@@ -12,6 +12,9 @@ import '../l10n/app_localizations.dart';
 import '../pages/page_tools_screen.dart';
 import '../pages/pdf_dialogs.dart';
 import '../theme/app_theme.dart';
+import '../widgets/glass_card.dart';
+import '../widgets/page_thumbnail.dart';
+import '../widgets/status_pill.dart';
 import '../window/focus_tint.dart';
 import 'annotation_panel.dart';
 import 'annotation_state.dart';
@@ -196,24 +199,22 @@ class _ViewerScreenState extends State<ViewerScreen> {
                 listenable: _controller,
                 builder: (context, _) {
                   if (!_controller.isReady) return const SizedBox.shrink();
-                  return Text(l10n.viewerPageOf(_controller.pageNumber ?? 1, _controller.pageCount));
+                  return StatusPill(label: l10n.viewerPageOf(_controller.pageNumber ?? 1, _controller.pageCount));
                 },
               ),
-              IconButton(
-                tooltip: l10n.viewerZoomOut,
-                icon: const Icon(Icons.zoom_out_rounded),
-                onPressed: () => _controller.isReady ? _controller.zoomDown() : null,
-              ),
-              IconButton(
-                tooltip: l10n.viewerZoomIn,
-                icon: const Icon(Icons.zoom_in_rounded),
-                onPressed: () => _controller.isReady ? _controller.zoomUp() : null,
-              ),
-              IconButton(
-                tooltip: l10n.annotSave,
-                icon: Icon(_annotations.dirty ? Icons.save_rounded : Icons.save_outlined),
+              const SizedBox(width: AppSpacing.sm),
+              _ZoomButtons(controller: _controller, zoomIn: l10n.viewerZoomIn, zoomOut: l10n.viewerZoomOut),
+              const SizedBox(width: AppSpacing.md),
+              if (_annotations.dirty) ...[
+                StatusPill(label: l10n.annotUnsavedShort, tone: PillTone.warning),
+                const SizedBox(width: AppSpacing.sm),
+              ],
+              FilledButton.tonalIcon(
                 onPressed: _annotations.busy ? null : _save,
+                icon: const Icon(Icons.save_outlined, size: 18),
+                label: Text(l10n.annotSave),
               ),
+              const SizedBox(width: AppSpacing.xs),
               IconButton(
                 tooltip: l10n.viewerEditPages,
                 icon: const Icon(Icons.dashboard_customize_outlined),
@@ -233,17 +234,21 @@ class _ViewerScreenState extends State<ViewerScreen> {
           ),
           body: Column(
             children: [
-              SizedBox(
-                height: 44,
-                child: AnnotationToolbar(
-                  state: _annotations,
-                  onHighlight: () => _applyToSelection(underline: false),
-                  onUnderline: () => _applyToSelection(underline: true),
-                  showList: _showList,
-                  onToggleList: () => setState(() => _showList = !_showList),
+              Material(
+                color: Theme.of(context).colorScheme.surface,
+                child: Column(
+                  children: [
+                    AnnotationToolbar(
+                      state: _annotations,
+                      onHighlight: () => _applyToSelection(underline: false),
+                      onUnderline: () => _applyToSelection(underline: true),
+                      showList: _showList,
+                      onToggleList: () => setState(() => _showList = !_showList),
+                    ),
+                    const Divider(height: 1),
+                  ],
                 ),
               ),
-              const Divider(height: 1),
               Expanded(child: _content(l10n)),
             ],
           ),
@@ -253,33 +258,37 @@ class _ViewerScreenState extends State<ViewerScreen> {
   }
 
   Widget _content(AppLocalizations l10n) {
+    final scheme = Theme.of(context).colorScheme;
+    final dark = scheme.brightness == Brightness.dark;
     return Row(
       children: [
         if (_showThumbnails)
-          SizedBox(
-            width: 160,
+          Container(
+            width: 148,
+            decoration: BoxDecoration(
+              color: scheme.surface,
+              border: Border(right: BorderSide(color: scheme.outlineVariant)),
+            ),
             child: PdfDocumentViewBuilder.file(
               widget.path,
               builder: (context, document) {
                 if (document == null) return const SizedBox.shrink();
-                return ListView.builder(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  itemCount: document.pages.length,
-                  itemBuilder: (context, index) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                    child: InkWell(
-                      onTap: () => _controller.goToPage(pageNumber: index + 1),
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            height: 180,
-                            child: PdfPageView(document: document, pageNumber: index + 1),
-                          ),
-                          Text('${index + 1}'),
-                        ],
+                return ListenableBuilder(
+                  listenable: _controller,
+                  builder: (context, _) {
+                    final current = _controller.isReady ? _controller.pageNumber : null;
+                    return ListView.separated(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      itemCount: document.pages.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
+                      itemBuilder: (context, index) => _Thumbnail(
+                        document: document,
+                        pageNumber: index + 1,
+                        selected: current == index + 1,
+                        onTap: () => _controller.goToPage(pageNumber: index + 1),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 );
               },
             ),
@@ -291,6 +300,13 @@ class _ViewerScreenState extends State<ViewerScreen> {
                 widget.path,
                 controller: _controller,
                 params: PdfViewerParams(
+                  backgroundColor: dark ? const Color(0xFF0F151C) : const Color(0xFFE8ECF2),
+                  margin: 16,
+                  pageDropShadow: BoxShadow(
+                    color: Colors.black.withValues(alpha: dark ? 0.5 : 0.18),
+                    blurRadius: 14,
+                    offset: const Offset(0, 3),
+                  ),
                   // 그리는 도구가 켜져 있으면 끌기는 그리기에 쓰이므로 화면 끌기를 끈다 (휠 스크롤·확대는 그대로).
                   panEnabled: !_annotations.drawing,
                   // 쪽 크기가 같으면 pdfrx가 이미 그린 쪽을 다시 그리지 않는다. 이 값이 바뀌면 이미지 캐시를 비우므로,
@@ -315,8 +331,12 @@ class _ViewerScreenState extends State<ViewerScreen> {
           ),
         ),
         if (_showList)
-          SizedBox(
-            width: 260,
+          Container(
+            width: 280,
+            decoration: BoxDecoration(
+              color: scheme.surface,
+              border: Border(left: BorderSide(color: scheme.outlineVariant)),
+            ),
             child: AnnotationPanel(
               state: _annotations,
               onJump: (page) => _controller.goToPage(pageNumber: page),
@@ -324,6 +344,80 @@ class _ViewerScreenState extends State<ViewerScreen> {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// 사이드바 썸네일: 지금 보는 쪽은 강조 테두리, 아래에 쪽 번호.
+class _Thumbnail extends StatelessWidget {
+  const _Thumbnail({required this.document, required this.pageNumber, required this.selected, required this.onTap});
+
+  final PdfDocument document;
+  final int pageNumber;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GlassCard(
+      radius: AppRadius.button + 4,
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      selected: selected,
+      onTap: onTap,
+      child: Column(
+        children: [
+          SizedBox(
+            height: 112,
+            child: PageThumbnail(document: document, pageNumber: pageNumber),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            '$pageNumber',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: selected ? theme.colorScheme.primary : null,
+              fontWeight: selected ? FontWeight.w800 : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 확대/축소 묶음: 알약 하나 안에 단추 둘.
+class _ZoomButtons extends StatelessWidget {
+  const _ZoomButtons({required this.controller, required this.zoomIn, required this.zoomOut});
+
+  final PdfViewerController controller;
+  final String zoomIn;
+  final String zoomOut;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppRadius.chip),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            tooltip: zoomOut,
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.remove_rounded),
+            onPressed: () => controller.isReady ? controller.zoomDown() : null,
+          ),
+          IconButton(
+            tooltip: zoomIn,
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.add_rounded),
+            onPressed: () => controller.isReady ? controller.zoomUp() : null,
+          ),
+        ],
+      ),
     );
   }
 }

@@ -319,5 +319,48 @@
   "annotUnsavedTitle": "You have unsaved annotations",
   "annotUnsavedBody": "If you leave without saving, the annotations you added are lost.",
   "annotDiscard": "Discard",
-  "annotFailed": "Couldn't process the annotation."
+  "annotFailed": "Couldn't process the annotation.",
+  "homeConvertHint": "Images, SVG and AI to PDF, or PDF to images",
+  "homePagesHint": "Merge, split, rotate, delete and reorder pages",
+  "homeDropSubtitle": "PDFs open right away; images, SVG and AI go to Convert",
+  "annotListLabel": "Annotations {count}",
+  "annotUnsavedShort": "Not saved",
+  "annotHintNote": "Click the page to place a note",
+  "annotHintInk": "Drag on the page to draw",
+  "annotHintShape": "Drag to set the area",
+  "annotListTitle": "Annotations",
+  "viewerGoToPage": "Go to page",
+  "@annotListLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mergeDropHint": "Drop PDFs here",
+  "splitDropHint": "Drop a PDF to split, or choose one",
+  "splitChange": "Another PDF",
+  "splitPreview": "Makes {count} files",
+  "pagesDropHere": "Drop here to move to the end",
+  "pagesMoveToEnd": "End",
+  "@splitPreview": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "convertStatusPending": "Waiting",
+  "convertStatusRunning": "Converting",
+  "convertStatusDone": "Done",
+  "convertStatusFailed": "Failed",
+  "convertReveal": "Show in folder",
+  "convertOpenResult": "Open",
+  "convertSectionImages": "Images → PDF",
+  "convertSectionPdf": "PDF → images",
+  "convertSectionOutput": "Save to",
+  "convertQueueTitle": "Queue",
+  "convertFormatLabel": "Format",
+  "convertResolutionLabel": "Resolution",
+  "convertImagesNote": "PNG, JPG, BMP, GIF, WebP, TIFF · SVG · AI (PDF-compatible)"
 }

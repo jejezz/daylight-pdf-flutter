@@ -475,4 +475,96 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get annotFailed => '주석을 처리하지 못했어요.';
+
+  @override
+  String get homeConvertHint => '이미지·SVG·AI를 PDF로, PDF를 이미지로';
+
+  @override
+  String get homePagesHint => '합치기, 나누기, 회전, 삭제, 순서 바꾸기';
+
+  @override
+  String get homeDropSubtitle => 'PDF는 바로 열고, 이미지·SVG·AI는 변환으로 보내요';
+
+  @override
+  String annotListLabel(int count) {
+    return '주석 $count';
+  }
+
+  @override
+  String get annotUnsavedShort => '저장 안 됨';
+
+  @override
+  String get annotHintNote => '쪽을 클릭해 메모를 놓으세요';
+
+  @override
+  String get annotHintInk => '쪽 위에서 끌어 그리세요';
+
+  @override
+  String get annotHintShape => '끌어서 영역을 지정하세요';
+
+  @override
+  String get annotListTitle => '주석';
+
+  @override
+  String get viewerGoToPage => '쪽 이동';
+
+  @override
+  String get mergeDropHint => '여기에 PDF를 놓으세요';
+
+  @override
+  String get splitDropHint => '나눌 PDF를 끌어다 놓거나 선택하세요';
+
+  @override
+  String get splitChange => '다른 PDF';
+
+  @override
+  String splitPreview(int count) {
+    return '파일 $count개로 나뉘어요';
+  }
+
+  @override
+  String get pagesDropHere => '여기에 놓아서 맨 뒤로 보내기';
+
+  @override
+  String get pagesMoveToEnd => '맨 뒤';
+
+  @override
+  String get convertStatusPending => '대기';
+
+  @override
+  String get convertStatusRunning => '변환 중';
+
+  @override
+  String get convertStatusDone => '완료';
+
+  @override
+  String get convertStatusFailed => '실패';
+
+  @override
+  String get convertReveal => '폴더에서 보기';
+
+  @override
+  String get convertOpenResult => '열기';
+
+  @override
+  String get convertSectionImages => '이미지 → PDF';
+
+  @override
+  String get convertSectionPdf => 'PDF → 이미지';
+
+  @override
+  String get convertSectionOutput => '저장 위치';
+
+  @override
+  String get convertQueueTitle => '대기열';
+
+  @override
+  String get convertFormatLabel => '형식';
+
+  @override
+  String get convertResolutionLabel => '해상도';
+
+  @override
+  String get convertImagesNote =>
+      'PNG, JPG, BMP, GIF, WebP, TIFF · SVG · AI(PDF 호환)';
 }

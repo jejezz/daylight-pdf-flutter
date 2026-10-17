@@ -919,6 +919,180 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'주석을 처리하지 못했어요.'**
   String get annotFailed;
+
+  /// No description provided for @homeConvertHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미지·SVG·AI를 PDF로, PDF를 이미지로'**
+  String get homeConvertHint;
+
+  /// No description provided for @homePagesHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'합치기, 나누기, 회전, 삭제, 순서 바꾸기'**
+  String get homePagesHint;
+
+  /// No description provided for @homeDropSubtitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF는 바로 열고, 이미지·SVG·AI는 변환으로 보내요'**
+  String get homeDropSubtitle;
+
+  /// No description provided for @annotListLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'주석 {count}'**
+  String annotListLabel(int count);
+
+  /// No description provided for @annotUnsavedShort.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장 안 됨'**
+  String get annotUnsavedShort;
+
+  /// No description provided for @annotHintNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'쪽을 클릭해 메모를 놓으세요'**
+  String get annotHintNote;
+
+  /// No description provided for @annotHintInk.
+  ///
+  /// In ko, this message translates to:
+  /// **'쪽 위에서 끌어 그리세요'**
+  String get annotHintInk;
+
+  /// No description provided for @annotHintShape.
+  ///
+  /// In ko, this message translates to:
+  /// **'끌어서 영역을 지정하세요'**
+  String get annotHintShape;
+
+  /// No description provided for @annotListTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'주석'**
+  String get annotListTitle;
+
+  /// No description provided for @viewerGoToPage.
+  ///
+  /// In ko, this message translates to:
+  /// **'쪽 이동'**
+  String get viewerGoToPage;
+
+  /// No description provided for @mergeDropHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'여기에 PDF를 놓으세요'**
+  String get mergeDropHint;
+
+  /// No description provided for @splitDropHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'나눌 PDF를 끌어다 놓거나 선택하세요'**
+  String get splitDropHint;
+
+  /// No description provided for @splitChange.
+  ///
+  /// In ko, this message translates to:
+  /// **'다른 PDF'**
+  String get splitChange;
+
+  /// No description provided for @splitPreview.
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 {count}개로 나뉘어요'**
+  String splitPreview(int count);
+
+  /// No description provided for @pagesDropHere.
+  ///
+  /// In ko, this message translates to:
+  /// **'여기에 놓아서 맨 뒤로 보내기'**
+  String get pagesDropHere;
+
+  /// No description provided for @pagesMoveToEnd.
+  ///
+  /// In ko, this message translates to:
+  /// **'맨 뒤'**
+  String get pagesMoveToEnd;
+
+  /// No description provided for @convertStatusPending.
+  ///
+  /// In ko, this message translates to:
+  /// **'대기'**
+  String get convertStatusPending;
+
+  /// No description provided for @convertStatusRunning.
+  ///
+  /// In ko, this message translates to:
+  /// **'변환 중'**
+  String get convertStatusRunning;
+
+  /// No description provided for @convertStatusDone.
+  ///
+  /// In ko, this message translates to:
+  /// **'완료'**
+  String get convertStatusDone;
+
+  /// No description provided for @convertStatusFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'실패'**
+  String get convertStatusFailed;
+
+  /// No description provided for @convertReveal.
+  ///
+  /// In ko, this message translates to:
+  /// **'폴더에서 보기'**
+  String get convertReveal;
+
+  /// No description provided for @convertOpenResult.
+  ///
+  /// In ko, this message translates to:
+  /// **'열기'**
+  String get convertOpenResult;
+
+  /// No description provided for @convertSectionImages.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미지 → PDF'**
+  String get convertSectionImages;
+
+  /// No description provided for @convertSectionPdf.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF → 이미지'**
+  String get convertSectionPdf;
+
+  /// No description provided for @convertSectionOutput.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장 위치'**
+  String get convertSectionOutput;
+
+  /// No description provided for @convertQueueTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'대기열'**
+  String get convertQueueTitle;
+
+  /// No description provided for @convertFormatLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'형식'**
+  String get convertFormatLabel;
+
+  /// No description provided for @convertResolutionLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'해상도'**
+  String get convertResolutionLabel;
+
+  /// No description provided for @convertImagesNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'PNG, JPG, BMP, GIF, WebP, TIFF · SVG · AI(PDF 호환)'**
+  String get convertImagesNote;
 }
 
 class _AppLocalizationsDelegate

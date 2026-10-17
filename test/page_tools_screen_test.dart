@@ -31,8 +31,8 @@ void main() {
     await tester.tap(find.text('합치기'));
     await tester.pumpAndSettle();
     expect(find.text('합칠 PDF를 추가하세요'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, '합쳐서 저장'), findsOneWidget);
-    expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, '합쳐서 저장')).onPressed, isNull);
+    expect(find.text('PDF 추가'), findsOneWidget);
+    expect(find.text('합쳐서 저장'), findsNothing, reason: 'the merge button appears once there are files to merge');
 
     await tester.tap(find.text('나누기'));
     await tester.pumpAndSettle();

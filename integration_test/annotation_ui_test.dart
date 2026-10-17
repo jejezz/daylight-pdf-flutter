@@ -8,7 +8,9 @@ import 'package:daylight_pdf/convert/svg_to_pdf.dart';
 import 'package:daylight_pdf/pages/page_ops.dart';
 import 'package:daylight_pdf/l10n/app_localizations.dart';
 import 'package:daylight_pdf/settings/app_settings.dart';
+import 'package:daylight_pdf/viewer/annotation_panel.dart';
 import 'package:daylight_pdf/viewer/viewer_screen.dart';
+import 'package:daylight_pdf/widgets/glass_card.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -39,6 +41,9 @@ void main() {
     );
     await tester.pumpAndSettle(const Duration(seconds: 2));
   }
+
+  /// 주석 목록 안에서만 찾는다 (도구 줄에도 같은 이름의 글자가 있다).
+  Finder inPanel(String text) => find.descendant(of: find.byType(AnnotationPanel), matching: find.text(text));
 
   Future<void> drag(WidgetTester tester, Offset from, Offset to) async {
     final g = await tester.startGesture(from, kind: PointerDeviceKind.mouse);
@@ -85,11 +90,10 @@ void main() {
     await pumpViewer(tester, '${dir.path}/doc.pdf');
 
     var viewer = tester.getRect(find.byType(PdfViewer));
-    Offset at(double fx, double fy) => Offset(viewer.left + viewer.width * fx, viewer.top + viewer.height * fy);
-    // 쪽은 뷰어 너비에 맞춰(좌우 여백 10) 가운데에 놓인다. 쪽 비율은 2:1 (400x200).
+    // 쪽은 뷰어 너비에 맞춰(좌우 여백 16) 가운데에 놓인다. 쪽 비율은 2:1 (400x200).
     Offset onPage(double fx, double fy) {
-      final width = viewer.width - 20, height = width / 2;
-      return Offset(viewer.left + 10 + width * fx, viewer.center.dy - height / 2 + height * fy);
+      final width = viewer.width - 32, height = width / 2;
+      return Offset(viewer.left + 16 + width * fx, viewer.center.dy - height / 2 + height * fy);
     }
 
     // 아무것도 선택하지 않고 형광펜 → 안내만 나온다
@@ -100,20 +104,20 @@ void main() {
     // 손글씨
     await tester.tap(find.byTooltip('손글씨'));
     await tester.pumpAndSettle();
-    await drag(tester, at(0.3, 0.7), at(0.6, 0.8));
+    await drag(tester, onPage(0.3, 0.75), onPage(0.6, 0.9));
     // 사각형
     await tester.tap(find.byTooltip('사각형'));
     await tester.pumpAndSettle();
-    await drag(tester, at(0.65, 0.2), at(0.85, 0.4));
+    await drag(tester, onPage(0.65, 0.15), onPage(0.85, 0.4));
     // 원
     await tester.tap(find.byTooltip('원'));
     await tester.pumpAndSettle();
-    await drag(tester, at(0.65, 0.6), at(0.85, 0.85));
+    await drag(tester, onPage(0.65, 0.55), onPage(0.85, 0.85));
 
     // 메모: 클릭 → 입력 → 추가
     await tester.tap(find.byTooltip('메모 (쪽을 클릭)'));
     await tester.pumpAndSettle();
-    final tap = await tester.startGesture(at(0.1, 0.8), kind: PointerDeviceKind.mouse);
+    final tap = await tester.startGesture(onPage(0.1, 0.85), kind: PointerDeviceKind.mouse);
     await tap.up();
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '확인할 메모 note');
@@ -125,10 +129,10 @@ void main() {
     // 목록에 4개 (손글씨, 사각형, 원, 메모)
     await tester.tap(find.byTooltip('주석 목록'));
     await tester.pumpAndSettle();
-    expect(find.text('확인할 메모 note'), findsOneWidget);
-    expect(find.text('손글씨'), findsOneWidget);
-    expect(find.text('사각형'), findsOneWidget);
-    expect(find.text('원'), findsOneWidget);
+    expect(inPanel('확인할 메모 note'), findsOneWidget);
+    expect(inPanel('손글씨'), findsOneWidget);
+    expect(inPanel('사각형'), findsOneWidget);
+    expect(inPanel('원'), findsOneWidget);
 
     // 글자 선택(마우스 끌기) → 형광펜. 목록이 열려 뷰어 너비가 줄었으니 다시 잰다.
     await tester.pumpAndSettle();
@@ -136,16 +140,16 @@ void main() {
     await drag(tester, onPage(0.06, 0.25), onPage(0.60, 0.25));
     await tester.tap(find.byTooltip('형광펜 (선택한 글자)'));
     await tester.pumpAndSettle(const Duration(seconds: 1));
-    final highlighted = find.text('형광펜').evaluate().isNotEmpty;
+    final highlighted = inPanel('형광펜').evaluate().isNotEmpty;
     expect(highlighted, isTrue, reason: 'selecting text and pressing highlight must add a highlight');
     await snapshot(tester, 'daylight_pdf_viewer_annotated');
 
     // 삭제: 사각형을 지운다
     final before = find.byIcon(Icons.delete_outline_rounded).evaluate().length;
-    final rectTile = find.ancestor(of: find.text('사각형'), matching: find.byType(ListTile));
+    final rectTile = find.ancestor(of: inPanel('사각형'), matching: find.byType(GlassCard));
     await tester.tap(find.descendant(of: rectTile, matching: find.byIcon(Icons.delete_outline_rounded)));
     await tester.pumpAndSettle(const Duration(seconds: 1));
-    expect(find.text('사각형'), findsNothing);
+    expect(inPanel('사각형'), findsNothing);
     expect(find.byIcon(Icons.delete_outline_rounded).evaluate().length, before - 1);
     await snapshot(tester, 'daylight_pdf_viewer_after_delete');
 

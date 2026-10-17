@@ -478,4 +478,97 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get annotFailed => 'Couldn\'t process the annotation.';
+
+  @override
+  String get homeConvertHint => 'Images, SVG and AI to PDF, or PDF to images';
+
+  @override
+  String get homePagesHint => 'Merge, split, rotate, delete and reorder pages';
+
+  @override
+  String get homeDropSubtitle =>
+      'PDFs open right away; images, SVG and AI go to Convert';
+
+  @override
+  String annotListLabel(int count) {
+    return 'Annotations $count';
+  }
+
+  @override
+  String get annotUnsavedShort => 'Not saved';
+
+  @override
+  String get annotHintNote => 'Click the page to place a note';
+
+  @override
+  String get annotHintInk => 'Drag on the page to draw';
+
+  @override
+  String get annotHintShape => 'Drag to set the area';
+
+  @override
+  String get annotListTitle => 'Annotations';
+
+  @override
+  String get viewerGoToPage => 'Go to page';
+
+  @override
+  String get mergeDropHint => 'Drop PDFs here';
+
+  @override
+  String get splitDropHint => 'Drop a PDF to split, or choose one';
+
+  @override
+  String get splitChange => 'Another PDF';
+
+  @override
+  String splitPreview(int count) {
+    return 'Makes $count files';
+  }
+
+  @override
+  String get pagesDropHere => 'Drop here to move to the end';
+
+  @override
+  String get pagesMoveToEnd => 'End';
+
+  @override
+  String get convertStatusPending => 'Waiting';
+
+  @override
+  String get convertStatusRunning => 'Converting';
+
+  @override
+  String get convertStatusDone => 'Done';
+
+  @override
+  String get convertStatusFailed => 'Failed';
+
+  @override
+  String get convertReveal => 'Show in folder';
+
+  @override
+  String get convertOpenResult => 'Open';
+
+  @override
+  String get convertSectionImages => 'Images → PDF';
+
+  @override
+  String get convertSectionPdf => 'PDF → images';
+
+  @override
+  String get convertSectionOutput => 'Save to';
+
+  @override
+  String get convertQueueTitle => 'Queue';
+
+  @override
+  String get convertFormatLabel => 'Format';
+
+  @override
+  String get convertResolutionLabel => 'Resolution';
+
+  @override
+  String get convertImagesNote =>
+      'PNG, JPG, BMP, GIF, WebP, TIFF · SVG · AI (PDF-compatible)';
 }

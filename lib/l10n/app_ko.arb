@@ -336,5 +336,48 @@
   "annotUnsavedTitle": "저장하지 않은 주석이 있어요",
   "annotUnsavedBody": "저장하지 않고 나가면 이번에 단 주석이 사라져요.",
   "annotDiscard": "저장 안 함",
-  "annotFailed": "주석을 처리하지 못했어요."
+  "annotFailed": "주석을 처리하지 못했어요.",
+  "homeConvertHint": "이미지·SVG·AI를 PDF로, PDF를 이미지로",
+  "homePagesHint": "합치기, 나누기, 회전, 삭제, 순서 바꾸기",
+  "homeDropSubtitle": "PDF는 바로 열고, 이미지·SVG·AI는 변환으로 보내요",
+  "annotListLabel": "주석 {count}",
+  "annotUnsavedShort": "저장 안 됨",
+  "annotHintNote": "쪽을 클릭해 메모를 놓으세요",
+  "annotHintInk": "쪽 위에서 끌어 그리세요",
+  "annotHintShape": "끌어서 영역을 지정하세요",
+  "annotListTitle": "주석",
+  "viewerGoToPage": "쪽 이동",
+  "@annotListLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mergeDropHint": "여기에 PDF를 놓으세요",
+  "splitDropHint": "나눌 PDF를 끌어다 놓거나 선택하세요",
+  "splitChange": "다른 PDF",
+  "splitPreview": "파일 {count}개로 나뉘어요",
+  "pagesDropHere": "여기에 놓아서 맨 뒤로 보내기",
+  "pagesMoveToEnd": "맨 뒤",
+  "@splitPreview": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "convertStatusPending": "대기",
+  "convertStatusRunning": "변환 중",
+  "convertStatusDone": "완료",
+  "convertStatusFailed": "실패",
+  "convertReveal": "폴더에서 보기",
+  "convertOpenResult": "열기",
+  "convertSectionImages": "이미지 → PDF",
+  "convertSectionPdf": "PDF → 이미지",
+  "convertSectionOutput": "저장 위치",
+  "convertQueueTitle": "대기열",
+  "convertFormatLabel": "형식",
+  "convertResolutionLabel": "해상도",
+  "convertImagesNote": "PNG, JPG, BMP, GIF, WebP, TIFF · SVG · AI(PDF 호환)"
 }

@@ -4,9 +4,14 @@ import 'conversion_error.dart';
 
 enum JobStatus { pending, running, done, failed }
 
+/// 목록에서 아이콘을 고르는 데 쓰는 변환 종류.
+enum JobKind { image, svg, ai, pdf, other }
+
 /// 큐에서 도는 변환 한 건. [run]은 만든 파일 경로 목록을 돌려준다.
 class ConversionJob {
-  ConversionJob({required this.label, required this.run});
+  ConversionJob({required this.label, required this.run, this.kind = JobKind.other});
+
+  final JobKind kind;
 
   /// 목록에 보일 이름 (원본 파일 이름 등).
   final String label;
