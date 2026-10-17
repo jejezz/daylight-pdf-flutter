@@ -231,5 +231,83 @@
         "type": "String"
       }
     }
+  },
+  "pagesTitle": "페이지 도구",
+  "pagesTabEdit": "편집",
+  "pagesTabMerge": "합치기",
+  "pagesTabSplit": "나누기",
+  "pagesOpenPdf": "PDF 열기",
+  "pagesEmpty": "편집할 PDF를 열거나 끌어다 놓으세요",
+  "pagesRotateLeft": "왼쪽으로 회전",
+  "pagesRotateRight": "오른쪽으로 회전",
+  "pagesDelete": "선택한 쪽 삭제",
+  "pagesExtract": "선택한 쪽만 저장",
+  "pagesSave": "저장",
+  "pagesSelectAll": "모두 선택",
+  "pagesPageLabel": "{n}쪽",
+  "pagesSelectedCount": "{count}쪽 선택",
+  "pagesNothingSelected": "먼저 쪽을 선택하세요",
+  "pagesNoneLeft": "남은 쪽이 없어서 저장할 수 없어요",
+  "pagesSaved": "저장했어요: {name}",
+  "pagesSavedMany": "파일 {count}개를 만들었어요",
+  "pagesReset": "되돌리기",
+  "mergeAdd": "PDF 추가",
+  "mergeAction": "합쳐서 저장",
+  "mergeNeedTwo": "PDF를 2개 이상 추가하세요",
+  "mergeRemove": "목록에서 빼기",
+  "mergeEmpty": "합칠 PDF를 추가하세요",
+  "splitChoose": "나눌 PDF 선택",
+  "splitModeEach": "한 쪽씩",
+  "splitModeEveryN": "N쪽마다",
+  "splitModeRanges": "범위로",
+  "splitEveryNLabel": "쪽 수",
+  "splitRangesLabel": "범위 (예: 1-3, 5, 8-)",
+  "splitAction": "나누기",
+  "splitPageCount": "전체 {count}쪽",
+  "splitChooseFolder": "저장할 폴더 선택",
+  "errInvalidRange": "쪽 범위를 이해할 수 없어요: {name}",
+  "viewerEditPages": "페이지 편집",
+  "homePagesAction": "페이지 도구",
+  "@pagesPageLabel": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@pagesSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@pagesSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@pagesSavedMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@splitPageCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@errInvalidRange": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -8,8 +8,8 @@ import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../window/focus_tint.dart';
 import 'ai_to_pdf.dart';
-import 'conversion_error.dart';
 import 'conversion_queue.dart';
+import 'error_text.dart';
 import 'image_to_pdf.dart';
 import 'output_paths.dart';
 import 'pdf_to_images.dart';
@@ -152,14 +152,6 @@ class _ConvertScreenState extends State<ConvertScreen> {
     );
   }
 
-  String _errorText(AppLocalizations l10n, ConversionException e) => switch (e.kind) {
-    ConversionErrorKind.unsupportedFormat => l10n.errUnsupportedFormat(e.fileName),
-    ConversionErrorKind.cannotRead => l10n.errCannotRead(e.fileName),
-    ConversionErrorKind.passwordProtected => l10n.errPasswordProtected(e.fileName),
-    ConversionErrorKind.writeFailed => l10n.errWriteFailed(e.fileName),
-    ConversionErrorKind.notPdfCompatible => l10n.errNotPdfCompatible(e.fileName),
-  };
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -267,7 +259,7 @@ class _ConvertScreenState extends State<ConvertScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             JobStatus.failed => Text(
-                              _errorText(l10n, job.error!),
+                              conversionErrorText(l10n, job.error!),
                               style: TextStyle(color: theme.colorScheme.error),
                             ),
                             _ => null,

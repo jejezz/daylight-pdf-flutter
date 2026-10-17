@@ -214,5 +214,83 @@
         "type": "String"
       }
     }
+  },
+  "pagesTitle": "Page tools",
+  "pagesTabEdit": "Edit",
+  "pagesTabMerge": "Merge",
+  "pagesTabSplit": "Split",
+  "pagesOpenPdf": "Open PDF",
+  "pagesEmpty": "Open or drop a PDF to edit",
+  "pagesRotateLeft": "Rotate left",
+  "pagesRotateRight": "Rotate right",
+  "pagesDelete": "Delete selected pages",
+  "pagesExtract": "Save selected pages only",
+  "pagesSave": "Save",
+  "pagesSelectAll": "Select all",
+  "pagesPageLabel": "Page {n}",
+  "pagesSelectedCount": "{count} selected",
+  "pagesNothingSelected": "Select pages first",
+  "pagesNoneLeft": "No pages left to save",
+  "pagesSaved": "Saved: {name}",
+  "pagesSavedMany": "Created {count} files",
+  "pagesReset": "Reset",
+  "mergeAdd": "Add PDFs",
+  "mergeAction": "Merge and save",
+  "mergeNeedTwo": "Add at least 2 PDFs",
+  "mergeRemove": "Remove from list",
+  "mergeEmpty": "Add PDFs to merge",
+  "splitChoose": "Choose a PDF to split",
+  "splitModeEach": "One page each",
+  "splitModeEveryN": "Every N pages",
+  "splitModeRanges": "By ranges",
+  "splitEveryNLabel": "Pages",
+  "splitRangesLabel": "Ranges (e.g. 1-3, 5, 8-)",
+  "splitAction": "Split",
+  "splitPageCount": "{count} pages in total",
+  "splitChooseFolder": "Choose output folder",
+  "errInvalidRange": "Couldn't understand the page range: {name}",
+  "viewerEditPages": "Edit pages",
+  "homePagesAction": "Page tools",
+  "@pagesPageLabel": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@pagesSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@pagesSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@pagesSavedMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@splitPageCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@errInvalidRange": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

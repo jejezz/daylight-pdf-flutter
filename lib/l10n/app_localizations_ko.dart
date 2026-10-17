@@ -274,4 +274,124 @@ class AppLocalizationsKo extends AppLocalizations {
   String errNotPdfCompatible(String name) {
     return 'PDF 호환 파일로 저장되지 않은 .ai예요. Illustrator에서 \"PDF 호환 파일 만들기\"를 켜고 다시 저장해 주세요: $name';
   }
+
+  @override
+  String get pagesTitle => '페이지 도구';
+
+  @override
+  String get pagesTabEdit => '편집';
+
+  @override
+  String get pagesTabMerge => '합치기';
+
+  @override
+  String get pagesTabSplit => '나누기';
+
+  @override
+  String get pagesOpenPdf => 'PDF 열기';
+
+  @override
+  String get pagesEmpty => '편집할 PDF를 열거나 끌어다 놓으세요';
+
+  @override
+  String get pagesRotateLeft => '왼쪽으로 회전';
+
+  @override
+  String get pagesRotateRight => '오른쪽으로 회전';
+
+  @override
+  String get pagesDelete => '선택한 쪽 삭제';
+
+  @override
+  String get pagesExtract => '선택한 쪽만 저장';
+
+  @override
+  String get pagesSave => '저장';
+
+  @override
+  String get pagesSelectAll => '모두 선택';
+
+  @override
+  String pagesPageLabel(int n) {
+    return '$n쪽';
+  }
+
+  @override
+  String pagesSelectedCount(int count) {
+    return '$count쪽 선택';
+  }
+
+  @override
+  String get pagesNothingSelected => '먼저 쪽을 선택하세요';
+
+  @override
+  String get pagesNoneLeft => '남은 쪽이 없어서 저장할 수 없어요';
+
+  @override
+  String pagesSaved(String name) {
+    return '저장했어요: $name';
+  }
+
+  @override
+  String pagesSavedMany(int count) {
+    return '파일 $count개를 만들었어요';
+  }
+
+  @override
+  String get pagesReset => '되돌리기';
+
+  @override
+  String get mergeAdd => 'PDF 추가';
+
+  @override
+  String get mergeAction => '합쳐서 저장';
+
+  @override
+  String get mergeNeedTwo => 'PDF를 2개 이상 추가하세요';
+
+  @override
+  String get mergeRemove => '목록에서 빼기';
+
+  @override
+  String get mergeEmpty => '합칠 PDF를 추가하세요';
+
+  @override
+  String get splitChoose => '나눌 PDF 선택';
+
+  @override
+  String get splitModeEach => '한 쪽씩';
+
+  @override
+  String get splitModeEveryN => 'N쪽마다';
+
+  @override
+  String get splitModeRanges => '범위로';
+
+  @override
+  String get splitEveryNLabel => '쪽 수';
+
+  @override
+  String get splitRangesLabel => '범위 (예: 1-3, 5, 8-)';
+
+  @override
+  String get splitAction => '나누기';
+
+  @override
+  String splitPageCount(int count) {
+    return '전체 $count쪽';
+  }
+
+  @override
+  String get splitChooseFolder => '저장할 폴더 선택';
+
+  @override
+  String errInvalidRange(String name) {
+    return '쪽 범위를 이해할 수 없어요: $name';
+  }
+
+  @override
+  String get viewerEditPages => '페이지 편집';
+
+  @override
+  String get homePagesAction => '페이지 도구';
 }

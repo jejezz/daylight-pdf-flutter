@@ -541,6 +541,222 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'PDF 호환 파일로 저장되지 않은 .ai예요. Illustrator에서 \"PDF 호환 파일 만들기\"를 켜고 다시 저장해 주세요: {name}'**
   String errNotPdfCompatible(String name);
+
+  /// No description provided for @pagesTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'페이지 도구'**
+  String get pagesTitle;
+
+  /// No description provided for @pagesTabEdit.
+  ///
+  /// In ko, this message translates to:
+  /// **'편집'**
+  String get pagesTabEdit;
+
+  /// No description provided for @pagesTabMerge.
+  ///
+  /// In ko, this message translates to:
+  /// **'합치기'**
+  String get pagesTabMerge;
+
+  /// No description provided for @pagesTabSplit.
+  ///
+  /// In ko, this message translates to:
+  /// **'나누기'**
+  String get pagesTabSplit;
+
+  /// No description provided for @pagesOpenPdf.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF 열기'**
+  String get pagesOpenPdf;
+
+  /// No description provided for @pagesEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'편집할 PDF를 열거나 끌어다 놓으세요'**
+  String get pagesEmpty;
+
+  /// No description provided for @pagesRotateLeft.
+  ///
+  /// In ko, this message translates to:
+  /// **'왼쪽으로 회전'**
+  String get pagesRotateLeft;
+
+  /// No description provided for @pagesRotateRight.
+  ///
+  /// In ko, this message translates to:
+  /// **'오른쪽으로 회전'**
+  String get pagesRotateRight;
+
+  /// No description provided for @pagesDelete.
+  ///
+  /// In ko, this message translates to:
+  /// **'선택한 쪽 삭제'**
+  String get pagesDelete;
+
+  /// No description provided for @pagesExtract.
+  ///
+  /// In ko, this message translates to:
+  /// **'선택한 쪽만 저장'**
+  String get pagesExtract;
+
+  /// No description provided for @pagesSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get pagesSave;
+
+  /// No description provided for @pagesSelectAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'모두 선택'**
+  String get pagesSelectAll;
+
+  /// No description provided for @pagesPageLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'{n}쪽'**
+  String pagesPageLabel(int n);
+
+  /// No description provided for @pagesSelectedCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}쪽 선택'**
+  String pagesSelectedCount(int count);
+
+  /// No description provided for @pagesNothingSelected.
+  ///
+  /// In ko, this message translates to:
+  /// **'먼저 쪽을 선택하세요'**
+  String get pagesNothingSelected;
+
+  /// No description provided for @pagesNoneLeft.
+  ///
+  /// In ko, this message translates to:
+  /// **'남은 쪽이 없어서 저장할 수 없어요'**
+  String get pagesNoneLeft;
+
+  /// No description provided for @pagesSaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장했어요: {name}'**
+  String pagesSaved(String name);
+
+  /// No description provided for @pagesSavedMany.
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 {count}개를 만들었어요'**
+  String pagesSavedMany(int count);
+
+  /// No description provided for @pagesReset.
+  ///
+  /// In ko, this message translates to:
+  /// **'되돌리기'**
+  String get pagesReset;
+
+  /// No description provided for @mergeAdd.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF 추가'**
+  String get mergeAdd;
+
+  /// No description provided for @mergeAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'합쳐서 저장'**
+  String get mergeAction;
+
+  /// No description provided for @mergeNeedTwo.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF를 2개 이상 추가하세요'**
+  String get mergeNeedTwo;
+
+  /// No description provided for @mergeRemove.
+  ///
+  /// In ko, this message translates to:
+  /// **'목록에서 빼기'**
+  String get mergeRemove;
+
+  /// No description provided for @mergeEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'합칠 PDF를 추가하세요'**
+  String get mergeEmpty;
+
+  /// No description provided for @splitChoose.
+  ///
+  /// In ko, this message translates to:
+  /// **'나눌 PDF 선택'**
+  String get splitChoose;
+
+  /// No description provided for @splitModeEach.
+  ///
+  /// In ko, this message translates to:
+  /// **'한 쪽씩'**
+  String get splitModeEach;
+
+  /// No description provided for @splitModeEveryN.
+  ///
+  /// In ko, this message translates to:
+  /// **'N쪽마다'**
+  String get splitModeEveryN;
+
+  /// No description provided for @splitModeRanges.
+  ///
+  /// In ko, this message translates to:
+  /// **'범위로'**
+  String get splitModeRanges;
+
+  /// No description provided for @splitEveryNLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'쪽 수'**
+  String get splitEveryNLabel;
+
+  /// No description provided for @splitRangesLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'범위 (예: 1-3, 5, 8-)'**
+  String get splitRangesLabel;
+
+  /// No description provided for @splitAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'나누기'**
+  String get splitAction;
+
+  /// No description provided for @splitPageCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체 {count}쪽'**
+  String splitPageCount(int count);
+
+  /// No description provided for @splitChooseFolder.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장할 폴더 선택'**
+  String get splitChooseFolder;
+
+  /// No description provided for @errInvalidRange.
+  ///
+  /// In ko, this message translates to:
+  /// **'쪽 범위를 이해할 수 없어요: {name}'**
+  String errInvalidRange(String name);
+
+  /// No description provided for @viewerEditPages.
+  ///
+  /// In ko, this message translates to:
+  /// **'페이지 편집'**
+  String get viewerEditPages;
+
+  /// No description provided for @homePagesAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'페이지 도구'**
+  String get homePagesAction;
 }
 
 class _AppLocalizationsDelegate

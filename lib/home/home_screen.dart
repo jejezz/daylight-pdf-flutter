@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../app_identity.dart';
 import '../convert/convert_screen.dart';
 import '../l10n/app_localizations.dart';
+import '../pages/page_tools_screen.dart';
 import '../settings/settings_menus.dart';
 import '../theme/app_theme.dart';
 import '../viewer/viewer_screen.dart';
@@ -94,6 +95,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     FilledButton(onPressed: _pick, child: Text(l10n.homeEmptyAction)),
                     const SizedBox(width: AppSpacing.md),
                     OutlinedButton(onPressed: _openConvert, child: Text(l10n.homeConvertAction)),
+                    const SizedBox(width: AppSpacing.md),
+                    OutlinedButton(
+                      onPressed: () =>
+                          Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const PageToolsScreen())),
+                      child: Text(l10n.homePagesAction),
+                    ),
                   ],
                 ),
               ],

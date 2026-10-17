@@ -276,4 +276,124 @@ class AppLocalizationsEn extends AppLocalizations {
   String errNotPdfCompatible(String name) {
     return 'This .ai was saved without PDF compatibility. In Illustrator, turn on \"Create PDF Compatible File\" and save again: $name';
   }
+
+  @override
+  String get pagesTitle => 'Page tools';
+
+  @override
+  String get pagesTabEdit => 'Edit';
+
+  @override
+  String get pagesTabMerge => 'Merge';
+
+  @override
+  String get pagesTabSplit => 'Split';
+
+  @override
+  String get pagesOpenPdf => 'Open PDF';
+
+  @override
+  String get pagesEmpty => 'Open or drop a PDF to edit';
+
+  @override
+  String get pagesRotateLeft => 'Rotate left';
+
+  @override
+  String get pagesRotateRight => 'Rotate right';
+
+  @override
+  String get pagesDelete => 'Delete selected pages';
+
+  @override
+  String get pagesExtract => 'Save selected pages only';
+
+  @override
+  String get pagesSave => 'Save';
+
+  @override
+  String get pagesSelectAll => 'Select all';
+
+  @override
+  String pagesPageLabel(int n) {
+    return 'Page $n';
+  }
+
+  @override
+  String pagesSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get pagesNothingSelected => 'Select pages first';
+
+  @override
+  String get pagesNoneLeft => 'No pages left to save';
+
+  @override
+  String pagesSaved(String name) {
+    return 'Saved: $name';
+  }
+
+  @override
+  String pagesSavedMany(int count) {
+    return 'Created $count files';
+  }
+
+  @override
+  String get pagesReset => 'Reset';
+
+  @override
+  String get mergeAdd => 'Add PDFs';
+
+  @override
+  String get mergeAction => 'Merge and save';
+
+  @override
+  String get mergeNeedTwo => 'Add at least 2 PDFs';
+
+  @override
+  String get mergeRemove => 'Remove from list';
+
+  @override
+  String get mergeEmpty => 'Add PDFs to merge';
+
+  @override
+  String get splitChoose => 'Choose a PDF to split';
+
+  @override
+  String get splitModeEach => 'One page each';
+
+  @override
+  String get splitModeEveryN => 'Every N pages';
+
+  @override
+  String get splitModeRanges => 'By ranges';
+
+  @override
+  String get splitEveryNLabel => 'Pages';
+
+  @override
+  String get splitRangesLabel => 'Ranges (e.g. 1-3, 5, 8-)';
+
+  @override
+  String get splitAction => 'Split';
+
+  @override
+  String splitPageCount(int count) {
+    return '$count pages in total';
+  }
+
+  @override
+  String get splitChooseFolder => 'Choose output folder';
+
+  @override
+  String errInvalidRange(String name) {
+    return 'Couldn\'t understand the page range: $name';
+  }
+
+  @override
+  String get viewerEditPages => 'Edit pages';
+
+  @override
+  String get homePagesAction => 'Page tools';
 }

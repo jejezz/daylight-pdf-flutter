@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 import '../l10n/app_localizations.dart';
+import '../pages/page_tools_screen.dart';
 import '../theme/app_theme.dart';
 import '../window/focus_tint.dart';
 
@@ -45,6 +46,13 @@ class _ViewerScreenState extends State<ViewerScreen> {
             tooltip: l10n.viewerZoomIn,
             icon: const Icon(Icons.zoom_in_rounded),
             onPressed: () => _controller.isReady ? _controller.zoomUp() : null,
+          ),
+          IconButton(
+            tooltip: l10n.viewerEditPages,
+            icon: const Icon(Icons.dashboard_customize_outlined),
+            onPressed: () =>
+                Navigator.of(context)
+                    .push(MaterialPageRoute<void>(builder: (_) => PageToolsScreen(initialPath: widget.path))),
           ),
           IconButton(
             tooltip: l10n.viewerThumbnails,
