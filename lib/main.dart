@@ -8,25 +8,26 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdfrx/pdfrx.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'about/about_dialog.dart';
 import 'about/app_menu_bar.dart';
 import 'about/extra_licenses.dart';
 import 'app_identity.dart';
+import 'home/home_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'settings/app_settings.dart';
-import 'settings/settings_menus.dart';
 import 'theme/app_theme.dart';
 import 'update/update_scope.dart';
 import 'update/update_service.dart';
-import 'window/focus_tint.dart';
 
 final bool _isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   registerExtraLicenses();
+  await pdfrxFlutterInitialize();
 
   if (_isDesktop) {
     await windowManager.ensureInitialized();
@@ -133,48 +134,6 @@ class _AppState extends State<App> with WidgetsBindingObserver {
             child: child!,
           ),
           home: HomeScreen(onAbout: _showAbout),
-        ),
-      ),
-    );
-  }
-}
-
-/// 기능이 들어오기 전의 자리 표시 화면 — 빈 상태 패턴 (ui-ux.md §6).
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key, required this.onAbout});
-
-  final VoidCallback onAbout;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        flexibleSpace: const FocusTint(),
-        title: const Text(AppIdentity.displayName),
-        actions: [
-          const ThemeMenuButton(),
-          const LanguageMenuButton(),
-          IconButton(
-            tooltip: l10n.aboutTooltip,
-            icon: const Icon(Icons.info_outline_rounded),
-            onPressed: onAbout,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(AppIdentity.iconAsset, width: 48, height: 48),
-            const SizedBox(height: AppSpacing.lg),
-            Text(l10n.homeEmptyTitle, style: theme.textTheme.titleMedium),
-            const SizedBox(height: AppSpacing.lg),
-            // 기능이 생기면 주 행동을 연결한다. 그 전까지는 비활성.
-            FilledButton(onPressed: null, child: Text(l10n.homeEmptyAction)),
-          ],
         ),
       ),
     );

@@ -409,6 +409,48 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'작업이 진행 중입니다. 끝난 뒤에 다시 시도해 주세요.'**
   String get updateBusyBody;
+
+  /// No description provided for @fileTypePdf.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF 문서'**
+  String get fileTypePdf;
+
+  /// No description provided for @openPdfOnly.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF 파일만 열 수 있어요. 다른 형식은 변환 기능을 이용해 주세요.'**
+  String get openPdfOnly;
+
+  /// No description provided for @openFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'파일을 열 수 없어요.'**
+  String get openFailed;
+
+  /// No description provided for @viewerZoomIn.
+  ///
+  /// In ko, this message translates to:
+  /// **'확대'**
+  String get viewerZoomIn;
+
+  /// No description provided for @viewerZoomOut.
+  ///
+  /// In ko, this message translates to:
+  /// **'축소'**
+  String get viewerZoomOut;
+
+  /// No description provided for @viewerThumbnails.
+  ///
+  /// In ko, this message translates to:
+  /// **'썸네일'**
+  String get viewerThumbnails;
+
+  /// No description provided for @viewerPageOf.
+  ///
+  /// In ko, this message translates to:
+  /// **'{page} / {total}'**
+  String viewerPageOf(int page, int total);
 }
 
 class _AppLocalizationsDelegate

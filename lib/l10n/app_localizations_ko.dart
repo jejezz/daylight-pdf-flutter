@@ -190,4 +190,27 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get updateBusyBody => '작업이 진행 중입니다. 끝난 뒤에 다시 시도해 주세요.';
+
+  @override
+  String get fileTypePdf => 'PDF 문서';
+
+  @override
+  String get openPdfOnly => 'PDF 파일만 열 수 있어요. 다른 형식은 변환 기능을 이용해 주세요.';
+
+  @override
+  String get openFailed => '파일을 열 수 없어요.';
+
+  @override
+  String get viewerZoomIn => '확대';
+
+  @override
+  String get viewerZoomOut => '축소';
+
+  @override
+  String get viewerThumbnails => '썸네일';
+
+  @override
+  String viewerPageOf(int page, int total) {
+    return '$page / $total';
+  }
 }

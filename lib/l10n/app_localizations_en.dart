@@ -192,4 +192,28 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get updateBusyBody =>
       'A task is in progress. Please try again when it has finished.';
+
+  @override
+  String get fileTypePdf => 'PDF document';
+
+  @override
+  String get openPdfOnly =>
+      'Only PDF files can be opened. Use conversion for other formats.';
+
+  @override
+  String get openFailed => 'Couldn\'t open the file.';
+
+  @override
+  String get viewerZoomIn => 'Zoom in';
+
+  @override
+  String get viewerZoomOut => 'Zoom out';
+
+  @override
+  String get viewerThumbnails => 'Thumbnails';
+
+  @override
+  String viewerPageOf(int page, int total) {
+    return '$page / $total';
+  }
 }

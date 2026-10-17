@@ -123,5 +123,22 @@
   },
   "updateQuitAndInstall": "Quit and install",
   "updateBusyTitle": "Can't update right now",
-  "updateBusyBody": "A task is in progress. Please try again when it has finished."
+  "updateBusyBody": "A task is in progress. Please try again when it has finished.",
+  "fileTypePdf": "PDF document",
+  "openPdfOnly": "Only PDF files can be opened. Use conversion for other formats.",
+  "openFailed": "Couldn't open the file.",
+  "viewerZoomIn": "Zoom in",
+  "viewerZoomOut": "Zoom out",
+  "viewerThumbnails": "Thumbnails",
+  "viewerPageOf": "{page} / {total}",
+  "@viewerPageOf": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  }
 }
