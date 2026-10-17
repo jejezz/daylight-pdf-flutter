@@ -86,6 +86,22 @@ void main() {
     final inkColored = [for (var x = 40; x < 200; x++) px(x, 300 - 90)].any((c) => c != 0xFFFFFF);
     expect(inkColored, isTrue, reason: 'ink stroke must be drawn');
 
+    // 메모 아이콘이 어디에 있는지 읽을 수 있다 (x: 300, y: 250에서 24pt 정사각형)
+    final noteRect = annotations[2].rect;
+    expect([noteRect.left, noteRect.bottom, noteRect.right, noteRect.top], [300, 250, 324, 274]);
+
+    // 메모 고치기: 한글 내용으로 바꾸고 저장해 다시 열어도 남아 있다
+    await PdfiumAnnotations.setContents(reopened, 0, 2, '고친 메모 ✓ edited');
+    expect((await PdfiumAnnotations.read(reopened))[2].contents, '고친 메모 ✓ edited');
+    final editedPath = '${dir.path}/edited.pdf';
+    File(editedPath).writeAsBytesSync(await reopened.encodePdf());
+    final edited = await PdfDocument.openFile(editedPath);
+    addTearDown(edited.dispose);
+    final editedAnnotations = await PdfiumAnnotations.read(edited);
+    expect(editedAnnotations.map((a) => a.subtype), [9, 10, 1, 15, 5, 6], reason: 'editing keeps every annotation');
+    expect(editedAnnotations[2].contents, '고친 메모 ✓ edited');
+    expect(editedAnnotations[0].contents, isEmpty, reason: 'other annotations are untouched');
+
     // 지우기: 손글씨(3번째 위치 index 3)를 지우면 나머지 순서는 그대로
     await PdfiumAnnotations.remove(reopened, 0, 3);
     expect((await PdfiumAnnotations.read(reopened)).map((a) => a.subtype), [9, 10, 1, 5, 6]);

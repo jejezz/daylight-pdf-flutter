@@ -8,10 +8,19 @@ import 'annotation_state.dart';
 
 /// 문서의 주석 목록(카드): 누르면 그 쪽으로 가고, 휴지통으로 지운다.
 class AnnotationPanel extends StatelessWidget {
-  const AnnotationPanel({super.key, required this.state, required this.onJump, required this.onDelete});
+  const AnnotationPanel({
+    super.key,
+    required this.state,
+    required this.onJump,
+    required this.onOpenNote,
+    required this.onDelete,
+  });
 
   final AnnotationState state;
   final void Function(int pageNumber) onJump;
+
+  /// 메모 행을 눌렀을 때: 내용을 읽고 고칠 수 있는 창을 연다.
+  final void Function(ReadAnnotation note) onOpenNote;
   final void Function(ReadAnnotation annotation) onDelete;
 
   static (IconData, String Function(AppLocalizations)) _kind(int subtype) => switch (subtype) {
@@ -57,7 +66,7 @@ class AnnotationPanel extends StatelessWidget {
                             AppSpacing.xs,
                             AppSpacing.sm,
                           ),
-                          onTap: () => onJump(a.pageIndex + 1),
+                          onTap: () => a.subtype == 1 ? onOpenNote(a) : onJump(a.pageIndex + 1),
                           child: Row(
                             children: [
                               Icon(icon, size: 20, color: theme.colorScheme.primary),
@@ -68,7 +77,7 @@ class AnnotationPanel extends StatelessWidget {
                                   children: [
                                     Text(
                                       a.contents.isEmpty ? name(l10n) : a.contents,
-                                      maxLines: 2,
+                                      maxLines: a.subtype == 1 ? 3 : 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: theme.textTheme.bodyMedium,
                                     ),

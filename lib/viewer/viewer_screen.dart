@@ -22,6 +22,7 @@ import 'annotation_panel.dart';
 import 'annotation_state.dart';
 import 'annotation_toolbar.dart';
 import 'draw_layer.dart';
+import 'note_dialog.dart';
 import 'text_boxes.dart';
 
 /// PDF 보기 화면: 본문 + 접을 수 있는 썸네일 사이드바, 쪽 번호와 확대/축소, 주석 도구와 주석 목록.
@@ -136,6 +137,43 @@ class _ViewerScreenState extends State<ViewerScreen> {
     } on Object {
       if (mounted) showMessage(context, AppLocalizations.of(context).annotFailed);
     }
+  }
+
+  /// 메모를 열어 내용을 읽고, 고치고, 지운다 (쪽의 메모 아이콘이나 주석 목록의 메모 행에서).
+  Future<void> _openNote(ReadAnnotation note) async {
+    final document = _document;
+    if (document == null) return;
+    final result = await showNoteDialog(context, initialText: note.contents, pageNumber: note.pageIndex + 1);
+    if (result == null || !mounted) return;
+    try {
+      switch (result.action) {
+        case NoteDialogAction.save:
+          await _annotations.editNote(document, note, result.text);
+        case NoteDialogAction.delete:
+          await _annotations.remove(document, note);
+      }
+    } on Object {
+      if (mounted) showMessage(context, AppLocalizations.of(context).annotFailed);
+    }
+  }
+
+  /// 쪽 위의 메모 아이콘 자리에 얹는 투명한 영역: 마우스를 올리면 내용이 툴팁으로 보이고, 누르면 메모 창이 열린다.
+  /// 누르기는 pdfrx가 권하는 [PdfOverlayInteractionRegion]으로 받아 뷰어의 끌기·글자 선택을 방해하지 않는다.
+  List<Widget> _noteHotspots(Rect pageRect, PdfPage page) {
+    final notes = _annotations.items.where((a) => a.subtype == 1 && a.pageIndex == page.pageNumber - 1);
+    return [
+      for (final note in notes)
+        if (note.rect.right > note.rect.left && note.rect.top > note.rect.bottom)
+          Positioned.fromRect(
+            rect: PdfRect(
+              note.rect.left,
+              note.rect.top,
+              note.rect.right,
+              note.rect.bottom,
+            ).toRect(page: page, scaledPageSize: pageRect.size),
+            child: _NoteHotspot(note: note, onOpen: () => _openNote(note)),
+          ),
+    ];
   }
 
   Future<void> _delete(ReadAnnotation annotation) async {
@@ -341,6 +379,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
                   annotationRenderingMode: _annotations.revision.isOdd
                       ? PdfAnnotationRenderingMode.annotation
                       : PdfAnnotationRenderingMode.annotationAndForms,
+                  pageOverlaysBuilder: (context, pageRect, page) => _noteHotspots(pageRect, page),
                   onViewerReady: (document, controller) => _annotations.refresh(document),
                   errorBannerBuilder: (context, error, stackTrace, documentRef) => Center(child: Text(l10n.openFailed)),
                 ),
@@ -364,9 +403,68 @@ class _ViewerScreenState extends State<ViewerScreen> {
               color: scheme.surface,
               border: Border(left: BorderSide(color: scheme.outlineVariant)),
             ),
-            child: AnnotationPanel(state: _annotations, onJump: _goToPage, onDelete: _delete),
+            child: AnnotationPanel(
+              state: _annotations,
+              onJump: _goToPage,
+              onOpenNote: (note) {
+                _goToPage(note.pageIndex + 1);
+                _openNote(note);
+              },
+              onDelete: _delete,
+            ),
           ),
       ],
+    );
+  }
+}
+
+/// 쪽 위 메모 아이콘 자리의 투명한 영역. 마우스를 올리면 내용이 툴팁으로 뜨고, 누르면 [onOpen]이 불린다.
+///
+/// 이 영역이 뷰어로 가는 입력을 막으면 안 된다(뷰어가 끌기·글자 선택·누르기를 모두 받아야 한다):
+/// - 올리기는 `opaque: false`인 [MouseRegion]으로만 받는다 (기본값은 아래 위젯으로 가는 입력을 막는다).
+/// - 툴팁은 직접 띄우고 [IgnorePointer]로 감싸 입력을 받지 않게 한다 (Tooltip 안의 영역도 입력을 막는다).
+/// - 누르기는 pdfrx가 권하는 [PdfOverlayInteractionRegion]으로 받는다.
+class _NoteHotspot extends StatefulWidget {
+  const _NoteHotspot({required this.note, required this.onOpen});
+
+  final ReadAnnotation note;
+  final VoidCallback onOpen;
+
+  @override
+  State<_NoteHotspot> createState() => _NoteHotspotState();
+}
+
+class _NoteHotspotState extends State<_NoteHotspot> {
+  final _tooltip = GlobalKey<TooltipState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      opaque: false,
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => _tooltip.currentState?.ensureTooltipVisible(),
+      onExit: (_) => Tooltip.dismissAllToolTips(),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          IgnorePointer(
+            child: Tooltip(
+              key: _tooltip,
+              message: widget.note.contents,
+              triggerMode: TooltipTriggerMode.manual,
+              constraints: const BoxConstraints(maxWidth: 320),
+              child: const SizedBox.expand(),
+            ),
+          ),
+          PdfOverlayInteractionRegion(
+            onTap: (_) {
+              widget.onOpen();
+              return true; // 처리했다는 뜻 (뷰어가 같은 누르기를 다시 쓰지 않는다)
+            },
+            child: const SizedBox.expand(),
+          ),
+        ],
+      ),
     );
   }
 }

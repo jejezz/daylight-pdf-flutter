@@ -7,22 +7,29 @@ import 'package:pdfrx/pdfrx.dart';
 class _FakeDocument extends Fake implements PdfDocument {}
 
 /// PDFium처럼 새 주석을 그 쪽 목록의 끝에 붙이고, 지우면 뒤 번호가 당겨지는 가짜 문서.
+class _Entry {
+  _Entry(this.spec) : contents = spec is NoteSpec ? spec.text : '';
+  final PdfAnnotationSpec spec;
+  String contents;
+}
+
 class _FakeBackend implements AnnotationBackend {
-  final pages = <int, List<PdfAnnotationSpec>>{};
+  final pages = <int, List<_Entry>>{};
   final removed = <({int page, int index})>[];
   bool failNextRemove = false;
 
   @override
   Future<void> add(PdfDocument document, List<PdfAnnotationSpec> specs) async {
     for (final s in specs) {
-      pages.putIfAbsent(s.pageIndex, () => []).add(s);
+      pages.putIfAbsent(s.pageIndex, () => []).add(_Entry(s));
     }
   }
 
   @override
   Future<List<ReadAnnotation>> read(PdfDocument document) async => [
     for (final page in pages.keys.toList()..sort())
-      for (var i = 0; i < pages[page]!.length; i++) ReadAnnotation(pageIndex: page, index: i, subtype: 5, contents: ''),
+      for (var i = 0; i < pages[page]!.length; i++)
+        ReadAnnotation(pageIndex: page, index: i, subtype: 5, contents: pages[page]![i].contents),
   ];
 
   @override
@@ -35,9 +42,14 @@ class _FakeBackend implements AnnotationBackend {
     pages[pageIndex]!.removeAt(index);
   }
 
+  @override
+  Future<void> setContents(PdfDocument document, int pageIndex, int index, String text) async {
+    pages[pageIndex]![index].contents = text;
+  }
+
   /// 쪽마다 남은 주석(그리는 순서대로 붙인 이름표 대신 색)을 읽기 쉽게.
   Map<int, List<int>> get colors => {
-    for (final e in pages.entries) e.key: [for (final s in e.value) s.color],
+    for (final e in pages.entries) e.key: [for (final x in e.value) x.spec.color],
   };
 }
 
@@ -143,5 +155,38 @@ void main() {
     await expectLater(state.undo(doc), throwsStateError);
     expect(state.canUndo, isFalse);
     expect(state.busy, isFalse, reason: 'state must not stay stuck busy');
+  });
+
+  group('editNote', () {
+    NoteSpec note(int page, int color, String text) => NoteSpec(pageIndex: page, color: color, x: 0, y: 0, text: text);
+
+    test('changes the text of that note only, and marks the document as changed', () async {
+      await state.add(doc, [note(0, 1, '첫 메모'), note(0, 2, '둘째 메모')]);
+      state.markSaved();
+      expect(state.dirty, isFalse);
+
+      await state.editNote(doc, state.items[1], '고친 메모');
+      expect(state.items.map((a) => a.contents), ['첫 메모', '고친 메모']);
+      expect(state.dirty, isTrue);
+    });
+
+    test('is not an undo step: undo still removes the last added annotation', () async {
+      await state.add(doc, [note(0, 1, 'a')]);
+      await state.add(doc, [note(0, 2, 'b')]);
+      await state.editNote(doc, state.items.first, '고침');
+
+      await state.undo(doc); // 마지막으로 단 b가 지워진다 (고치기는 기록에 없다)
+      expect(state.items.map((a) => a.contents), ['고침']);
+      await state.undo(doc);
+      expect(state.items, isEmpty);
+      expect(state.canUndo, isFalse);
+    });
+
+    test('works on a note whose index shifted after a deletion', () async {
+      await state.add(doc, [note(0, 1, 'a'), note(0, 2, 'b'), note(0, 3, 'c')]);
+      await state.remove(doc, state.items.first); // a를 지움 → b가 0번, c가 1번
+      await state.editNote(doc, state.items.last, '고친 c');
+      expect(state.items.map((a) => a.contents), ['b', '고친 c']);
+    });
   });
 }

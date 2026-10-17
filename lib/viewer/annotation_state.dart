@@ -9,6 +9,7 @@ abstract interface class AnnotationBackend {
   Future<void> add(PdfDocument document, List<PdfAnnotationSpec> specs);
   Future<List<ReadAnnotation>> read(PdfDocument document);
   Future<void> remove(PdfDocument document, int pageIndex, int index);
+  Future<void> setContents(PdfDocument document, int pageIndex, int index, String text);
 }
 
 class PdfiumAnnotationBackend implements AnnotationBackend {
@@ -23,6 +24,10 @@ class PdfiumAnnotationBackend implements AnnotationBackend {
   @override
   Future<void> remove(PdfDocument document, int pageIndex, int index) =>
       PdfiumAnnotations.remove(document, pageIndex, index);
+
+  @override
+  Future<void> setContents(PdfDocument document, int pageIndex, int index, String text) =>
+      PdfiumAnnotations.setContents(document, pageIndex, index, text);
 }
 
 /// 실행 취소가 지울 주석 하나: 그 쪽(0부터)에서 몇 번째인지.
@@ -125,6 +130,14 @@ class AnnotationState extends ChangeNotifier {
     _undo.removeWhere((step) => step.isEmpty);
     _dirty = true;
     _revision++;
+    await refresh(document);
+  });
+
+  /// 메모의 내용을 고친다. 번호가 바뀌지 않으므로 실행 취소 기록은 그대로 두고(고치기 자체는 되돌리지 않는다),
+  /// 저장한 파일과 달라지므로 변경됨으로 표시한다.
+  Future<void> editNote(PdfDocument document, ReadAnnotation annotation, String text) => _run(() async {
+    await _backend.setContents(document, annotation.pageIndex, annotation.index, text);
+    _dirty = true;
     await refresh(document);
   });
 

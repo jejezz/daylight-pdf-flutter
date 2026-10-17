@@ -55,6 +55,27 @@ abstract final class PdfiumAnnotations {
     await document.reloadPages(pageNumbersToReload: [pageIndex + 1]);
   }
 
+  /// [pageIndex]쪽의 [annotationIndex]번째 주석의 내용(`Contents`)을 [text]로 바꾼다 (메모 고치기).
+  static Future<void> setContents(PdfDocument document, int pageIndex, int annotationIndex, String text) async {
+    await document.useNativeDocumentHandle((handle) {
+      final pdfium = getPdfium();
+      final page = pdfium.FPDF_LoadPage(FPDF_DOCUMENT.fromAddress(handle), pageIndex);
+      if (page == ffi.nullptr) throw StateError('cannot load page $pageIndex');
+      try {
+        final annot = pdfium.FPDFPage_GetAnnot(page, annotationIndex);
+        if (annot == ffi.nullptr) throw StateError('no annotation $annotationIndex on page $pageIndex');
+        try {
+          _setString(pdfium, annot, 'Contents', text);
+        } finally {
+          pdfium.FPDFPage_CloseAnnot(annot);
+        }
+      } finally {
+        pdfium.FPDF_ClosePage(page);
+      }
+    });
+    await document.reloadPages(pageNumbersToReload: [pageIndex + 1]);
+  }
+
   /// 문서의 모든 주석을 쪽 순서대로 읽는다.
   static Future<List<ReadAnnotation>> read(PdfDocument document) {
     return document.useNativeDocumentHandle((handle) {
@@ -76,6 +97,7 @@ abstract final class PdfiumAnnotations {
                   index: i,
                   subtype: pdfium.FPDFAnnot_GetSubtype(annot),
                   contents: _getString(pdfium, annot, 'Contents'),
+                  rect: _getRect(pdfium, annot),
                 ),
               );
             } finally {
@@ -221,6 +243,18 @@ abstract final class PdfiumAnnotations {
     }
   }
 
+  static PdfBox _getRect(PDFium pdfium, FPDF_ANNOTATION annot) {
+    final rect = calloc<FS_RECTF>();
+    try {
+      if (!_ok(pdfium.FPDFAnnot_GetRect(annot, rect))) return (left: 0, bottom: 0, right: 0, top: 0);
+      return (left: rect.ref.left, bottom: rect.ref.bottom, right: rect.ref.right, top: rect.ref.top);
+    } finally {
+      calloc.free(rect);
+    }
+  }
+
+  static bool _ok(Object value) => value != false && value != 0;
+
   static void _check(Object ok, String what) {
     if (ok == false || ok == 0) throw StateError('PDFium $what failed');
   }
@@ -228,7 +262,13 @@ abstract final class PdfiumAnnotations {
 
 /// [PdfiumAnnotations.read]가 돌려주는 한 주석.
 class ReadAnnotation {
-  const ReadAnnotation({required this.pageIndex, required this.index, required this.subtype, required this.contents});
+  const ReadAnnotation({
+    required this.pageIndex,
+    required this.index,
+    required this.subtype,
+    required this.contents,
+    this.rect = (left: 0, bottom: 0, right: 0, top: 0),
+  });
   final int pageIndex;
 
   /// 그 쪽 안에서 0부터 센 순서. [PdfiumAnnotations.remove]에 그대로 쓴다.
@@ -237,4 +277,7 @@ class ReadAnnotation {
   /// PDFium `FPDF_ANNOT_*` 값 (1 메모, 5 사각형, 6 원, 9 형광펜, 10 밑줄, 15 손글씨).
   final int subtype;
   final String contents;
+
+  /// 쪽 위의 영역 (PDF 사용자 공간, 원점 왼쪽 아래, pt). 메모 아이콘이 어디에 있는지 알 때 쓴다.
+  final PdfBox rect;
 }

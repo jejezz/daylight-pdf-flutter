@@ -107,3 +107,13 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
 - 화면 좌표를 계산식으로 추정하지 않는다. 쪽 위치는 실제 그려진 화면에서 측정한다(`measurePage`, 순백 바탕 영역).
   창 크기·배치가 바뀌면 추정은 어긋난다.
 - 앱을 직접 열어 보기 전에는 `flutter build macos --debug`를 다시 한다 (통합 테스트가 같은 경로의 앱을 테스트용으로 바꾼다).
+
+## 메모 보기·고치기
+
+- 쪽의 메모 아이콘 자리에 투명한 `_NoteHotspot`을 얹는다: 마우스를 올리면 내용이 툴팁으로 뜨고, 누르면 `showNoteDialog`(읽기·고치기·삭제)가
+  열린다. 주석 목록의 메모 행을 눌러도 같은 창이 열린다. 메모 위치는 `ReadAnnotation.rect`(PDF 좌표)로 안다.
+- **뷰어로 가는 입력을 막지 않는 것이 핵심이다.** `MouseRegion`과 `Tooltip`은 기본값(`opaque: true`)으로 아래 위젯의 입력을
+  막아 뷰어가 누르기를 못 받는다. 그래서 올리기는 `MouseRegion(opaque: false)`, 툴팁은 `IgnorePointer` 안에서 직접 띄우고
+  (`triggerMode: manual`), 누르기는 `PdfOverlayInteractionRegion`으로 받는다.
+- 뷰어는 더블탭과 구분하려고 누른 뒤 약 0.3초 기다린다(프레임 없는 타이머라 테스트에서는 `pump(500ms)`가 필요하다).
+- 메모를 고치는 일(`editNote`)은 실행 취소 기록에 넣지 않는다.

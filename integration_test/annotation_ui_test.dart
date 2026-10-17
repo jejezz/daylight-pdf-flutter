@@ -378,4 +378,74 @@ void main() {
     await pressCmdZ(); // 더 되돌릴 게 없어도 아무 일 없다
     expect(find.text('주석이 없어요'), findsOneWidget);
   });
+
+  testWidgets('a note can be read on hover, opened by tapping its icon, edited, reopened from the list and deleted', (
+    tester,
+  ) async {
+    await pdfrxFlutterInitialize();
+    final dir = Directory.systemTemp.createTempSync('daylight_pdf_note');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    File('${dir.path}/p.png')
+        .writeAsBytesSync(img.encodePng(img.Image(width: 400, height: 200)..clear(img.ColorRgb8(255, 255, 255))));
+    await ImageToPdf.convert(['${dir.path}/p.png'], '${dir.path}/doc.pdf');
+    await pumpViewer(tester, '${dir.path}/doc.pdf');
+
+    final page = await measurePage(tester);
+    Offset onPage(double fx, double fy) => Offset(page.left + page.width * fx, page.top + page.height * fy);
+    Finder inDialog(String text) => find.descendant(of: find.byType(AlertDialog), matching: find.text(text));
+
+    // 메모 달기
+    await tester.tap(find.byTooltip('메모 (쪽을 클릭)'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(onPage(0.3, 0.5)); // 터치로 누른다 (아래에서 새 마우스 포인터로 올리기를 시험하므로)
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '첫 메모 내용\n둘째 줄');
+    await tester.tap(inDialog('추가'));
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    await tester.tap(find.byTooltip('메모 (쪽을 클릭)')); // 도구 끄기
+    await tester.pumpAndSettle();
+
+    // 쪽의 메모 아이콘 자리에 내용이 툴팁으로 달려 있어 마우스를 올리면 보인다.
+    final hotspot = find.byTooltip('첫 메모 내용\n둘째 줄');
+    expect(hotspot, findsOneWidget);
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(tester.getCenter(hotspot));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('첫 메모 내용\n둘째 줄'), findsOneWidget, reason: 'hovering the icon shows the note text');
+    await mouse.moveTo(Offset.zero);
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('첫 메모 내용\n둘째 줄'), findsNothing, reason: 'moving away hides it again');
+
+    // 아이콘을 누르면 메모 창이 열리고 내용을 다시 볼 수 있다.
+    await tester.tap(hotspot, warnIfMissed: false); // 툴팁은 입력을 받지 않으니 실제로는 아래 영역이 받는다
+    // 뷰어는 더블탭과 구분하려고 누른 뒤 잠깐(약 0.3초) 기다린다. 프레임이 없는 타이머라 pumpAndSettle이 기다려 주지 않는다.
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, '첫 메모 내용\n둘째 줄'), findsOneWidget);
+    expect(inDialog('저장'), findsOneWidget);
+
+    // 고쳐서 저장하면 툴팁도 바뀐다.
+    await tester.enterText(find.byType(TextField), '고친 내용');
+    await tester.pump();
+    await tester.tap(inDialog('저장'));
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    expect(find.byTooltip('고친 내용'), findsOneWidget);
+    expect(find.byTooltip('첫 메모 내용\n둘째 줄'), findsNothing);
+
+    // 주석 목록에서도 같은 메모를 열 수 있다.
+    await tester.tap(find.byTooltip('주석 목록'));
+    await tester.pumpAndSettle();
+    expect(inPanel('고친 내용'), findsOneWidget);
+    await tester.tap(inPanel('고친 내용'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, '고친 내용'), findsOneWidget);
+
+    // 지우면 쪽과 목록에서 모두 사라진다.
+    await tester.tap(inDialog('삭제'));
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    expect(find.byTooltip('고친 내용'), findsNothing);
+    expect(find.text('주석이 없어요'), findsOneWidget);
+  });
 }
