@@ -1,6 +1,7 @@
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:path/path.dart' as p;
 
 import '../l10n/app_localizations.dart';
@@ -85,7 +86,9 @@ class _ConvertScreenState extends State<ConvertScreen> {
       }
     }
     for (final svg in svgs) {
-      _queue.add(_toPdfJob(svg, SvgToPdf.convert));
+      _queue.add(
+        _toPdfJob(svg, (input, output) => SvgToPdf.convert(input, output, loadFallbackFonts: _loadFallbackFonts)),
+      );
     }
     for (final ai in ais) {
       _queue.add(_toPdfJob(ai, AiToPdf.convert));
@@ -111,6 +114,16 @@ class _ConvertScreenState extends State<ConvertScreen> {
         await ImageToPdf.convert(inputs, out);
         return [out];
       },
+    );
+  }
+
+  /// SVG 글자에 한글 등이 있을 때 쓰는 대체 글꼴 — 앱에 이미 들어 있는 SeoulNamsan.
+  static Future<SvgFallbackFonts> _loadFallbackFonts() async {
+    final regular = await rootBundle.load('assets/fonts/seoul_namsan_regular.ttf');
+    final bold = await rootBundle.load('assets/fonts/seoul_namsan_bold.ttf');
+    return (
+      regular: regular.buffer.asUint8List(regular.offsetInBytes, regular.lengthInBytes),
+      bold: bold.buffer.asUint8List(bold.offsetInBytes, bold.lengthInBytes),
     );
   }
 

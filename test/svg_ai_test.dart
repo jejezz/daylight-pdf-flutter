@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:daylight_pdf/convert/ai_to_pdf.dart';
 import 'package:daylight_pdf/convert/conversion_error.dart';
@@ -61,6 +62,60 @@ void main() {
       final input = write('bad.svg', '<svg width="10"');
       final out = '${dir.path}/bad.pdf';
       await expectLater(SvgToPdf.convert(input, out), failsWith(ConversionErrorKind.cannotRead));
+      expect(File(out).existsSync(), isFalse);
+    });
+  });
+
+  group('SvgToPdf text fonts', () {
+    const korean =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="50"><text x="5" y="30" font-size="20">한글 Text</text></svg>';
+    const latin =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="50"><text x="5" y="30" font-size="20">Café</text></svg>';
+
+    test('needsUnicodeFont looks only at text outside Latin-1', () {
+      expect(SvgToPdf.needsUnicodeFont(korean), isTrue);
+      expect(SvgToPdf.needsUnicodeFont(latin), isFalse);
+      expect(
+        SvgToPdf.needsUnicodeFont('<svg xmlns="http://www.w3.org/2000/svg"><!-- 한글 --><title>한글</title></svg>'),
+        isFalse,
+      );
+      expect(SvgToPdf.needsUnicodeFont('<svg'), isFalse);
+    });
+
+    test('Korean text converts when a fallback font is provided, and the loader runs once', () async {
+      final regular = File('assets/fonts/seoul_namsan_regular.ttf').readAsBytesSync();
+      final bold = File('assets/fonts/seoul_namsan_bold.ttf').readAsBytesSync();
+      var loads = 0;
+      final out = '${dir.path}/k.pdf';
+      await SvgToPdf.convert(
+        write('k.svg', korean),
+        out,
+        loadFallbackFonts: () async {
+          loads++;
+          return (regular: Uint8List.fromList(regular), bold: Uint8List.fromList(bold));
+        },
+      );
+      expect(loads, 1);
+      expect(String.fromCharCodes(File(out).readAsBytesSync()), startsWith('%PDF'));
+    });
+
+    test('Latin-only text never loads the fallback font', () async {
+      var loads = 0;
+      await SvgToPdf.convert(
+        write('l.svg', latin),
+        '${dir.path}/l.pdf',
+        loadFallbackFonts: () async {
+          loads++;
+          throw StateError('should not load');
+        },
+      );
+      expect(loads, 0);
+      expect(File('${dir.path}/l.pdf').existsSync(), isTrue);
+    });
+
+    test('Korean text without any fallback font fails cleanly instead of writing a broken PDF', () async {
+      final out = '${dir.path}/nofont.pdf';
+      await expectLater(SvgToPdf.convert(write('n.svg', korean), out), failsWith(ConversionErrorKind.cannotRead));
       expect(File(out).existsSync(), isFalse);
     });
   });

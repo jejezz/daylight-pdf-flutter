@@ -36,3 +36,10 @@ https://github.com/jejezz/application-release-templates/tree/main/conventions
   (`flutter test integration_test/convert_test.dart -d macos`). 여러 파일을 한 번에 돌리면 앞 앱이
   덜 닫혀 "Unable to start the app"으로 실패할 수 있다.
 - 변환 실패는 `ConversionException(kind)`로 던지고 문구는 UI가 ARB에서 고른다.
+
+## 변환 한계 (사용자에게 알려야 하는 것)
+
+- `.ai`는 "PDF 호환 파일 만들기"로 저장된 것만 변환한다. 아니면 `notPdfCompatible`로 안내한다.
+- SVG 글자에 한글 등 Latin-1 밖 문자가 있으면 대체 글꼴 SeoulNamsan을 PDF에 넣는다(`SvgToPdf.convert`의
+  `loadFallbackFonts`). 이 글꼴에 없는 문자(예: é ñ ü)는 □로 나오고, 이때 SVG 글자 전체가 SeoulNamsan이 된다.
+- 이미지는 PNG/JPG/BMP/GIF/WebP/TIFF. HEIC는 지원하지 않는다(건너뛰고 알림).
