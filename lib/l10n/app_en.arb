@@ -143,7 +143,7 @@
   "convertTitle": "Convert",
   "convertAddFiles": "Add files",
   "convertClearFinished": "Clear finished",
-  "convertFileTypes": "Images and PDF",
+  "convertFileTypes": "Images, SVG, AI, PDF",
   "convertMergeImages": "Merge images into one PDF",
   "convertOutputSame": "Same folder as source",
   "convertEmpty": "Drop images or PDFs to convert",
@@ -201,6 +201,14 @@
     }
   },
   "@errWriteFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "errNotPdfCompatible": "This .ai was saved without PDF compatibility. In Illustrator, turn on \"Create PDF Compatible File\" and save again: {name}",
+  "@errNotPdfCompatible": {
     "placeholders": {
       "name": {
         "type": "String"

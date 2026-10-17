@@ -31,7 +31,7 @@ void main() {
 
   testWidgets('unsupported files are skipped with a message and queue nothing (en)', (tester) async {
     await tester.pumpWidget(
-      await _app(const ConvertScreen(initialPaths: ['/x/photo.heic', '/x/drawing.ai']), const Locale('en')),
+      await _app(const ConvertScreen(initialPaths: ['/x/photo.heic', '/x/design.psd']), const Locale('en')),
     );
     await tester.pump();
     await tester.pump();

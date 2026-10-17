@@ -160,7 +160,7 @@
   "convertTitle": "변환",
   "convertAddFiles": "파일 추가",
   "convertClearFinished": "완료 항목 지우기",
-  "convertFileTypes": "이미지와 PDF",
+  "convertFileTypes": "이미지, SVG, AI, PDF",
   "convertMergeImages": "이미지를 한 PDF로 합치기",
   "convertOutputSame": "원본과 같은 폴더",
   "convertEmpty": "변환할 이미지나 PDF를 끌어다 놓으세요",
@@ -218,6 +218,14 @@
     }
   },
   "@errWriteFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "errNotPdfCompatible": "PDF 호환 파일로 저장되지 않은 .ai예요. Illustrator에서 \"PDF 호환 파일 만들기\"를 켜고 다시 저장해 주세요: {name}",
+  "@errNotPdfCompatible": {
     "placeholders": {
       "name": {
         "type": "String"

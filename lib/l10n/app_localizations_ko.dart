@@ -221,7 +221,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get convertClearFinished => '완료 항목 지우기';
 
   @override
-  String get convertFileTypes => '이미지와 PDF';
+  String get convertFileTypes => '이미지, SVG, AI, PDF';
 
   @override
   String get convertMergeImages => '이미지를 한 PDF로 합치기';
@@ -269,4 +269,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get homeConvertAction => '변환';
+
+  @override
+  String errNotPdfCompatible(String name) {
+    return 'PDF 호환 파일로 저장되지 않은 .ai예요. Illustrator에서 \"PDF 호환 파일 만들기\"를 켜고 다시 저장해 주세요: $name';
+  }
 }

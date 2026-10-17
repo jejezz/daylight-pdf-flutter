@@ -467,7 +467,7 @@ abstract class AppLocalizations {
   /// No description provided for @convertFileTypes.
   ///
   /// In ko, this message translates to:
-  /// **'이미지와 PDF'**
+  /// **'이미지, SVG, AI, PDF'**
   String get convertFileTypes;
 
   /// No description provided for @convertMergeImages.
@@ -535,6 +535,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'변환'**
   String get homeConvertAction;
+
+  /// No description provided for @errNotPdfCompatible.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF 호환 파일로 저장되지 않은 .ai예요. Illustrator에서 \"PDF 호환 파일 만들기\"를 켜고 다시 저장해 주세요: {name}'**
+  String errNotPdfCompatible(String name);
 }
 
 class _AppLocalizationsDelegate

@@ -223,7 +223,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get convertClearFinished => 'Clear finished';
 
   @override
-  String get convertFileTypes => 'Images and PDF';
+  String get convertFileTypes => 'Images, SVG, AI, PDF';
 
   @override
   String get convertMergeImages => 'Merge images into one PDF';
@@ -271,4 +271,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeConvertAction => 'Convert';
+
+  @override
+  String errNotPdfCompatible(String name) {
+    return 'This .ai was saved without PDF compatibility. In Illustrator, turn on \"Create PDF Compatible File\" and save again: $name';
+  }
 }

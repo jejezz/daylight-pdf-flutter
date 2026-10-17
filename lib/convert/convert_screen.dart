@@ -6,11 +6,13 @@ import 'package:path/path.dart' as p;
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../window/focus_tint.dart';
+import 'ai_to_pdf.dart';
 import 'conversion_error.dart';
 import 'conversion_queue.dart';
 import 'image_to_pdf.dart';
 import 'output_paths.dart';
 import 'pdf_to_images.dart';
+import 'svg_to_pdf.dart';
 
 bool _isPdf(String path) => p.extension(path).toLowerCase() == '.pdf';
 
@@ -66,7 +68,12 @@ class _ConvertScreenState extends State<ConvertScreen> {
     final l10n = AppLocalizations.of(context);
     final images = paths.where(ImageToPdf.supports).toList();
     final pdfs = paths.where(_isPdf).toList();
-    final skipped = paths.where((x) => !ImageToPdf.supports(x) && !_isPdf(x)).map(p.basename).toList();
+    final svgs = paths.where(SvgToPdf.supports).toList();
+    final ais = paths.where(AiToPdf.supports).toList();
+    final skipped = paths
+        .where((x) => !ImageToPdf.supports(x) && !_isPdf(x) && !SvgToPdf.supports(x) && !AiToPdf.supports(x))
+        .map(p.basename)
+        .toList();
 
     if (images.isNotEmpty) {
       if (_mergeImages) {
@@ -76,6 +83,12 @@ class _ConvertScreenState extends State<ConvertScreen> {
           _queue.add(_imagesJob([image]));
         }
       }
+    }
+    for (final svg in svgs) {
+      _queue.add(_toPdfJob(svg, SvgToPdf.convert));
+    }
+    for (final ai in ais) {
+      _queue.add(_toPdfJob(ai, AiToPdf.convert));
     }
     for (final pdf in pdfs) {
       _queue.add(_pdfJob(pdf));
@@ -101,6 +114,18 @@ class _ConvertScreenState extends State<ConvertScreen> {
     );
   }
 
+  /// 파일 하나를 같은 이름의 PDF 하나로 바꾸는 작업 (SVG, AI).
+  ConversionJob _toPdfJob(String input, Future<void> Function(String input, String output) convert) {
+    return ConversionJob(
+      label: p.basename(input),
+      run: () async {
+        final out = uniquePath(p.join(_dirFor(input), '${p.basenameWithoutExtension(input)}.pdf'));
+        await convert(input, out);
+        return [out];
+      },
+    );
+  }
+
   ConversionJob _pdfJob(String input) {
     final format = _format, dpi = _dpi;
     return ConversionJob(
@@ -119,6 +144,7 @@ class _ConvertScreenState extends State<ConvertScreen> {
     ConversionErrorKind.cannotRead => l10n.errCannotRead(e.fileName),
     ConversionErrorKind.passwordProtected => l10n.errPasswordProtected(e.fileName),
     ConversionErrorKind.writeFailed => l10n.errWriteFailed(e.fileName),
+    ConversionErrorKind.notPdfCompatible => l10n.errNotPdfCompatible(e.fileName),
   };
 
   @override
