@@ -28,3 +28,11 @@ https://github.com/jejezz/application-release-templates/tree/main/conventions
   일괄 변환. PDF 호환 옵션이 꺼진 `.ai`는 안내 메시지로 처리한다.
 - 보기, 주석(하이라이트·밑줄·도형·손글씨), 메모(PDF 표준 주석), 페이지 조작.
 - PDF 엔진은 인터페이스 뒤에 두어 교체 가능하게 한다.
+
+## 테스트
+
+- `flutter test`: 순수 Dart·위젯 테스트. 네이티브 PDFium은 여기서 못 불러온다.
+- `integration_test/`: PDFium이 필요한 테스트는 실제 앱에서 돈다. **파일 하나씩** 돌린다
+  (`flutter test integration_test/convert_test.dart -d macos`). 여러 파일을 한 번에 돌리면 앞 앱이
+  덜 닫혀 "Unable to start the app"으로 실패할 수 있다.
+- 변환 실패는 `ConversionException(kind)`로 던지고 문구는 UI가 ARB에서 고른다.
