@@ -50,6 +50,10 @@ class _ViewerScreenState extends State<ViewerScreen> {
     super.dispose();
   }
 
+  /// 그 쪽의 위에 맞춰 이동한다. 기본값은 마지막 쪽만 아래에 맞춰(pdfrx `pageAnchorEnd`) 3쪽짜리 문서의 3쪽을 누르면
+  /// 쪽 맨 아래가 보였다. 우리는 항상 쪽의 처음부터 보여 준다.
+  Future<void> _goToPage(int pageNumber) => _controller.goToPage(pageNumber: pageNumber, anchor: PdfPageAnchor.top);
+
   /// 선택한 글자에 형광펜/밑줄을 단다.
   Future<void> _applyToSelection({required bool underline}) async {
     final l10n = AppLocalizations.of(context);
@@ -285,7 +289,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
                         document: document,
                         pageNumber: index + 1,
                         selected: current == index + 1,
-                        onTap: () => _controller.goToPage(pageNumber: index + 1),
+                        onTap: () => _goToPage(index + 1),
                       ),
                     );
                   },
@@ -337,11 +341,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
               color: scheme.surface,
               border: Border(left: BorderSide(color: scheme.outlineVariant)),
             ),
-            child: AnnotationPanel(
-              state: _annotations,
-              onJump: (page) => _controller.goToPage(pageNumber: page),
-              onDelete: _delete,
-            ),
+            child: AnnotationPanel(state: _annotations, onJump: _goToPage, onDelete: _delete),
           ),
       ],
     );
