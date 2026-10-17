@@ -142,7 +142,6 @@
   "updateBusyTitle": "지금은 업데이트할 수 없습니다",
   "updateBusyBody": "작업이 진행 중입니다. 끝난 뒤에 다시 시도해 주세요.",
   "fileTypePdf": "PDF 문서",
-  "openPdfOnly": "PDF 파일만 열 수 있어요. 다른 형식은 변환 기능을 이용해 주세요.",
   "openFailed": "파일을 열 수 없어요.",
   "viewerZoomIn": "확대",
   "viewerZoomOut": "축소",
@@ -155,6 +154,73 @@
       },
       "total": {
         "type": "int"
+      }
+    }
+  },
+  "convertTitle": "변환",
+  "convertAddFiles": "파일 추가",
+  "convertClearFinished": "완료 항목 지우기",
+  "convertFileTypes": "이미지와 PDF",
+  "convertMergeImages": "이미지를 한 PDF로 합치기",
+  "convertOutputSame": "원본과 같은 폴더",
+  "convertEmpty": "변환할 이미지나 PDF를 끌어다 놓으세요",
+  "convertDpi": "{dpi} DPI",
+  "convertFilesCreated": "파일 {count}개를 만들었어요",
+  "convertSkipped": "지원하지 않는 형식 {count}개를 건너뛰었어요: {names}",
+  "errUnsupportedFormat": "지원하지 않는 형식이에요: {name}",
+  "errCannotRead": "파일을 읽을 수 없어요: {name}",
+  "errPasswordProtected": "암호가 걸린 PDF는 변환할 수 없어요: {name}",
+  "errWriteFailed": "결과를 저장할 수 없어요: {name}",
+  "homeConvertAction": "변환",
+  "@convertDpi": {
+    "placeholders": {
+      "dpi": {
+        "type": "int"
+      }
+    }
+  },
+  "@convertFilesCreated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@convertSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "@errUnsupportedFormat": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@errCannotRead": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@errPasswordProtected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@errWriteFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
       }
     }
   }

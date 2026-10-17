@@ -92,8 +92,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
               widget.path,
               controller: _controller,
               params: PdfViewerParams(
-                errorBannerBuilder: (context, error, stackTrace, documentRef) =>
-                    Center(child: Text(l10n.openFailed)),
+                errorBannerBuilder: (context, error, stackTrace, documentRef) => Center(child: Text(l10n.openFailed)),
               ),
             ),
           ),

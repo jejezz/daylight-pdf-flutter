@@ -197,10 +197,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileTypePdf => 'PDF document';
 
   @override
-  String get openPdfOnly =>
-      'Only PDF files can be opened. Use conversion for other formats.';
-
-  @override
   String get openFailed => 'Couldn\'t open the file.';
 
   @override
@@ -216,4 +212,63 @@ class AppLocalizationsEn extends AppLocalizations {
   String viewerPageOf(int page, int total) {
     return '$page / $total';
   }
+
+  @override
+  String get convertTitle => 'Convert';
+
+  @override
+  String get convertAddFiles => 'Add files';
+
+  @override
+  String get convertClearFinished => 'Clear finished';
+
+  @override
+  String get convertFileTypes => 'Images and PDF';
+
+  @override
+  String get convertMergeImages => 'Merge images into one PDF';
+
+  @override
+  String get convertOutputSame => 'Same folder as source';
+
+  @override
+  String get convertEmpty => 'Drop images or PDFs to convert';
+
+  @override
+  String convertDpi(int dpi) {
+    return '$dpi DPI';
+  }
+
+  @override
+  String convertFilesCreated(int count) {
+    return 'Created $count files';
+  }
+
+  @override
+  String convertSkipped(int count, String names) {
+    return 'Skipped $count unsupported files: $names';
+  }
+
+  @override
+  String errUnsupportedFormat(String name) {
+    return 'Unsupported format: $name';
+  }
+
+  @override
+  String errCannotRead(String name) {
+    return 'Couldn\'t read the file: $name';
+  }
+
+  @override
+  String errPasswordProtected(String name) {
+    return 'Password-protected PDFs can\'t be converted: $name';
+  }
+
+  @override
+  String errWriteFailed(String name) {
+    return 'Couldn\'t save the result: $name';
+  }
+
+  @override
+  String get homeConvertAction => 'Convert';
 }

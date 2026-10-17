@@ -416,12 +416,6 @@ abstract class AppLocalizations {
   /// **'PDF 문서'**
   String get fileTypePdf;
 
-  /// No description provided for @openPdfOnly.
-  ///
-  /// In ko, this message translates to:
-  /// **'PDF 파일만 열 수 있어요. 다른 형식은 변환 기능을 이용해 주세요.'**
-  String get openPdfOnly;
-
   /// No description provided for @openFailed.
   ///
   /// In ko, this message translates to:
@@ -451,6 +445,96 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{page} / {total}'**
   String viewerPageOf(int page, int total);
+
+  /// No description provided for @convertTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'변환'**
+  String get convertTitle;
+
+  /// No description provided for @convertAddFiles.
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 추가'**
+  String get convertAddFiles;
+
+  /// No description provided for @convertClearFinished.
+  ///
+  /// In ko, this message translates to:
+  /// **'완료 항목 지우기'**
+  String get convertClearFinished;
+
+  /// No description provided for @convertFileTypes.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미지와 PDF'**
+  String get convertFileTypes;
+
+  /// No description provided for @convertMergeImages.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미지를 한 PDF로 합치기'**
+  String get convertMergeImages;
+
+  /// No description provided for @convertOutputSame.
+  ///
+  /// In ko, this message translates to:
+  /// **'원본과 같은 폴더'**
+  String get convertOutputSame;
+
+  /// No description provided for @convertEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'변환할 이미지나 PDF를 끌어다 놓으세요'**
+  String get convertEmpty;
+
+  /// No description provided for @convertDpi.
+  ///
+  /// In ko, this message translates to:
+  /// **'{dpi} DPI'**
+  String convertDpi(int dpi);
+
+  /// No description provided for @convertFilesCreated.
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 {count}개를 만들었어요'**
+  String convertFilesCreated(int count);
+
+  /// No description provided for @convertSkipped.
+  ///
+  /// In ko, this message translates to:
+  /// **'지원하지 않는 형식 {count}개를 건너뛰었어요: {names}'**
+  String convertSkipped(int count, String names);
+
+  /// No description provided for @errUnsupportedFormat.
+  ///
+  /// In ko, this message translates to:
+  /// **'지원하지 않는 형식이에요: {name}'**
+  String errUnsupportedFormat(String name);
+
+  /// No description provided for @errCannotRead.
+  ///
+  /// In ko, this message translates to:
+  /// **'파일을 읽을 수 없어요: {name}'**
+  String errCannotRead(String name);
+
+  /// No description provided for @errPasswordProtected.
+  ///
+  /// In ko, this message translates to:
+  /// **'암호가 걸린 PDF는 변환할 수 없어요: {name}'**
+  String errPasswordProtected(String name);
+
+  /// No description provided for @errWriteFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'결과를 저장할 수 없어요: {name}'**
+  String errWriteFailed(String name);
+
+  /// No description provided for @homeConvertAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'변환'**
+  String get homeConvertAction;
 }
 
 class _AppLocalizationsDelegate

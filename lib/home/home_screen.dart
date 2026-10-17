@@ -3,6 +3,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../app_identity.dart';
+import '../convert/convert_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../settings/settings_menus.dart';
 import '../theme/app_theme.dart';
@@ -27,17 +28,28 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _pick() async {
     final l10n = AppLocalizations.of(context);
     final file = await openFile(
-      acceptedTypeGroups: [XTypeGroup(label: l10n.fileTypePdf, extensions: const ['pdf'])],
+      acceptedTypeGroups: [
+        XTypeGroup(label: l10n.fileTypePdf, extensions: const ['pdf']),
+      ],
     );
     if (file != null && mounted) _open(file.path);
   }
 
   void _open(String path) {
-    if (!isPdfPath(path)) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).openPdfOnly)));
-      return;
-    }
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ViewerScreen(path: path)));
+  }
+
+  void _openConvert([List<String> paths = const []]) {
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ConvertScreen(initialPaths: paths)));
+  }
+
+  /// 끌어다 놓은 파일: PDF 한 개는 보기로, 그 밖에는 변환 화면으로 보낸다.
+  void _handleDrop(List<String> paths) {
+    if (paths.length == 1 && isPdfPath(paths.first)) {
+      _open(paths.first);
+    } else {
+      _openConvert(paths);
+    }
   }
 
   @override
@@ -64,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onDragExited: (_) => setState(() => _dragging = false),
         onDragDone: (details) {
           setState(() => _dragging = false);
-          if (details.files.isNotEmpty) _open(details.files.first.path);
+          if (details.files.isNotEmpty) _handleDrop(details.files.map((f) => f.path).toList());
         },
         child: Container(
           color: _dragging ? theme.colorScheme.primary.withValues(alpha: 0.08) : null,
@@ -76,7 +88,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: AppSpacing.lg),
                 Text(l10n.homeEmptyTitle, style: theme.textTheme.titleMedium),
                 const SizedBox(height: AppSpacing.lg),
-                FilledButton(onPressed: _pick, child: Text(l10n.homeEmptyAction)),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FilledButton(onPressed: _pick, child: Text(l10n.homeEmptyAction)),
+                    const SizedBox(width: AppSpacing.md),
+                    OutlinedButton(onPressed: _openConvert, child: Text(l10n.homeConvertAction)),
+                  ],
+                ),
               ],
             ),
           ),

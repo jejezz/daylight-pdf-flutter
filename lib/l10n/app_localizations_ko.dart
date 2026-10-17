@@ -195,9 +195,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fileTypePdf => 'PDF 문서';
 
   @override
-  String get openPdfOnly => 'PDF 파일만 열 수 있어요. 다른 형식은 변환 기능을 이용해 주세요.';
-
-  @override
   String get openFailed => '파일을 열 수 없어요.';
 
   @override
@@ -213,4 +210,63 @@ class AppLocalizationsKo extends AppLocalizations {
   String viewerPageOf(int page, int total) {
     return '$page / $total';
   }
+
+  @override
+  String get convertTitle => '변환';
+
+  @override
+  String get convertAddFiles => '파일 추가';
+
+  @override
+  String get convertClearFinished => '완료 항목 지우기';
+
+  @override
+  String get convertFileTypes => '이미지와 PDF';
+
+  @override
+  String get convertMergeImages => '이미지를 한 PDF로 합치기';
+
+  @override
+  String get convertOutputSame => '원본과 같은 폴더';
+
+  @override
+  String get convertEmpty => '변환할 이미지나 PDF를 끌어다 놓으세요';
+
+  @override
+  String convertDpi(int dpi) {
+    return '$dpi DPI';
+  }
+
+  @override
+  String convertFilesCreated(int count) {
+    return '파일 $count개를 만들었어요';
+  }
+
+  @override
+  String convertSkipped(int count, String names) {
+    return '지원하지 않는 형식 $count개를 건너뛰었어요: $names';
+  }
+
+  @override
+  String errUnsupportedFormat(String name) {
+    return '지원하지 않는 형식이에요: $name';
+  }
+
+  @override
+  String errCannotRead(String name) {
+    return '파일을 읽을 수 없어요: $name';
+  }
+
+  @override
+  String errPasswordProtected(String name) {
+    return '암호가 걸린 PDF는 변환할 수 없어요: $name';
+  }
+
+  @override
+  String errWriteFailed(String name) {
+    return '결과를 저장할 수 없어요: $name';
+  }
+
+  @override
+  String get homeConvertAction => '변환';
 }
