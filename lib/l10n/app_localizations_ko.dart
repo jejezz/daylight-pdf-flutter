@@ -567,4 +567,21 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get convertImagesNote =>
       'PNG, JPG, BMP, GIF, WebP, TIFF · SVG · AI(PDF 호환)';
+
+  @override
+  String get annotUndo => '실행 취소';
+
+  @override
+  String annotUndoTip(String shortcut) {
+    return '실행 취소 ($shortcut)';
+  }
+
+  @override
+  String get homeRecentTitle => '최근 파일';
+
+  @override
+  String get homeRecentClear => '목록 지우기';
+
+  @override
+  String get homeRecentRemove => '목록에서 지우기';
 }

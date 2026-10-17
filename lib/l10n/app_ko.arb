@@ -379,5 +379,17 @@
   "convertQueueTitle": "대기열",
   "convertFormatLabel": "형식",
   "convertResolutionLabel": "해상도",
-  "convertImagesNote": "PNG, JPG, BMP, GIF, WebP, TIFF · SVG · AI(PDF 호환)"
+  "convertImagesNote": "PNG, JPG, BMP, GIF, WebP, TIFF · SVG · AI(PDF 호환)",
+  "annotUndo": "실행 취소",
+  "annotUndoTip": "실행 취소 ({shortcut})",
+  "@annotUndoTip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "homeRecentTitle": "최근 파일",
+  "homeRecentClear": "목록 지우기",
+  "homeRecentRemove": "목록에서 지우기"
 }

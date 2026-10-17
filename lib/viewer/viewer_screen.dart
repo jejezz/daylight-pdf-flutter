@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:path/path.dart' as p;
 import 'package:pdfrx/pdfrx.dart';
 
@@ -123,6 +125,19 @@ class _ViewerScreenState extends State<ViewerScreen> {
     ]);
   }
 
+  bool get _isMac => defaultTargetPlatform == TargetPlatform.macOS;
+
+  /// 마지막으로 한 주석 일을 되돌린다 (⌘Z / Ctrl+Z).
+  Future<void> _undo() async {
+    final document = _document;
+    if (document == null || !_annotations.canUndo || _annotations.busy) return;
+    try {
+      await _annotations.undo(document);
+    } on Object {
+      if (mounted) showMessage(context, AppLocalizations.of(context).annotFailed);
+    }
+  }
+
   Future<void> _delete(ReadAnnotation annotation) async {
     final document = _document;
     if (document == null) return;
@@ -194,67 +209,75 @@ class _ViewerScreenState extends State<ViewerScreen> {
         onPopInvokedWithResult: (didPop, _) {
           if (!didPop) _confirmLeave();
         },
-        child: Scaffold(
-          appBar: AppBar(
-            flexibleSpace: const FocusTint(),
-            title: Text(_name, overflow: TextOverflow.ellipsis),
-            actions: [
-              ListenableBuilder(
-                listenable: _controller,
-                builder: (context, _) {
-                  if (!_controller.isReady) return const SizedBox.shrink();
-                  return StatusPill(label: l10n.viewerPageOf(_controller.pageNumber ?? 1, _controller.pageCount));
-                },
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              _ZoomButtons(controller: _controller, zoomIn: l10n.viewerZoomIn, zoomOut: l10n.viewerZoomOut),
-              const SizedBox(width: AppSpacing.md),
-              if (_annotations.dirty) ...[
-                StatusPill(label: l10n.annotUnsavedShort, tone: PillTone.warning),
-                const SizedBox(width: AppSpacing.sm),
-              ],
-              FilledButton.tonalIcon(
-                onPressed: _annotations.busy ? null : _save,
-                icon: const Icon(Icons.save_outlined, size: 18),
-                label: Text(l10n.annotSave),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              IconButton(
-                tooltip: l10n.viewerEditPages,
-                icon: const Icon(Icons.dashboard_customize_outlined),
-                onPressed: () =>
-                    Navigator.of(context)
-                        .push(MaterialPageRoute<void>(builder: (_) => PageToolsScreen(initialPath: widget.path))),
-              ),
-              IconButton(
-                tooltip: l10n.viewerThumbnails,
-                isSelected: _showThumbnails,
-                icon: const Icon(Icons.view_sidebar_outlined),
-                selectedIcon: const Icon(Icons.view_sidebar_rounded),
-                onPressed: () => setState(() => _showThumbnails = !_showThumbnails),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-            ],
-          ),
-          body: Column(
-            children: [
-              Material(
-                color: Theme.of(context).colorScheme.surface,
-                child: Column(
-                  children: [
-                    AnnotationToolbar(
-                      state: _annotations,
-                      onHighlight: () => _applyToSelection(underline: false),
-                      onUnderline: () => _applyToSelection(underline: true),
-                      showList: _showList,
-                      onToggleList: () => setState(() => _showList = !_showList),
-                    ),
-                    const Divider(height: 1),
+        child: CallbackShortcuts(
+          bindings: {SingleActivator(LogicalKeyboardKey.keyZ, meta: _isMac, control: !_isMac): _undo},
+          child: Focus(
+            autofocus: true,
+            child: Scaffold(
+              appBar: AppBar(
+                flexibleSpace: const FocusTint(),
+                title: Text(_name, overflow: TextOverflow.ellipsis),
+                actions: [
+                  ListenableBuilder(
+                    listenable: _controller,
+                    builder: (context, _) {
+                      if (!_controller.isReady) return const SizedBox.shrink();
+                      return StatusPill(label: l10n.viewerPageOf(_controller.pageNumber ?? 1, _controller.pageCount));
+                    },
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  _ZoomButtons(controller: _controller, zoomIn: l10n.viewerZoomIn, zoomOut: l10n.viewerZoomOut),
+                  const SizedBox(width: AppSpacing.md),
+                  if (_annotations.dirty) ...[
+                    StatusPill(label: l10n.annotUnsavedShort, tone: PillTone.warning),
+                    const SizedBox(width: AppSpacing.sm),
                   ],
-                ),
+                  FilledButton.tonalIcon(
+                    onPressed: _annotations.busy ? null : _save,
+                    icon: const Icon(Icons.save_outlined, size: 18),
+                    label: Text(l10n.annotSave),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  IconButton(
+                    tooltip: l10n.viewerEditPages,
+                    icon: const Icon(Icons.dashboard_customize_outlined),
+                    onPressed: () =>
+                        Navigator.of(context)
+                            .push(MaterialPageRoute<void>(builder: (_) => PageToolsScreen(initialPath: widget.path))),
+                  ),
+                  IconButton(
+                    tooltip: l10n.viewerThumbnails,
+                    isSelected: _showThumbnails,
+                    icon: const Icon(Icons.view_sidebar_outlined),
+                    selectedIcon: const Icon(Icons.view_sidebar_rounded),
+                    onPressed: () => setState(() => _showThumbnails = !_showThumbnails),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
               ),
-              Expanded(child: _content(l10n)),
-            ],
+              body: Column(
+                children: [
+                  Material(
+                    color: Theme.of(context).colorScheme.surface,
+                    child: Column(
+                      children: [
+                        AnnotationToolbar(
+                          state: _annotations,
+                          onHighlight: () => _applyToSelection(underline: false),
+                          onUnderline: () => _applyToSelection(underline: true),
+                          showList: _showList,
+                          onToggleList: () => setState(() => _showList = !_showList),
+                          onUndo: _undo,
+                          undoShortcut: _isMac ? '⌘Z' : 'Ctrl+Z',
+                        ),
+                        const Divider(height: 1),
+                      ],
+                    ),
+                  ),
+                  Expanded(child: _content(l10n)),
+                ],
+              ),
+            ),
           ),
         ),
       ),

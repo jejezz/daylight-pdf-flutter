@@ -72,16 +72,39 @@ void main() {
       return 'other';
     }
 
+    /// 실패했을 때 눈으로 볼 수 있게 화면을 PNG로 남긴다 (시스템 임시 폴더).
+    Future<void> dump(WidgetTester t, String name) async {
+      RenderObject? node = t.renderObject(find.byType(PdfViewer));
+      while (node != null && node is! RenderRepaintBoundary) {
+        node = node.parent;
+      }
+      final image = await (node! as RenderRepaintBoundary).toImage(pixelRatio: 1);
+      final data = (await image.toByteData(format: ui.ImageByteFormat.png))!;
+      File('${Directory.systemTemp.path}/$name.png').writeAsBytesSync(data.buffer.asUint8List());
+    }
+
     final viewer = tester.getRect(find.byType(PdfViewer));
-    final nearTop = Offset(viewer.center.dx, viewer.top + 30);
-    final nearBottom = Offset(viewer.center.dx, viewer.bottom - 30);
+    final cx = viewer.center.dx;
+    final nearBottom = Offset(cx, viewer.bottom - 30);
+
+    /// 뷰어 배경과 뚜렷이 다른 첫 줄 = 쪽이 시작하는 줄 (쪽 위 여백과 그림자에 상관없이 찾는다).
+    Offset pageTopProbe(({int w, List<int> rgba}) shot) {
+      int ch(int y, int c) => shot.rgba[(y * shot.w + cx.toInt()) * 4 + c];
+      final y0 = viewer.top.toInt() + 2;
+      for (var y = y0 + 1; y < viewer.bottom.toInt(); y++) {
+        final differs = [0, 1, 2].any((c) => (ch(y, c) - ch(y0, c)).abs() > 60);
+        if (differs) return Offset(cx, y + 20.0); // 쪽의 첫 줄에서 20픽셀 안쪽
+      }
+      return Offset(cx, viewer.top + 30);
+    }
 
     for (final page in [2, 3, 1]) {
       await tester.tap(find.text('$page')); // 사이드바 썸네일의 쪽 번호
       await tester.pumpAndSettle(const Duration(milliseconds: 500));
       final shot = await capture();
+      await dump(tester, 'daylight_pdf_nav_page$page');
       expect(
-        colorAt(shot, nearTop),
+        colorAt(shot, pageTopProbe(shot)),
         'red',
         reason: 'page $page must open at its top (the red band is the top of a page)',
       );

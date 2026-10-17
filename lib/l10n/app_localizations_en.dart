@@ -571,4 +571,21 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get convertImagesNote =>
       'PNG, JPG, BMP, GIF, WebP, TIFF · SVG · AI (PDF-compatible)';
+
+  @override
+  String get annotUndo => 'Undo';
+
+  @override
+  String annotUndoTip(String shortcut) {
+    return 'Undo ($shortcut)';
+  }
+
+  @override
+  String get homeRecentTitle => 'Recent files';
+
+  @override
+  String get homeRecentClear => 'Clear list';
+
+  @override
+  String get homeRecentRemove => 'Remove from list';
 }

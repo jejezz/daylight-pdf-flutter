@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 
 import '../app_identity.dart';
 import '../convert/convert_screen.dart';
@@ -10,41 +13,89 @@ import '../theme/app_theme.dart';
 import '../viewer/viewer_screen.dart';
 import '../widgets/drop_zone.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/tool_chip.dart';
 import '../window/focus_tint.dart';
+import 'recent_files.dart';
 
 bool isPdfPath(String path) => path.toLowerCase().endsWith('.pdf');
 
-/// 시작 화면: 큰 끌어놓기 영역(창의 대부분이 드롭 영역) + 변환·페이지 도구로 가는 카드.
+/// 시작 화면: 큰 끌어놓기 영역, 최근 파일, 변환·페이지 도구로 가는 카드.
 /// PDF 한 개를 놓으면 보기로, 그 밖의 파일은 변환 화면으로 간다.
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key, required this.onAbout});
+class HomeScreen extends StatefulWidget {
+  HomeScreen({super.key, required this.onAbout, RecentFiles? recents}) : recents = recents ?? RecentFiles();
 
   final VoidCallback onAbout;
+  final RecentFiles recents;
 
-  Future<void> _pick(BuildContext context) async {
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<String> _recent = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _reload();
+  }
+
+  Future<void> _reload() async {
+    final list = await widget.recents.loadExisting();
+    if (mounted) setState(() => _recent = list);
+  }
+
+  Future<void> _pick() async {
     final l10n = AppLocalizations.of(context);
     final file = await openFile(
       acceptedTypeGroups: [
         XTypeGroup(label: l10n.fileTypePdf, extensions: const ['pdf']),
       ],
     );
-    if (file != null && context.mounted) _open(context, file.path);
+    if (file != null && mounted) _open(file.path);
   }
 
-  void _open(BuildContext context, String path) =>
-      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ViewerScreen(path: path)));
+  /// 보기 화면으로 간다. 최근 파일 맨 앞에 올리고, 돌아오면 목록을 새로 읽는다.
+  Future<void> _open(String path) async {
+    await widget.recents.add(path);
+    if (!mounted) return;
+    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ViewerScreen(path: path)));
+    if (mounted) _reload();
+  }
 
-  void _openConvert(BuildContext context, [List<String> paths = const []]) =>
+  /// 최근 목록의 파일 열기. 그새 사라진 파일이면 알리고 목록에서 뺀다.
+  Future<void> _openRecent(String path) async {
+    if (!File(path).existsSync()) {
+      await widget.recents.remove(path);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).errCannotRead(p.basename(path)))));
+      _reload();
+      return;
+    }
+    await _open(path);
+  }
+
+  Future<void> _removeRecent(String path) async {
+    await widget.recents.remove(path);
+    _reload();
+  }
+
+  Future<void> _clearRecent() async {
+    await widget.recents.clear();
+    _reload();
+  }
+
+  void _openConvert([List<String> paths = const []]) =>
       Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ConvertScreen(initialPaths: paths)));
 
-  void _openPages(BuildContext context) =>
-      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const PageToolsScreen()));
+  void _openPages() => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const PageToolsScreen()));
 
-  void _handleDrop(BuildContext context, List<String> paths) {
+  void _handleDrop(List<String> paths) {
     if (paths.length == 1 && isPdfPath(paths.first)) {
-      _open(context, paths.first);
+      _open(paths.first);
     } else {
-      _openConvert(context, paths);
+      _openConvert(paths);
     }
   }
 
@@ -59,7 +110,11 @@ class HomeScreen extends StatelessWidget {
         actions: [
           const ThemeMenuButton(),
           const LanguageMenuButton(),
-          IconButton(tooltip: l10n.aboutTooltip, icon: const Icon(Icons.info_outline_rounded), onPressed: onAbout),
+          IconButton(
+            tooltip: l10n.aboutTooltip,
+            icon: const Icon(Icons.info_outline_rounded),
+            onPressed: widget.onAbout,
+          ),
           const SizedBox(width: AppSpacing.sm),
         ],
       ),
@@ -91,29 +146,78 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                Expanded(
-                  child: DropZone(
-                    onDrop: (paths) => _handleDrop(context, paths),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.upload_file_rounded, size: 44, color: theme.colorScheme.primary),
-                          const SizedBox(height: AppSpacing.md),
-                          Text(l10n.homeEmptyTitle, style: theme.textTheme.titleMedium, textAlign: TextAlign.center),
-                          const SizedBox(height: AppSpacing.xs),
-                          Text(l10n.homeDropSubtitle, style: theme.textTheme.bodySmall, textAlign: TextAlign.center),
-                          const SizedBox(height: AppSpacing.lg),
-                          FilledButton.icon(
-                            onPressed: () => _pick(context),
-                            icon: const Icon(Icons.folder_open_rounded, size: 18),
-                            label: Text(l10n.homeEmptyAction),
+                // 최근 파일이 없으면 큰 끌어놓기 영역이 화면을 채우고, 있으면 한 줄짜리로 줄여 목록에 자리를 준다.
+                if (_recent.isEmpty)
+                  Expanded(
+                    child: DropZone(
+                      onDrop: _handleDrop,
+                      child: Center(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.upload_file_rounded, size: 44, color: theme.colorScheme.primary),
+                              const SizedBox(height: AppSpacing.md),
+                              Text(
+                                l10n.homeEmptyTitle,
+                                style: theme.textTheme.titleMedium,
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                l10n.homeDropSubtitle,
+                                style: theme.textTheme.bodySmall,
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+                              FilledButton.icon(
+                                onPressed: _pick,
+                                icon: const Icon(Icons.folder_open_rounded, size: 18),
+                                label: Text(l10n.homeEmptyAction),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
+                  )
+                else ...[
+                  DropZone(
+                    onDrop: _handleDrop,
+                    radius: AppRadius.tile,
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+                    child: Row(
+                      children: [
+                        Icon(Icons.upload_file_rounded, size: 32, color: theme.colorScheme.primary),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(l10n.homeEmptyTitle, style: theme.textTheme.titleSmall),
+                              Text(l10n.homeDropSubtitle, style: theme.textTheme.bodySmall),
+                            ],
+                          ),
+                        ),
+                        FilledButton.icon(
+                          onPressed: _pick,
+                          icon: const Icon(Icons.folder_open_rounded, size: 18),
+                          label: Text(l10n.homeEmptyAction),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Expanded(
+                    child: _RecentSection(
+                      paths: _recent,
+                      onOpen: _openRecent,
+                      onRemove: _removeRecent,
+                      onClear: _clearRecent,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.lg),
                 Row(
                   children: [
@@ -122,7 +226,7 @@ class HomeScreen extends StatelessWidget {
                         icon: Icons.swap_horiz_rounded,
                         title: l10n.homeConvertAction,
                         hint: l10n.homeConvertHint,
-                        onTap: () => _openConvert(context),
+                        onTap: _openConvert,
                       ),
                     ),
                     const SizedBox(width: AppSpacing.lg),
@@ -131,7 +235,7 @@ class HomeScreen extends StatelessWidget {
                         icon: Icons.dashboard_customize_outlined,
                         title: l10n.homePagesAction,
                         hint: l10n.homePagesHint,
-                        onTap: () => _openPages(context),
+                        onTap: _openPages,
                       ),
                     ),
                   ],
@@ -139,6 +243,107 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 최근 파일: 제목 줄(목록 지우기) 아래에 두 열 격자. 칸이 모자라면 격자 안에서 스크롤한다.
+class _RecentSection extends StatelessWidget {
+  const _RecentSection({required this.paths, required this.onOpen, required this.onRemove, required this.onClear});
+
+  final List<String> paths;
+  final void Function(String path) onOpen;
+  final void Function(String path) onRemove;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Text(l10n.homeRecentTitle, style: theme.textTheme.titleSmall),
+            const Spacer(),
+            ToolChip(icon: Icons.playlist_remove_rounded, label: l10n.homeRecentClear, onPressed: onClear),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Expanded(
+          child: GridView.builder(
+            itemCount: paths.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisExtent: 52,
+              crossAxisSpacing: AppSpacing.sm,
+              mainAxisSpacing: AppSpacing.sm,
+            ),
+            itemBuilder: (context, i) => _RecentRow(
+              path: paths[i],
+              onOpen: () => onOpen(paths[i]),
+              onRemove: () => onRemove(paths[i]),
+              removeTooltip: l10n.homeRecentRemove,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RecentRow extends StatelessWidget {
+  const _RecentRow({required this.path, required this.onOpen, required this.onRemove, required this.removeTooltip});
+
+  final String path;
+  final VoidCallback onOpen;
+  final VoidCallback onRemove;
+  final String removeTooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Tooltip(
+      message: path,
+      waitDuration: const Duration(milliseconds: 600),
+      child: GlassCard(
+        radius: AppRadius.button + 4,
+        padding: const EdgeInsets.only(left: AppSpacing.md, right: AppSpacing.xs),
+        onTap: onOpen,
+        child: Row(
+          children: [
+            Icon(Icons.picture_as_pdf_rounded, size: 22, color: theme.colorScheme.primary),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p.basename(path),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  Text(
+                    shortFolder(path),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: removeTooltip,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.close_rounded, size: 18),
+              onPressed: onRemove,
+            ),
+          ],
         ),
       ),
     );

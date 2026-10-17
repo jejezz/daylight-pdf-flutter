@@ -11,9 +11,11 @@ import 'package:daylight_pdf/settings/app_settings.dart';
 import 'package:daylight_pdf/viewer/annotation_panel.dart';
 import 'package:daylight_pdf/viewer/viewer_screen.dart';
 import 'package:daylight_pdf/widgets/glass_card.dart';
+import 'package:daylight_pdf/widgets/tool_chip.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:integration_test/integration_test.dart';
@@ -44,6 +46,34 @@ void main() {
 
   /// 주석 목록 안에서만 찾는다 (도구 줄에도 같은 이름의 글자가 있다).
   Finder inPanel(String text) => find.descendant(of: find.byType(AnnotationPanel), matching: find.text(text));
+
+  /// 화면에서 쪽(순백 바탕)이 차지한 영역을 잰다. 쪽 위치를 계산식으로 추정하면 창 크기나 배치가 바뀔 때 어긋나므로
+  /// (글자 줄을 놓치기도 한다) 실제로 그려진 모습에서 찾는다.
+  Future<Rect> measurePage(WidgetTester tester) async {
+    await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: 1))); // 쪽 이미지가 그려질 시간
+    await tester.pump();
+    final viewer = tester.getRect(find.byType(PdfViewer));
+    RenderObject? node = tester.renderObject(find.byType(PdfViewer));
+    while (node != null && node is! RenderRepaintBoundary) {
+      node = node.parent;
+    }
+    final image = await (node! as RenderRepaintBoundary).toImage(pixelRatio: 1);
+    final rgba = (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!.buffer.asUint8List();
+    var left = 1 << 30, top = 1 << 30, right = -1, bottom = -1;
+    for (var y = viewer.top.toInt(); y < viewer.bottom.toInt(); y++) {
+      for (var x = viewer.left.toInt(); x < viewer.right.toInt(); x++) {
+        final i = (y * image.width + x) * 4;
+        if (rgba[i] == 255 && rgba[i + 1] == 255 && rgba[i + 2] == 255) {
+          if (x < left) left = x;
+          if (x > right) right = x;
+          if (y < top) top = y;
+          if (y > bottom) bottom = y;
+        }
+      }
+    }
+    expect(right - left, greaterThan(50), reason: 'the page must be visible');
+    return Rect.fromLTRB(left.toDouble(), top.toDouble(), right + 1.0, bottom + 1.0);
+  }
 
   Future<void> drag(WidgetTester tester, Offset from, Offset to) async {
     final g = await tester.startGesture(from, kind: PointerDeviceKind.mouse);
@@ -89,12 +119,8 @@ void main() {
     await SvgToPdf.convert('${dir.path}/doc.svg', '${dir.path}/doc.pdf');
     await pumpViewer(tester, '${dir.path}/doc.pdf');
 
-    var viewer = tester.getRect(find.byType(PdfViewer));
-    // 쪽은 뷰어 너비에 맞춰(좌우 여백 16) 가운데에 놓인다. 쪽 비율은 2:1 (400x200).
-    Offset onPage(double fx, double fy) {
-      final width = viewer.width - 32, height = width / 2;
-      return Offset(viewer.left + 16 + width * fx, viewer.center.dy - height / 2 + height * fy);
-    }
+    var page = await measurePage(tester);
+    Offset onPage(double fx, double fy) => Offset(page.left + page.width * fx, page.top + page.height * fy);
 
     // 아무것도 선택하지 않고 형광펜 → 안내만 나온다
     await tester.tap(find.byTooltip('형광펜 (선택한 글자)'));
@@ -136,13 +162,14 @@ void main() {
 
     // 글자 선택(마우스 끌기) → 형광펜. 목록이 열려 뷰어 너비가 줄었으니 다시 잰다.
     await tester.pumpAndSettle();
-    viewer = tester.getRect(find.byType(PdfViewer));
+    // 글자 선택은 쪽의 글자 정보가 비동기로 로드된 뒤에야 된다: measurePage가 잠깐 기다리며 쪽을 다시 잰다.
+    page = await measurePage(tester);
     await drag(tester, onPage(0.06, 0.25), onPage(0.60, 0.25));
     await tester.tap(find.byTooltip('형광펜 (선택한 글자)'));
     await tester.pumpAndSettle(const Duration(seconds: 1));
+    await snapshot(tester, 'daylight_pdf_viewer_annotated'); // 실패해도 화면을 볼 수 있게 확인 전에 남긴다
     final highlighted = inPanel('형광펜').evaluate().isNotEmpty;
     expect(highlighted, isTrue, reason: 'selecting text and pressing highlight must add a highlight');
-    await snapshot(tester, 'daylight_pdf_viewer_annotated');
 
     // 삭제: 사각형을 지운다
     final before = find.byIcon(Icons.delete_outline_rounded).evaluate().length;
@@ -298,5 +325,57 @@ void main() {
       expect(yellow(to.dx.round(), midY), isTrue, reason: '$name: right edge');
       expect(yellow(midX, midY), isFalse, reason: '$name: inside stays empty (outline only)');
     }
+  });
+
+  testWidgets('Cmd+Z and the Undo button remove the last annotation, one step at a time', (tester) async {
+    await pdfrxFlutterInitialize();
+    final dir = Directory.systemTemp.createTempSync('daylight_pdf_undo');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    File('${dir.path}/p.png')
+        .writeAsBytesSync(img.encodePng(img.Image(width: 400, height: 200)..clear(img.ColorRgb8(255, 255, 255))));
+    await ImageToPdf.convert(['${dir.path}/p.png'], '${dir.path}/doc.pdf');
+    await pumpViewer(tester, '${dir.path}/doc.pdf');
+
+    final undoChip = find.byWidgetPredicate((w) => w is ToolChip && w.icon == Icons.undo_rounded);
+    bool undoEnabled() => tester.widget<ToolChip>(undoChip).onPressed != null;
+    expect(undoEnabled(), isFalse, reason: 'nothing to undo yet');
+
+    await tester.tap(find.byTooltip('주석 목록'));
+    await tester.pumpAndSettle();
+    final page = await measurePage(tester);
+    Offset onPage(double fx, double fy) => Offset(page.left + page.width * fx, page.top + page.height * fy);
+
+    await tester.tap(find.byTooltip('사각형'));
+    await tester.pumpAndSettle();
+    await drag(tester, onPage(0.2, 0.2), onPage(0.5, 0.6));
+    await tester.tap(find.byTooltip('손글씨'));
+    await tester.pumpAndSettle();
+    await drag(tester, onPage(0.6, 0.3), onPage(0.9, 0.8));
+    await tester.tap(find.byTooltip('손글씨')); // 도구 끄기
+    await tester.pumpAndSettle();
+    expect(inPanel('사각형'), findsOneWidget);
+    expect(inPanel('손글씨'), findsOneWidget);
+    expect(undoEnabled(), isTrue);
+
+    Future<void> pressCmdZ() async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+      await tester.pumpAndSettle(const Duration(milliseconds: 500));
+    }
+
+    await pressCmdZ(); // 마지막(손글씨)만 사라진다
+    expect(inPanel('손글씨'), findsNothing);
+    expect(inPanel('사각형'), findsOneWidget);
+    expect(undoEnabled(), isTrue);
+
+    await tester.tap(undoChip); // 버튼도 같은 동작
+    await tester.pumpAndSettle(const Duration(milliseconds: 500));
+    expect(inPanel('사각형'), findsNothing);
+    expect(find.text('주석이 없어요'), findsOneWidget);
+    expect(undoEnabled(), isFalse);
+
+    await pressCmdZ(); // 더 되돌릴 게 없어도 아무 일 없다
+    expect(find.text('주석이 없어요'), findsOneWidget);
   });
 }

@@ -1093,6 +1093,36 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'PNG, JPG, BMP, GIF, WebP, TIFF · SVG · AI(PDF 호환)'**
   String get convertImagesNote;
+
+  /// No description provided for @annotUndo.
+  ///
+  /// In ko, this message translates to:
+  /// **'실행 취소'**
+  String get annotUndo;
+
+  /// No description provided for @annotUndoTip.
+  ///
+  /// In ko, this message translates to:
+  /// **'실행 취소 ({shortcut})'**
+  String annotUndoTip(String shortcut);
+
+  /// No description provided for @homeRecentTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'최근 파일'**
+  String get homeRecentTitle;
+
+  /// No description provided for @homeRecentClear.
+  ///
+  /// In ko, this message translates to:
+  /// **'목록 지우기'**
+  String get homeRecentClear;
+
+  /// No description provided for @homeRecentRemove.
+  ///
+  /// In ko, this message translates to:
+  /// **'목록에서 지우기'**
+  String get homeRecentRemove;
 }
 
 class _AppLocalizationsDelegate

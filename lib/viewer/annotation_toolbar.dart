@@ -16,6 +16,8 @@ class AnnotationToolbar extends StatelessWidget {
     required this.onUnderline,
     required this.showList,
     required this.onToggleList,
+    required this.onUndo,
+    required this.undoShortcut,
   });
 
   final AnnotationState state;
@@ -23,6 +25,10 @@ class AnnotationToolbar extends StatelessWidget {
   final VoidCallback onUnderline;
   final bool showList;
   final VoidCallback onToggleList;
+  final VoidCallback onUndo;
+
+  /// 툴팁에 보여 줄 단축키 글자 (⌘Z / Ctrl+Z).
+  final String undoShortcut;
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +78,14 @@ class AnnotationToolbar extends StatelessWidget {
                   tool(DrawTool.circle, Icons.circle_outlined, l10n.annotTypeCircle, l10n.annotCircle),
                   const _Gap(),
                   _Swatches(state: state, tooltip: l10n.annotColor),
+                  const _Gap(),
+                  ToolChip(
+                    icon: Icons.undo_rounded,
+                    label: l10n.annotUndo,
+                    tooltip: l10n.annotUndoTip(undoShortcut),
+                    compact: compact,
+                    onPressed: state.canUndo && !state.busy ? onUndo : null,
+                  ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: hint == null

@@ -51,6 +51,14 @@ void main() {
     );
     File('${work.path}/old.ai').writeAsStringSync('%!PS-Adobe-3.0 EPSF-3.0\n');
 
+    // 최근 파일 10개 (실제 파일이어야 목록에 나온다)
+    final recentFiles = <String>[];
+    for (var i = 0; i < 10; i++) {
+      final f = File('${work.path}/문서 ${i + 1}.pdf')
+        ..writeAsBytesSync(File('${work.path}/report.pdf').readAsBytesSync());
+      recentFiles.add(f.path);
+    }
+
     Future<void> shoot(String name) async {
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 1500)));
       await tester.pump();
@@ -64,8 +72,8 @@ void main() {
       File('${out.path}/$name.png').writeAsBytesSync(data.buffer.asUint8List());
     }
 
-    Future<void> pump(Widget home, ThemeMode mode) async {
-      SharedPreferences.setMockInitialValues({});
+    Future<void> pump(Widget home, ThemeMode mode, {Map<String, Object> prefs = const {}}) async {
+      SharedPreferences.setMockInitialValues(prefs);
       final settings = await AppSettings.load();
       await tester.pumpWidget(
         AppSettingsScope(
@@ -99,6 +107,8 @@ void main() {
       final m = mode.name;
       await pump(HomeScreen(onAbout: () {}), mode);
       await shoot('home_$m');
+      await pump(HomeScreen(onAbout: () {}), mode, prefs: {'recent_files': recentFiles});
+      await shoot('home_recent_$m');
       await pump(
         ConvertScreen(
           initialPaths: [

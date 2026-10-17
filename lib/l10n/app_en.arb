@@ -362,5 +362,17 @@
   "convertQueueTitle": "Queue",
   "convertFormatLabel": "Format",
   "convertResolutionLabel": "Resolution",
-  "convertImagesNote": "PNG, JPG, BMP, GIF, WebP, TIFF · SVG · AI (PDF-compatible)"
+  "convertImagesNote": "PNG, JPG, BMP, GIF, WebP, TIFF · SVG · AI (PDF-compatible)",
+  "annotUndo": "Undo",
+  "annotUndoTip": "Undo ({shortcut})",
+  "@annotUndoTip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "homeRecentTitle": "Recent files",
+  "homeRecentClear": "Clear list",
+  "homeRecentRemove": "Remove from list"
 }
