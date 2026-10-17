@@ -17,8 +17,10 @@ https://github.com/jejezz/application-release-templates/tree/main/conventions
 - 테마·언어는 `AppSettings`(키 `theme_mode`, `app_locale`)로 다룬다.
 - README는 `README.md`(영어)와 `README.ko.md`(한국어)를 같은 내용으로 유지하고
   `python3 tool/readme/check_readme.py`로 검사한다.
-- 아이콘은 `assets/icon/source_glyph.png`를 바꾸고
-  `python3 tool/icon/generate_icons.py`로 다시 만든다. 손으로 고치지 않는다.
+- 아이콘은 고양이 + 소품 배지다. 소품은 `assets/icon/source_glyph.png`(지금은 임시 글리프),
+  설정은 `assets/icon/cat.json`(hue 0 고정: 기존 앱과 20° 이상 떨어짐)이고
+  `python3 tool/icon/generate_icons.py "$HOME/MyFiles/이미지/icons8-grinning-cat-1024.png"`로
+  다시 만든다. 고양이 원본은 저장소에 커밋하지 않는다. 손으로 고치지 않는다.
 
 ## 범위
 
