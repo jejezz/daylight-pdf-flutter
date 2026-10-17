@@ -1,0 +1,236 @@
+import 'dart:ffi' as ffi;
+import 'dart:math' as math;
+
+import 'package:ffi/ffi.dart';
+import 'package:pdfium_dart/pdfium_dart.dart';
+import 'package:pdfrx/pdfrx.dart';
+
+import 'annotation_specs.dart';
+
+/// PDFium 주석 API(FFI)로 열린 문서에 주석을 쓰고 읽는다. 문서는 pdfrx의 `useNativeDocumentHandle`로 빌려 쓰므로
+/// 저장은 평소처럼 `encodePdf()`면 된다 (PDFium이 같은 메모리 문서를 저장한다).
+abstract final class PdfiumAnnotations {
+  // PDFium FPDF_ANNOT_* 상수
+  static const _text = 1;
+  static const _square = 5;
+  static const _circle = 6;
+  static const _highlight = 9;
+  static const _underline = 10;
+  static const _ink = 15;
+
+  /// [specs]를 문서에 추가한다.
+  static Future<void> add(PdfDocument document, List<PdfAnnotationSpec> specs) async {
+    if (specs.isEmpty) return;
+    final touched = await document.useNativeDocumentHandle((handle) {
+      final pdfium = getPdfium();
+      final doc = FPDF_DOCUMENT.fromAddress(handle);
+      final pages = <int>{};
+      for (final spec in specs) {
+        final page = pdfium.FPDF_LoadPage(doc, spec.pageIndex);
+        if (page == ffi.nullptr) throw StateError('cannot load page ${spec.pageIndex}');
+        try {
+          _write(pdfium, page, spec);
+        } finally {
+          pdfium.FPDF_ClosePage(page);
+        }
+        pages.add(spec.pageIndex + 1);
+      }
+      return pages.toList();
+    });
+    await document.reloadPages(pageNumbersToReload: touched);
+  }
+
+  /// [pageIndex]쪽의 [annotationIndex]번째 주석(그 쪽 안에서 0부터)을 지운다. 인덱스는 [read]가 쪽마다 돌려주는 순서와 같다.
+  static Future<void> remove(PdfDocument document, int pageIndex, int annotationIndex) async {
+    await document.useNativeDocumentHandle((handle) {
+      final pdfium = getPdfium();
+      final page = pdfium.FPDF_LoadPage(FPDF_DOCUMENT.fromAddress(handle), pageIndex);
+      if (page == ffi.nullptr) throw StateError('cannot load page $pageIndex');
+      try {
+        _check(pdfium.FPDFPage_RemoveAnnot(page, annotationIndex), 'RemoveAnnot');
+      } finally {
+        pdfium.FPDF_ClosePage(page);
+      }
+    });
+    await document.reloadPages(pageNumbersToReload: [pageIndex + 1]);
+  }
+
+  /// 문서의 모든 주석을 쪽 순서대로 읽는다.
+  static Future<List<ReadAnnotation>> read(PdfDocument document) {
+    return document.useNativeDocumentHandle((handle) {
+      final pdfium = getPdfium();
+      final doc = FPDF_DOCUMENT.fromAddress(handle);
+      final out = <ReadAnnotation>[];
+      for (var p = 0; p < document.pages.length; p++) {
+        final page = pdfium.FPDF_LoadPage(doc, p);
+        if (page == ffi.nullptr) continue;
+        try {
+          final count = pdfium.FPDFPage_GetAnnotCount(page);
+          for (var i = 0; i < count; i++) {
+            final annot = pdfium.FPDFPage_GetAnnot(page, i);
+            if (annot == ffi.nullptr) continue;
+            try {
+              out.add(
+                ReadAnnotation(
+                  pageIndex: p,
+                  subtype: pdfium.FPDFAnnot_GetSubtype(annot),
+                  contents: _getString(pdfium, annot, 'Contents'),
+                ),
+              );
+            } finally {
+              pdfium.FPDFPage_CloseAnnot(annot);
+            }
+          }
+        } finally {
+          pdfium.FPDF_ClosePage(page);
+        }
+      }
+      return out;
+    });
+  }
+
+  static void _write(PDFium pdfium, FPDF_PAGE page, PdfAnnotationSpec spec) {
+    final subtype = switch (spec) {
+      HighlightSpec() => _highlight,
+      UnderlineSpec() => _underline,
+      NoteSpec() => _text,
+      InkSpec() => _ink,
+      ShapeSpec(kind: ShapeKind.square) => _square,
+      ShapeSpec(kind: ShapeKind.circle) => _circle,
+    };
+    final annot = pdfium.FPDFPage_CreateAnnot(page, subtype);
+    if (annot == ffi.nullptr) throw StateError('PDFium cannot create annotation subtype $subtype');
+    try {
+      final a = (spec.color >> 24) & 0xFF, r = (spec.color >> 16) & 0xFF, g = (spec.color >> 8) & 0xFF;
+      final b = spec.color & 0xFF;
+      _check(pdfium.FPDFAnnot_SetColor(annot, FPDFANNOT_COLORTYPE.FPDFANNOT_COLORTYPE_Color, r, g, b, a), 'SetColor');
+      switch (spec) {
+        case HighlightSpec(:final boxes) || UnderlineSpec(:final boxes):
+          _setRect(pdfium, annot, _union(boxes));
+          for (final box in boxes) {
+            _appendQuad(pdfium, annot, box);
+          }
+        case NoteSpec(:final x, :final y, :final text):
+          _setRect(pdfium, annot, (left: x, bottom: y, right: x + 24, top: y + 24));
+          _setString(pdfium, annot, 'Contents', text);
+        case InkSpec(:final strokes, :final width):
+          final box = _union([
+            for (final s in strokes)
+              (
+                left: s.map((p) => p.x).reduce(math.min),
+                bottom: s.map((p) => p.y).reduce(math.min),
+                right: s.map((p) => p.x).reduce(math.max),
+                top: s.map((p) => p.y).reduce(math.max),
+              ),
+          ]);
+          _setRect(pdfium, annot, box);
+          _check(pdfium.FPDFAnnot_SetBorder(annot, 0, 0, width), 'SetBorder');
+          for (final stroke in strokes) {
+            final points = calloc<FS_POINTF>(stroke.length);
+            try {
+              for (var i = 0; i < stroke.length; i++) {
+                points[i].x = stroke[i].x;
+                points[i].y = stroke[i].y;
+              }
+              if (pdfium.FPDFAnnot_AddInkStroke(annot, points, stroke.length) < 0) {
+                throw StateError('PDFium AddInkStroke failed');
+              }
+            } finally {
+              calloc.free(points);
+            }
+          }
+        case ShapeSpec(:final box, :final width):
+          _setRect(pdfium, annot, box);
+          _check(pdfium.FPDFAnnot_SetBorder(annot, 0, 0, width), 'SetBorder');
+      }
+    } finally {
+      pdfium.FPDFPage_CloseAnnot(annot);
+    }
+  }
+
+  static PdfBox _union(List<PdfBox> boxes) => (
+    left: boxes.map((b) => b.left).reduce(math.min),
+    bottom: boxes.map((b) => b.bottom).reduce(math.min),
+    right: boxes.map((b) => b.right).reduce(math.max),
+    top: boxes.map((b) => b.top).reduce(math.max),
+  );
+
+  static void _setRect(PDFium pdfium, FPDF_ANNOTATION annot, PdfBox box) {
+    final rect = calloc<FS_RECTF>();
+    try {
+      rect.ref
+        ..left = box.left
+        ..top = box.top
+        ..right = box.right
+        ..bottom = box.bottom;
+      _check(pdfium.FPDFAnnot_SetRect(annot, rect), 'SetRect');
+    } finally {
+      calloc.free(rect);
+    }
+  }
+
+  /// 왼쪽 위, 오른쪽 위, 왼쪽 아래, 오른쪽 아래 순 (Acrobat이 쓰는 순서).
+  static void _appendQuad(PDFium pdfium, FPDF_ANNOTATION annot, PdfBox box) {
+    final quad = calloc<FS_QUADPOINTSF>();
+    try {
+      quad.ref
+        ..x1 = box.left
+        ..y1 = box.top
+        ..x2 = box.right
+        ..y2 = box.top
+        ..x3 = box.left
+        ..y3 = box.bottom
+        ..x4 = box.right
+        ..y4 = box.bottom;
+      _check(pdfium.FPDFAnnot_AppendAttachmentPoints(annot, quad), 'AppendAttachmentPoints');
+    } finally {
+      calloc.free(quad);
+    }
+  }
+
+  static void _setString(PDFium pdfium, FPDF_ANNOTATION annot, String key, String value) {
+    final nativeKey = key.toNativeUtf8().cast<ffi.Char>();
+    final units = value.codeUnits;
+    final wide = calloc<FPDF_WCHAR>(units.length + 1);
+    try {
+      for (var i = 0; i < units.length; i++) {
+        wide[i] = units[i];
+      }
+      _check(pdfium.FPDFAnnot_SetStringValue(annot, nativeKey, wide), 'SetStringValue');
+    } finally {
+      calloc.free(wide);
+      calloc.free(nativeKey);
+    }
+  }
+
+  static String _getString(PDFium pdfium, FPDF_ANNOTATION annot, String key) {
+    final nativeKey = key.toNativeUtf8().cast<ffi.Char>();
+    try {
+      final bytes = pdfium.FPDFAnnot_GetStringValue(annot, nativeKey, ffi.nullptr, 0); // UTF-16 바이트 수 (끝 널 포함)
+      if (bytes <= 2) return '';
+      final buffer = calloc<FPDF_WCHAR>(bytes ~/ 2);
+      try {
+        pdfium.FPDFAnnot_GetStringValue(annot, nativeKey, buffer, bytes);
+        return String.fromCharCodes([for (var i = 0; i < bytes ~/ 2 - 1; i++) buffer[i]]);
+      } finally {
+        calloc.free(buffer);
+      }
+    } finally {
+      calloc.free(nativeKey);
+    }
+  }
+
+  static void _check(Object ok, String what) {
+    if (ok == false || ok == 0) throw StateError('PDFium $what failed');
+  }
+}
+
+/// [PdfiumAnnotations.read]가 돌려주는 한 주석.
+class ReadAnnotation {
+  const ReadAnnotation({required this.pageIndex, required this.subtype, required this.contents});
+  final int pageIndex;
+
+  /// PDFium `FPDF_ANNOT_*` 값 (1 메모, 5 사각형, 6 원, 9 형광펜, 10 밑줄, 15 손글씨).
+  final int subtype;
+  final String contents;
+}

@@ -51,3 +51,16 @@ https://github.com/jejezz/application-release-templates/tree/main/conventions
 - 쪽 범위 문법은 `page_ranges.dart` (`1-3, 5, 8-`), 오류는 `ConversionErrorKind.invalidPageRange`.
 - 앱 바의 `FocusTint`가 `window_manager`를 부르므로, 통합 테스트에서 앱 바가 있는 화면을 띄울 때는
   `windowManager.ensureInitialized()`를 먼저 해야 한다(안 하면 플러그인이 앱을 죽인다).
+
+## 주석 (`lib/engine/annotations/`) — 5단계 스파이크 결과
+
+PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다. 문서는 pdfrx의 `useNativeDocumentHandle`로
+빌려 쓰고, 저장은 평소처럼 `encodePdf()`다. **되는 것** (PDFium과 macOS PDFKit에서 종류·위치·색·한글 내용·표시 확인):
+
+- 형광펜(곱하기 혼합이라 글자를 가리지 않음), 밑줄, 스티커 메모(한글 내용 보존), 손글씨, 사각형, 원, 삭제(저장 후 유지).
+
+**안 하는 것**: FreeText(화면에 직접 보이는 글상자). PDFium이 외형을 만들어 주지 않아 직접 외형 스트림과 글꼴을
+써야 하는데, 되는 방법을 확인하지 못했다. 메모는 스티커 메모로 대신한다. 미리보기·PDFKit·PDFium 외의 뷰어
+(Acrobat, 브라우저 등)에서의 표시는 시험하지 못했다.
+
+규칙: 좌표는 PDF 사용자 공간(원점 왼쪽 아래, pt). 색은 0xAARRGGBB이고 알파는 불투명도가 된다.
