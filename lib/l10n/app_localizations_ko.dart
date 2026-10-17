@@ -394,4 +394,85 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get homePagesAction => '페이지 도구';
+
+  @override
+  String get annotHighlight => '형광펜 (선택한 글자)';
+
+  @override
+  String get annotUnderline => '밑줄 (선택한 글자)';
+
+  @override
+  String get annotNote => '메모 (쪽을 클릭)';
+
+  @override
+  String get annotInk => '손글씨';
+
+  @override
+  String get annotRectangle => '사각형';
+
+  @override
+  String get annotCircle => '원';
+
+  @override
+  String get annotColor => '색';
+
+  @override
+  String get annotList => '주석 목록';
+
+  @override
+  String get annotSave => '저장';
+
+  @override
+  String get annotSelectTextFirst => '먼저 글자를 선택하세요';
+
+  @override
+  String get annotNoteTitle => '메모';
+
+  @override
+  String get annotNoteHint => '메모 내용';
+
+  @override
+  String get annotNoteAdd => '추가';
+
+  @override
+  String get commonCancel => '취소';
+
+  @override
+  String get annotEmpty => '주석이 없어요';
+
+  @override
+  String get annotTypeHighlight => '형광펜';
+
+  @override
+  String get annotTypeUnderline => '밑줄';
+
+  @override
+  String get annotTypeNote => '메모';
+
+  @override
+  String get annotTypeInk => '손글씨';
+
+  @override
+  String get annotTypeRectangle => '사각형';
+
+  @override
+  String get annotTypeCircle => '원';
+
+  @override
+  String get annotTypeOther => '주석';
+
+  @override
+  String get annotDelete => '삭제';
+
+  @override
+  String get annotUnsavedTitle => '저장하지 않은 주석이 있어요';
+
+  @override
+  String get annotUnsavedBody => '저장하지 않고 나가면 이번에 단 주석이 사라져요.';
+
+  @override
+  String get annotDiscard => '저장 안 함';
+
+  @override
+  String get annotFailed => '주석을 처리하지 못했어요.';
 }

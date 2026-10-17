@@ -309,5 +309,32 @@
         "type": "String"
       }
     }
-  }
+  },
+  "annotHighlight": "형광펜 (선택한 글자)",
+  "annotUnderline": "밑줄 (선택한 글자)",
+  "annotNote": "메모 (쪽을 클릭)",
+  "annotInk": "손글씨",
+  "annotRectangle": "사각형",
+  "annotCircle": "원",
+  "annotColor": "색",
+  "annotList": "주석 목록",
+  "annotSave": "저장",
+  "annotSelectTextFirst": "먼저 글자를 선택하세요",
+  "annotNoteTitle": "메모",
+  "annotNoteHint": "메모 내용",
+  "annotNoteAdd": "추가",
+  "commonCancel": "취소",
+  "annotEmpty": "주석이 없어요",
+  "annotTypeHighlight": "형광펜",
+  "annotTypeUnderline": "밑줄",
+  "annotTypeNote": "메모",
+  "annotTypeInk": "손글씨",
+  "annotTypeRectangle": "사각형",
+  "annotTypeCircle": "원",
+  "annotTypeOther": "주석",
+  "annotDelete": "삭제",
+  "annotUnsavedTitle": "저장하지 않은 주석이 있어요",
+  "annotUnsavedBody": "저장하지 않고 나가면 이번에 단 주석이 사라져요.",
+  "annotDiscard": "저장 안 함",
+  "annotFailed": "주석을 처리하지 못했어요."
 }

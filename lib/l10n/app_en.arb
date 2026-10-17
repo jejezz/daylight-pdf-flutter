@@ -292,5 +292,32 @@
         "type": "String"
       }
     }
-  }
+  },
+  "annotHighlight": "Highlight (selected text)",
+  "annotUnderline": "Underline (selected text)",
+  "annotNote": "Note (click on the page)",
+  "annotInk": "Freehand",
+  "annotRectangle": "Rectangle",
+  "annotCircle": "Circle",
+  "annotColor": "Color",
+  "annotList": "Annotation list",
+  "annotSave": "Save",
+  "annotSelectTextFirst": "Select some text first",
+  "annotNoteTitle": "Note",
+  "annotNoteHint": "Note text",
+  "annotNoteAdd": "Add",
+  "commonCancel": "Cancel",
+  "annotEmpty": "No annotations",
+  "annotTypeHighlight": "Highlight",
+  "annotTypeUnderline": "Underline",
+  "annotTypeNote": "Note",
+  "annotTypeInk": "Freehand",
+  "annotTypeRectangle": "Rectangle",
+  "annotTypeCircle": "Circle",
+  "annotTypeOther": "Annotation",
+  "annotDelete": "Delete",
+  "annotUnsavedTitle": "You have unsaved annotations",
+  "annotUnsavedBody": "If you leave without saving, the annotations you added are lost.",
+  "annotDiscard": "Discard",
+  "annotFailed": "Couldn't process the annotation."
 }

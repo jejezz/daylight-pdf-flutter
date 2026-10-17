@@ -64,3 +64,16 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
 (Acrobat, 브라우저 등)에서의 표시는 시험하지 못했다.
 
 규칙: 좌표는 PDF 사용자 공간(원점 왼쪽 아래, pt). 색은 0xAARRGGBB이고 알파는 불투명도가 된다.
+
+## 주석 UI (`lib/viewer/`) — 6단계
+
+- 형광펜·밑줄은 "글자를 마우스로 고르고 도구 모음 버튼"(`lineBoxes`가 선택한 글자를 줄별 상자로 바꾼다).
+  메모(클릭)·손글씨·사각형·원은 도구 모드: `DrawLayer`가 뷰어 위에서 마우스 입력을 받아
+  `controller.getPdfPageHitTestResult`로 쪽과 PDF 좌표(쪽 회전 반영)로 바꾼다. 그리는 도구가 켜지면 화면 끌기만 꺼진다.
+- 주석은 열린 문서(메모리)에 바로 쓰이고, 저장 단추가 `encodePdf()`를 새 파일로 쓴다. 저장 안 한 주석이 있으면
+  나갈 때 묻는다(`PopScope`).
+- **pdfrx 함정**: 쪽 크기·회전이 같으면 본문의 이미 그린 쪽 이미지를 다시 그리지 않는다(`reloadPages`로는 안 바뀐다).
+  그래서 `AnnotationState.revision`의 홀짝으로 `annotationRenderingMode`를 바꿔 이미지 캐시를 비우게 한다
+  (`viewer_screen.dart`). 두 모드 모두 주석을 그리지만 폼 입력란이 있는 PDF는 모드에 따라 강조색이 미세하게 다르다.
+- 시험한 것: macOS의 실제 화면 구동(그리기·메모·형광펜·삭제·나가기 확인), 평평한 쪽과 90° 회전한 쪽에서 그린 위치.
+  **못 시험한 것**: 저장 창(네이티브)을 통한 저장 클릭, Windows·Linux.

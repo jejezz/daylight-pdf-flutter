@@ -396,4 +396,86 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homePagesAction => 'Page tools';
+
+  @override
+  String get annotHighlight => 'Highlight (selected text)';
+
+  @override
+  String get annotUnderline => 'Underline (selected text)';
+
+  @override
+  String get annotNote => 'Note (click on the page)';
+
+  @override
+  String get annotInk => 'Freehand';
+
+  @override
+  String get annotRectangle => 'Rectangle';
+
+  @override
+  String get annotCircle => 'Circle';
+
+  @override
+  String get annotColor => 'Color';
+
+  @override
+  String get annotList => 'Annotation list';
+
+  @override
+  String get annotSave => 'Save';
+
+  @override
+  String get annotSelectTextFirst => 'Select some text first';
+
+  @override
+  String get annotNoteTitle => 'Note';
+
+  @override
+  String get annotNoteHint => 'Note text';
+
+  @override
+  String get annotNoteAdd => 'Add';
+
+  @override
+  String get commonCancel => 'Cancel';
+
+  @override
+  String get annotEmpty => 'No annotations';
+
+  @override
+  String get annotTypeHighlight => 'Highlight';
+
+  @override
+  String get annotTypeUnderline => 'Underline';
+
+  @override
+  String get annotTypeNote => 'Note';
+
+  @override
+  String get annotTypeInk => 'Freehand';
+
+  @override
+  String get annotTypeRectangle => 'Rectangle';
+
+  @override
+  String get annotTypeCircle => 'Circle';
+
+  @override
+  String get annotTypeOther => 'Annotation';
+
+  @override
+  String get annotDelete => 'Delete';
+
+  @override
+  String get annotUnsavedTitle => 'You have unsaved annotations';
+
+  @override
+  String get annotUnsavedBody =>
+      'If you leave without saving, the annotations you added are lost.';
+
+  @override
+  String get annotDiscard => 'Discard';
+
+  @override
+  String get annotFailed => 'Couldn\'t process the annotation.';
 }

@@ -73,6 +73,7 @@ abstract final class PdfiumAnnotations {
               out.add(
                 ReadAnnotation(
                   pageIndex: p,
+                  index: i,
                   subtype: pdfium.FPDFAnnot_GetSubtype(annot),
                   contents: _getString(pdfium, annot, 'Contents'),
                 ),
@@ -227,8 +228,11 @@ abstract final class PdfiumAnnotations {
 
 /// [PdfiumAnnotations.read]가 돌려주는 한 주석.
 class ReadAnnotation {
-  const ReadAnnotation({required this.pageIndex, required this.subtype, required this.contents});
+  const ReadAnnotation({required this.pageIndex, required this.index, required this.subtype, required this.contents});
   final int pageIndex;
+
+  /// 그 쪽 안에서 0부터 센 순서. [PdfiumAnnotations.remove]에 그대로 쓴다.
+  final int index;
 
   /// PDFium `FPDF_ANNOT_*` 값 (1 메모, 5 사각형, 6 원, 9 형광펜, 10 밑줄, 15 손글씨).
   final int subtype;

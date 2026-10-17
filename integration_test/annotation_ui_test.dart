@@ -1,0 +1,298 @@
+// 실제 PDFium으로 보기 화면의 주석 도구를 구동한다:
+//   flutter test integration_test/annotation_ui_test.dart -d macos
+import 'dart:io';
+import 'dart:ui' as ui;
+
+import 'package:daylight_pdf/convert/image_to_pdf.dart';
+import 'package:daylight_pdf/convert/svg_to_pdf.dart';
+import 'package:daylight_pdf/pages/page_ops.dart';
+import 'package:daylight_pdf/l10n/app_localizations.dart';
+import 'package:daylight_pdf/settings/app_settings.dart';
+import 'package:daylight_pdf/viewer/viewer_screen.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
+import 'package:integration_test/integration_test.dart';
+import 'package:pdfrx/pdfrx.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:window_manager/window_manager.dart';
+
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() => windowManager.ensureInitialized());
+
+  Future<void> pumpViewer(WidgetTester tester, String path) async {
+    SharedPreferences.setMockInitialValues({});
+    final settings = await AppSettings.load();
+    await tester.pumpWidget(
+      AppSettingsScope(
+        settings: settings,
+        child: MaterialApp(
+          locale: const Locale('ko'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: ViewerScreen(key: ValueKey(path), path: path),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle(const Duration(seconds: 2));
+  }
+
+  Future<void> drag(WidgetTester tester, Offset from, Offset to) async {
+    final g = await tester.startGesture(from, kind: PointerDeviceKind.mouse);
+    for (var i = 1; i <= 8; i++) {
+      await g.moveTo(Offset.lerp(from, to, i / 8)!);
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await g.up();
+    await tester.pumpAndSettle(const Duration(milliseconds: 500));
+  }
+
+  /// 뒤로 가기. 앱 바의 뒤로 가기 버튼(플랫폼마다 다른 위젯)이나 PopScope를 거치는 `maybePop`과 같은 경로다.
+  Future<void> back(WidgetTester tester) async {
+    await tester.state<NavigatorState>(find.byType(Navigator).first).maybePop();
+    await tester.pumpAndSettle();
+  }
+
+  /// 뷰어를 감싼 가장 가까운 RepaintBoundary를 PNG로 떠서 [name]으로 남긴다 (눈으로 확인하는 용도).
+  Future<void> snapshot(WidgetTester tester, String name) async {
+    // PDFium 렌더링은 비동기라 프레임이 안 돌아도 끝난다: 잠깐 기다렸다가 그린다.
+    await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: 2)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    RenderObject? node = tester.renderObject(find.byType(PdfViewer));
+    while (node != null && node is! RenderRepaintBoundary) {
+      node = node.parent;
+    }
+    final image = await (node! as RenderRepaintBoundary).toImage(pixelRatio: 1);
+    final bytes = (await image.toByteData(format: ui.ImageByteFormat.png))!;
+    File('${Directory.systemTemp.path}/$name.png').writeAsBytesSync(bytes.buffer.asUint8List());
+  }
+
+  testWidgets('draw, note, highlight and delete annotations in the viewer', (tester) async {
+    await pdfrxFlutterInitialize();
+    final dir = Directory.systemTemp.createTempSync('daylight_pdf_annot_ui');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    File('${dir.path}/doc.svg').writeAsStringSync(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200">'
+      '<rect width="400" height="200" fill="#ffffff"/>'
+      '<text x="20" y="60" font-family="Helvetica" font-size="32" fill="#000000">Highlight this line</text>'
+      '<text x="20" y="110" font-family="Helvetica" font-size="32" fill="#000000">Second line here</text></svg>',
+    );
+    await SvgToPdf.convert('${dir.path}/doc.svg', '${dir.path}/doc.pdf');
+    await pumpViewer(tester, '${dir.path}/doc.pdf');
+
+    var viewer = tester.getRect(find.byType(PdfViewer));
+    Offset at(double fx, double fy) => Offset(viewer.left + viewer.width * fx, viewer.top + viewer.height * fy);
+    // 쪽은 뷰어 너비에 맞춰(좌우 여백 10) 가운데에 놓인다. 쪽 비율은 2:1 (400x200).
+    Offset onPage(double fx, double fy) {
+      final width = viewer.width - 20, height = width / 2;
+      return Offset(viewer.left + 10 + width * fx, viewer.center.dy - height / 2 + height * fy);
+    }
+
+    // 아무것도 선택하지 않고 형광펜 → 안내만 나온다
+    await tester.tap(find.byTooltip('형광펜 (선택한 글자)'));
+    await tester.pumpAndSettle();
+    expect(find.text('먼저 글자를 선택하세요'), findsOneWidget);
+
+    // 손글씨
+    await tester.tap(find.byTooltip('손글씨'));
+    await tester.pumpAndSettle();
+    await drag(tester, at(0.3, 0.7), at(0.6, 0.8));
+    // 사각형
+    await tester.tap(find.byTooltip('사각형'));
+    await tester.pumpAndSettle();
+    await drag(tester, at(0.65, 0.2), at(0.85, 0.4));
+    // 원
+    await tester.tap(find.byTooltip('원'));
+    await tester.pumpAndSettle();
+    await drag(tester, at(0.65, 0.6), at(0.85, 0.85));
+
+    // 메모: 클릭 → 입력 → 추가
+    await tester.tap(find.byTooltip('메모 (쪽을 클릭)'));
+    await tester.pumpAndSettle();
+    final tap = await tester.startGesture(at(0.1, 0.8), kind: PointerDeviceKind.mouse);
+    await tap.up();
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '확인할 메모 note');
+    await tester.tap(find.text('추가'));
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    await tester.tap(find.byTooltip('메모 (쪽을 클릭)')); // 도구 끄기
+    await tester.pumpAndSettle();
+
+    // 목록에 4개 (손글씨, 사각형, 원, 메모)
+    await tester.tap(find.byTooltip('주석 목록'));
+    await tester.pumpAndSettle();
+    expect(find.text('확인할 메모 note'), findsOneWidget);
+    expect(find.text('손글씨'), findsOneWidget);
+    expect(find.text('사각형'), findsOneWidget);
+    expect(find.text('원'), findsOneWidget);
+
+    // 글자 선택(마우스 끌기) → 형광펜. 목록이 열려 뷰어 너비가 줄었으니 다시 잰다.
+    await tester.pumpAndSettle();
+    viewer = tester.getRect(find.byType(PdfViewer));
+    await drag(tester, onPage(0.06, 0.25), onPage(0.60, 0.25));
+    await tester.tap(find.byTooltip('형광펜 (선택한 글자)'));
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    final highlighted = find.text('형광펜').evaluate().isNotEmpty;
+    expect(highlighted, isTrue, reason: 'selecting text and pressing highlight must add a highlight');
+    await snapshot(tester, 'daylight_pdf_viewer_annotated');
+
+    // 삭제: 사각형을 지운다
+    final before = find.byIcon(Icons.delete_outline_rounded).evaluate().length;
+    final rectTile = find.ancestor(of: find.text('사각형'), matching: find.byType(ListTile));
+    await tester.tap(find.descendant(of: rectTile, matching: find.byIcon(Icons.delete_outline_rounded)));
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    expect(find.text('사각형'), findsNothing);
+    expect(find.byIcon(Icons.delete_outline_rounded).evaluate().length, before - 1);
+    await snapshot(tester, 'daylight_pdf_viewer_after_delete');
+
+    // ignore: avoid_print
+    print('HIGHLIGHT_APPLIED=$highlighted DIR=${Directory.systemTemp.path}');
+  });
+
+  testWidgets('leaving with unsaved annotations asks first; cancel stays, discard leaves', (tester) async {
+    await pdfrxFlutterInitialize();
+    final dir = Directory.systemTemp.createTempSync('daylight_pdf_annot_ui');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    File('${dir.path}/p.png')
+        .writeAsBytesSync(img.encodePng(img.Image(width: 400, height: 200)..clear(img.ColorRgb8(255, 255, 255))));
+    await ImageToPdf.convert(['${dir.path}/p.png'], '${dir.path}/doc.pdf');
+
+    SharedPreferences.setMockInitialValues({});
+    final settings = await AppSettings.load();
+    await tester.pumpWidget(
+      AppSettingsScope(
+        settings: settings,
+        child: MaterialApp(
+          locale: const Locale('ko'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: FilledButton(
+                  onPressed: () =>
+                      Navigator.of(context)
+                          .push(MaterialPageRoute<void>(builder: (_) => ViewerScreen(path: '${dir.path}/doc.pdf'))),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle(const Duration(seconds: 2));
+
+    // 주석이 없으면 바로 나간다
+    await back(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('open'), findsOneWidget);
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle(const Duration(seconds: 2));
+    final viewer = tester.getRect(find.byType(PdfViewer));
+    await tester.tap(find.byTooltip('사각형'));
+    await tester.pumpAndSettle();
+    await drag(tester, viewer.center - const Offset(40, 20), viewer.center + const Offset(40, 20));
+
+    await back(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('저장하지 않은 주석이 있어요'), findsOneWidget);
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ViewerScreen), findsOneWidget, reason: 'cancel keeps the viewer');
+
+    await back(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('저장 안 함'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ViewerScreen), findsNothing);
+    expect(find.text('open'), findsOneWidget);
+  });
+
+  testWidgets('a drawn rectangle lands where it was drawn, also on a page rotated by 90 degrees', (tester) async {
+    await pdfrxFlutterInitialize();
+    final dir = Directory.systemTemp.createTempSync('daylight_pdf_annot_ui');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    File('${dir.path}/p.png')
+        .writeAsBytesSync(img.encodePng(img.Image(width: 400, height: 200)..clear(img.ColorRgb8(255, 255, 255))));
+    await ImageToPdf.convert(['${dir.path}/p.png'], '${dir.path}/flat.pdf');
+    await PageOps.build([PageRef('${dir.path}/flat.pdf', 0, quarterTurns: 1)], '${dir.path}/rotated.pdf');
+
+    Future<({int w, int h, List<int> rgba})> capture() async {
+      RenderObject? node = tester.renderObject(find.byType(PdfViewer));
+      while (node != null && node is! RenderRepaintBoundary) {
+        node = node.parent;
+      }
+      final image = await (node! as RenderRepaintBoundary).toImage(pixelRatio: 1);
+      final data = (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!;
+      return (w: image.width, h: image.height, rgba: data.buffer.asUint8List());
+    }
+
+    // 회전한 쪽은 문서에서도 세로(200x400)로 보여야 한다 (테스트 자료 점검).
+    final rotatedDoc = await PdfDocument.openFile('${dir.path}/rotated.pdf');
+    expect([rotatedDoc.pages.first.width, rotatedDoc.pages.first.height], [200, 400]);
+    rotatedDoc.dispose();
+
+    for (final name in ['flat', 'rotated']) {
+      await pumpViewer(tester, '${dir.path}/$name.pdf');
+      await tester.tap(find.byTooltip('주석 목록')); // 목록은 닫아 둔다 (기본은 닫힘 → 눌러서 열렸다면 다시 닫기)
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('주석 목록'));
+      await tester.pumpAndSettle();
+      await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: 1)));
+      await tester.pump();
+
+      // 쪽(순백)이 차지한 화면 영역을 찾는다: 뷰어 안에서 R=G=B=255인 픽셀의 경계.
+      final viewer = tester.getRect(find.byType(PdfViewer));
+      final before = await capture();
+      var left = 1 << 30, top = 1 << 30, right = -1, bottom = -1;
+      for (var y = viewer.top.toInt(); y < viewer.bottom.toInt(); y++) {
+        for (var x = viewer.left.toInt(); x < viewer.right.toInt(); x++) {
+          final i = (y * before.w + x) * 4;
+          if (before.rgba[i] == 255 && before.rgba[i + 1] == 255 && before.rgba[i + 2] == 255) {
+            if (x < left) left = x;
+            if (x > right) right = x;
+            if (y < top) top = y;
+            if (y > bottom) bottom = y;
+          }
+        }
+      }
+      expect(right - left, greaterThan(50), reason: '$name: page must be visible');
+      final page = Rect.fromLTRB(left.toDouble(), top.toDouble(), right.toDouble() + 1, bottom.toDouble() + 1);
+      await tester.tap(find.byTooltip('사각형'));
+      await tester.pumpAndSettle();
+      final from = Offset(page.left + page.width * 0.25, page.top + page.height * 0.25);
+      final to = Offset(page.left + page.width * 0.75, page.top + page.height * 0.5);
+      await drag(tester, from, to);
+      await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: 2)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await snapshot(tester, 'daylight_pdf_rect_$name');
+      // 노란 테두리(R,G 높고 B 낮음)가 그린 사각형의 네 변 위에 있어야 한다.
+      final after = await capture();
+      bool yellow(int x, int y) {
+        for (var dy = -3; dy <= 3; dy++) {
+          for (var dx = -3; dx <= 3; dx++) {
+            final i = ((y + dy) * after.w + (x + dx)) * 4;
+            if (after.rgba[i] > 200 && after.rgba[i + 1] > 180 && after.rgba[i + 2] < 120) return true;
+          }
+        }
+        return false;
+      }
+
+      final midX = ((from.dx + to.dx) / 2).round(), midY = ((from.dy + to.dy) / 2).round();
+      expect(yellow(midX, from.dy.round()), isTrue, reason: '$name: top edge');
+      expect(yellow(midX, to.dy.round()), isTrue, reason: '$name: bottom edge');
+      expect(yellow(from.dx.round(), midY), isTrue, reason: '$name: left edge');
+      expect(yellow(to.dx.round(), midY), isTrue, reason: '$name: right edge');
+      expect(yellow(midX, midY), isFalse, reason: '$name: inside stays empty (outline only)');
+    }
+  });
+}

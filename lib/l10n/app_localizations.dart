@@ -757,6 +757,168 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'페이지 도구'**
   String get homePagesAction;
+
+  /// No description provided for @annotHighlight.
+  ///
+  /// In ko, this message translates to:
+  /// **'형광펜 (선택한 글자)'**
+  String get annotHighlight;
+
+  /// No description provided for @annotUnderline.
+  ///
+  /// In ko, this message translates to:
+  /// **'밑줄 (선택한 글자)'**
+  String get annotUnderline;
+
+  /// No description provided for @annotNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 (쪽을 클릭)'**
+  String get annotNote;
+
+  /// No description provided for @annotInk.
+  ///
+  /// In ko, this message translates to:
+  /// **'손글씨'**
+  String get annotInk;
+
+  /// No description provided for @annotRectangle.
+  ///
+  /// In ko, this message translates to:
+  /// **'사각형'**
+  String get annotRectangle;
+
+  /// No description provided for @annotCircle.
+  ///
+  /// In ko, this message translates to:
+  /// **'원'**
+  String get annotCircle;
+
+  /// No description provided for @annotColor.
+  ///
+  /// In ko, this message translates to:
+  /// **'색'**
+  String get annotColor;
+
+  /// No description provided for @annotList.
+  ///
+  /// In ko, this message translates to:
+  /// **'주석 목록'**
+  String get annotList;
+
+  /// No description provided for @annotSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get annotSave;
+
+  /// No description provided for @annotSelectTextFirst.
+  ///
+  /// In ko, this message translates to:
+  /// **'먼저 글자를 선택하세요'**
+  String get annotSelectTextFirst;
+
+  /// No description provided for @annotNoteTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모'**
+  String get annotNoteTitle;
+
+  /// No description provided for @annotNoteHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 내용'**
+  String get annotNoteHint;
+
+  /// No description provided for @annotNoteAdd.
+  ///
+  /// In ko, this message translates to:
+  /// **'추가'**
+  String get annotNoteAdd;
+
+  /// No description provided for @commonCancel.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소'**
+  String get commonCancel;
+
+  /// No description provided for @annotEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'주석이 없어요'**
+  String get annotEmpty;
+
+  /// No description provided for @annotTypeHighlight.
+  ///
+  /// In ko, this message translates to:
+  /// **'형광펜'**
+  String get annotTypeHighlight;
+
+  /// No description provided for @annotTypeUnderline.
+  ///
+  /// In ko, this message translates to:
+  /// **'밑줄'**
+  String get annotTypeUnderline;
+
+  /// No description provided for @annotTypeNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모'**
+  String get annotTypeNote;
+
+  /// No description provided for @annotTypeInk.
+  ///
+  /// In ko, this message translates to:
+  /// **'손글씨'**
+  String get annotTypeInk;
+
+  /// No description provided for @annotTypeRectangle.
+  ///
+  /// In ko, this message translates to:
+  /// **'사각형'**
+  String get annotTypeRectangle;
+
+  /// No description provided for @annotTypeCircle.
+  ///
+  /// In ko, this message translates to:
+  /// **'원'**
+  String get annotTypeCircle;
+
+  /// No description provided for @annotTypeOther.
+  ///
+  /// In ko, this message translates to:
+  /// **'주석'**
+  String get annotTypeOther;
+
+  /// No description provided for @annotDelete.
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제'**
+  String get annotDelete;
+
+  /// No description provided for @annotUnsavedTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하지 않은 주석이 있어요'**
+  String get annotUnsavedTitle;
+
+  /// No description provided for @annotUnsavedBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하지 않고 나가면 이번에 단 주석이 사라져요.'**
+  String get annotUnsavedBody;
+
+  /// No description provided for @annotDiscard.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장 안 함'**
+  String get annotDiscard;
+
+  /// No description provided for @annotFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'주석을 처리하지 못했어요.'**
+  String get annotFailed;
 }
 
 class _AppLocalizationsDelegate
