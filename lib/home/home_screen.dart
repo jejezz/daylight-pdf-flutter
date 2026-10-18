@@ -2,20 +2,25 @@ import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 
 import '../app_identity.dart';
 import '../convert/convert_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../pages/page_tools_screen.dart';
+import '../platform/platform_kind.dart';
 import '../settings/settings_menus.dart';
 import '../theme/app_theme.dart';
-import '../viewer/viewer_screen.dart';
 import '../widgets/drop_zone.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/tool_chip.dart';
 import '../window/focus_tint.dart';
+import 'open_pdf.dart';
 import 'recent_files.dart';
+
+/// 홈 화면이 보기 화면에서 돌아왔을 때 최근 목록을 다시 읽도록 알아채는 관찰자 (다른 앱이 연 PDF가 목록에 생겼을 수 있다).
+final RouteObserver<ModalRoute<void>> homeRouteObserver = RouteObserver<ModalRoute<void>>();
 
 bool isPdfPath(String path) => path.toLowerCase().endsWith('.pdf');
 
@@ -31,7 +36,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with RouteAware {
   List<String> _recent = const [];
 
   @override
@@ -39,6 +44,23 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _reload();
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) homeRouteObserver.subscribe(this, route);
+  }
+
+  @override
+  void dispose() {
+    homeRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  /// 위에 올라와 있던 화면(보기)이 닫혀 홈이 다시 보일 때.
+  @override
+  void didPopNext() => _reload();
 
   Future<void> _reload() async {
     final list = await widget.recents.loadExisting();
@@ -57,9 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 보기 화면으로 간다. 최근 파일 맨 앞에 올리고, 돌아오면 목록을 새로 읽는다.
   Future<void> _open(String path) async {
-    await widget.recents.add(path);
-    if (!mounted) return;
-    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ViewerScreen(path: path)));
+    await openPdf(Navigator.of(context), path, recents: widget.recents);
     if (mounted) _reload();
   }
 
@@ -99,10 +119,88 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// 폰·태블릿 시작 화면: 큰 "PDF 열기" 카드 하나와 최근 파일. 끌어놓기, 변환, 페이지 도구는 없다 (읽기와 메모 중심).
+  Widget _mobile(AppLocalizations l10n, ThemeData theme) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(AppIdentity.displayName),
+        actions: [
+          const ThemeMenuButton(),
+          const LanguageMenuButton(),
+          IconButton(
+            tooltip: l10n.aboutTooltip,
+            icon: const Icon(Icons.info_outline_rounded),
+            onPressed: widget.onAbout,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+        ],
+      ),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 980),
+            child: LayoutBuilder(
+              builder: (context, box) {
+                final columns = box.maxWidth >= 860 ? 3 : (box.maxWidth >= 560 ? 2 : 1);
+                return CustomScrollView(
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.lg, AppSpacing.xl, AppSpacing.md),
+                      sliver: SliverToBoxAdapter(child: _OpenCard(onTap: _pick)),
+                    ),
+                    if (_recent.isEmpty)
+                      SliverFillRemaining(hasScrollBody: false, child: _MobileEmpty(theme: theme))
+                    else ...[
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.lg, AppSpacing.xl, AppSpacing.sm),
+                        sliver: SliverToBoxAdapter(
+                          child: Row(
+                            children: [
+                              Text(l10n.homeRecentTitle, style: theme.textTheme.titleMedium),
+                              const Spacer(),
+                              TextButton.icon(
+                                onPressed: _clearRecent,
+                                icon: const Icon(Icons.playlist_remove_rounded, size: 20),
+                                label: Text(l10n.homeRecentClear),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(AppSpacing.xl, 0, AppSpacing.xl, AppSpacing.xl),
+                        sliver: SliverGrid.builder(
+                          itemCount: _recent.length,
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: columns,
+                            mainAxisExtent: 84,
+                            crossAxisSpacing: AppSpacing.md,
+                            mainAxisSpacing: AppSpacing.md,
+                          ),
+                          itemBuilder: (context, i) => _MobileRecentCard(
+                            path: _recent[i],
+                            onOpen: () => _openRecent(_recent[i]),
+                            onRemove: () => _removeRecent(_recent[i]),
+                            removeTooltip: l10n.homeRecentRemove,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    if (isMobilePlatform) return _mobile(l10n, theme);
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: const FocusTint(),
@@ -392,4 +490,129 @@ class _ActionCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 모바일 시작 화면의 큰 "PDF 열기" 카드 (손가락으로 누르기 쉽게 크게).
+class _OpenCard extends StatelessWidget {
+  const _OpenCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return GlassCard(
+      onTap: onTap,
+      radius: AppRadius.card,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.xl),
+      child: Row(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary,
+              borderRadius: BorderRadius.circular(AppRadius.tile),
+            ),
+            child: Icon(Icons.folder_open_rounded, size: 32, color: theme.colorScheme.onPrimary),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.homeMobileOpenTitle, style: theme.textTheme.headlineSmall),
+                const SizedBox(height: AppSpacing.xs),
+                Text(l10n.homeMobileOpenHint, style: theme.textTheme.bodyMedium),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: theme.colorScheme.onSurfaceVariant),
+        ],
+      ),
+    );
+  }
+}
+
+/// 최근 파일이 아직 없을 때의 안내.
+class _MobileEmpty extends StatelessWidget {
+  const _MobileEmpty({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.edit_note_rounded, size: 64, color: theme.colorScheme.primary.withValues(alpha: 0.8)),
+          const SizedBox(height: AppSpacing.lg),
+          Text(l10n.homeMobileEmptyTitle, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
+          const SizedBox(height: AppSpacing.sm),
+          Text(l10n.homeMobileEmptyHint, style: theme.textTheme.bodyMedium, textAlign: TextAlign.center),
+        ],
+      ),
+    );
+  }
+}
+
+/// 모바일 최근 파일 카드: 이름과 "날짜 · 크기" (앱 안 보관함 경로는 보여 줘도 쓸모가 없다).
+class _MobileRecentCard extends StatelessWidget {
+  const _MobileRecentCard({
+    required this.path,
+    required this.onOpen,
+    required this.onRemove,
+    required this.removeTooltip,
+  });
+
+  final String path;
+  final VoidCallback onOpen;
+  final VoidCallback onRemove;
+  final String removeTooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final stat = File(path).statSync();
+    final meta = l10n.homeRecentMeta(
+      DateFormat.yMMMd(Localizations.localeOf(context).toString()).format(stat.modified),
+      formatFileSize(stat.size),
+    );
+    return GlassCard(
+      radius: AppRadius.tile,
+      padding: const EdgeInsets.only(left: AppSpacing.lg, right: AppSpacing.xs),
+      onTap: onOpen,
+      child: Row(
+        children: [
+          Icon(Icons.picture_as_pdf_rounded, size: 30, color: theme.colorScheme.primary),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(p.basename(path), maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
+                const SizedBox(height: 2),
+                Text(meta, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodySmall),
+              ],
+            ),
+          ),
+          IconButton(tooltip: removeTooltip, icon: const Icon(Icons.close_rounded, size: 20), onPressed: onRemove),
+        ],
+      ),
+    );
+  }
+}
+
+/// 파일 크기를 "1.2 MB"처럼 짧게.
+String formatFileSize(int bytes) {
+  if (bytes < 1024) return '$bytes B';
+  if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(bytes < 10 * 1024 ? 1 : 0)} KB';
+  if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
 }

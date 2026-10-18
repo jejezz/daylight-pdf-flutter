@@ -1519,6 +1519,36 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'복사'**
   String get viewerCopy;
+
+  /// No description provided for @homeMobileOpenTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF 열기'**
+  String get homeMobileOpenTitle;
+
+  /// No description provided for @homeMobileOpenHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 기기나 클라우드에서 파일을 골라요'**
+  String get homeMobileOpenHint;
+
+  /// No description provided for @homeMobileEmptyTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF를 열어 읽고 메모해 보세요'**
+  String get homeMobileEmptyTitle;
+
+  /// No description provided for @homeMobileEmptyHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 앱이나 다른 앱에서 PDF를 눌러도 이 앱으로 열 수 있어요'**
+  String get homeMobileEmptyHint;
+
+  /// No description provided for @homeRecentMeta.
+  ///
+  /// In ko, this message translates to:
+  /// **'{date} · {size}'**
+  String homeRecentMeta(String date, String size);
 }
 
 class _AppLocalizationsDelegate

@@ -509,5 +509,20 @@
       }
     }
   },
-  "viewerCopy": "복사"
+  "viewerCopy": "복사",
+  "homeMobileOpenTitle": "PDF 열기",
+  "homeMobileOpenHint": "이 기기나 클라우드에서 파일을 골라요",
+  "homeMobileEmptyTitle": "PDF를 열어 읽고 메모해 보세요",
+  "homeMobileEmptyHint": "파일 앱이나 다른 앱에서 PDF를 눌러도 이 앱으로 열 수 있어요",
+  "homeRecentMeta": "{date} · {size}",
+  "@homeRecentMeta": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  }
 }

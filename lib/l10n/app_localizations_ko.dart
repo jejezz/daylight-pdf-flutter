@@ -798,4 +798,21 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get viewerCopy => '복사';
+
+  @override
+  String get homeMobileOpenTitle => 'PDF 열기';
+
+  @override
+  String get homeMobileOpenHint => '이 기기나 클라우드에서 파일을 골라요';
+
+  @override
+  String get homeMobileEmptyTitle => 'PDF를 열어 읽고 메모해 보세요';
+
+  @override
+  String get homeMobileEmptyHint => '파일 앱이나 다른 앱에서 PDF를 눌러도 이 앱으로 열 수 있어요';
+
+  @override
+  String homeRecentMeta(String date, String size) {
+    return '$date · $size';
+  }
 }

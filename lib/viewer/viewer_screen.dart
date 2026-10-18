@@ -14,6 +14,7 @@ import '../engine/annotations/annotation_specs.dart';
 import '../engine/annotations/pdfium_annotations.dart';
 import '../l10n/app_localizations.dart';
 import '../pages/page_tools_screen.dart';
+import '../platform/platform_kind.dart';
 import '../pages/pdf_dialogs.dart';
 import '../print/print_dialog.dart';
 import '../theme/app_theme.dart';
@@ -468,18 +469,21 @@ class _ViewerScreenState extends State<ViewerScreen> {
                     selectedIcon: const Icon(Icons.search_rounded),
                     onPressed: _toggleSearch,
                   ),
-                  IconButton(
-                    tooltip: l10n.printTip(_isMac ? '⌘P' : 'Ctrl+P'),
-                    icon: const Icon(Icons.print_outlined),
-                    onPressed: _print,
-                  ),
-                  IconButton(
-                    tooltip: l10n.viewerEditPages,
-                    icon: const Icon(Icons.dashboard_customize_outlined),
-                    onPressed: () =>
-                        Navigator.of(context)
-                            .push(MaterialPageRoute<void>(builder: (_) => PageToolsScreen(initialPath: widget.path))),
-                  ),
+                  // 인쇄와 페이지 도구는 데스크톱 기능이다 (폰·태블릿 앱은 읽기와 메모에 집중한다).
+                  if (!isMobilePlatform) ...[
+                    IconButton(
+                      tooltip: l10n.printTip(_isMac ? '⌘P' : 'Ctrl+P'),
+                      icon: const Icon(Icons.print_outlined),
+                      onPressed: _print,
+                    ),
+                    IconButton(
+                      tooltip: l10n.viewerEditPages,
+                      icon: const Icon(Icons.dashboard_customize_outlined),
+                      onPressed: () =>
+                          Navigator.of(context)
+                              .push(MaterialPageRoute<void>(builder: (_) => PageToolsScreen(initialPath: widget.path))),
+                    ),
+                  ],
                   IconButton(
                     tooltip: l10n.viewerThumbnails,
                     isSelected: _showThumbnails,

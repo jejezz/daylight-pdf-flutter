@@ -492,5 +492,20 @@
       }
     }
   },
-  "viewerCopy": "Copy"
+  "viewerCopy": "Copy",
+  "homeMobileOpenTitle": "Open a PDF",
+  "homeMobileOpenHint": "Pick a file from this device or the cloud",
+  "homeMobileEmptyTitle": "Open a PDF to read and take notes",
+  "homeMobileEmptyHint": "You can also tap a PDF in the Files app or another app and open it here",
+  "homeRecentMeta": "{date} · {size}",
+  "@homeRecentMeta": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  }
 }

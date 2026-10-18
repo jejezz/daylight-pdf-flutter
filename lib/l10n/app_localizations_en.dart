@@ -804,4 +804,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewerCopy => 'Copy';
+
+  @override
+  String get homeMobileOpenTitle => 'Open a PDF';
+
+  @override
+  String get homeMobileOpenHint => 'Pick a file from this device or the cloud';
+
+  @override
+  String get homeMobileEmptyTitle => 'Open a PDF to read and take notes';
+
+  @override
+  String get homeMobileEmptyHint =>
+      'You can also tap a PDF in the Files app or another app and open it here';
+
+  @override
+  String homeRecentMeta(String date, String size) {
+    return '$date · $size';
+  }
 }

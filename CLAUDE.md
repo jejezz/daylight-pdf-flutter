@@ -144,6 +144,20 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
 - **주의**: `adb`는 기기가 둘 이상일 때 `-s <기기>`를 꼭 붙인다(실기기와 에뮬레이터). 에뮬레이터는 시작 직후 `offline`일 수 있다. 큰 APK(디버그 200MB)는 설치에 1~2분 걸린다.
 - 식별자는 `art.zoomon.daylightpdf`(Android `applicationId`·`namespace`), 표시 이름 `Daylight PDF`. 릴리스 서명·Play 트랙은 아직 구성하지 않았다.
 
+## 모바일(Android 태블릿) 시작 화면과 파일 열기
+
+- 모바일 판별은 `isMobilePlatform`(`lib/platform/platform_kind.dart`, `defaultTargetPlatform` 기준 Android·iOS). **`flutter test`의 기본 플랫폼은 Android**라서 화면이 플랫폼마다 다른 위젯 시험은
+  `testWidgets(..., variant: TargetPlatformVariant.only(...))`로 어느 쪽인지 정한다 (`debugDefaultTargetPlatformOverride`를 직접 바꾸면 테스트 틀이 "값이 바뀌었다"고 실패한다).
+  통합 시험(macOS)은 데스크톱이다.
+- **모바일 홈**(`HomeScreen._mobile`): 큰 "PDF 열기" 카드 하나 + 최근 파일 카드(이름, "날짜 · 크기", 너비에 따라 1~3열, 높이 84). 끌어놓기·변환·페이지 도구는 없다. 보기 화면에서도 인쇄·페이지 도구 단추는 숨긴다.
+- **열린 파일은 앱 보관함에 복사**한다(`OpenedFiles`, `getApplicationSupportDirectory()/opened/<시각>/이름.pdf`): 파일 선택 창과 다른 앱이 주는 파일은 캐시 복사본이라 시스템이 지울 수 있어
+  최근 파일이 열리지 않게 되기 때문이다. 최근 목록에서 빠진 복사본은 `prune`이 지운다. 열기의 공통 경로는 `openPdf`(보관함 복사 → 최근 목록 → 보기 화면).
+- **다른 앱에서 열기**: `AndroidManifest.xml`의 `VIEW`/`SEND` + `application/pdf` 필터, `MainActivity.kt`가 `content://` 주소를 앱 캐시로 복사해(표시 이름을 지킨다)
+  MethodChannel `art.zoomon.daylightpdf/incoming`으로 Dart에 넘긴다(시작할 때는 `initialFile`, 켜져 있을 때는 `fileOpened`; `IncomingFiles`가 받고 `main.dart`가 `openPdf`로 연다).
+  같은 intent를 두 번 처리하지 않게 표시를 달아 둔다. 홈은 `homeRouteObserver`(`RouteAware`)로 보기 화면이 닫히면 최근 목록을 다시 읽는다.
+- **실기기 시험 요령**: `adb -s <기기>`를 항상 붙이고, 절전 중이면 스크린샷이 까맣다(`input keyevent KEYCODE_WAKEUP`). 다른 앱에서 열기는 `adb shell content query --uri content://media/external/file
+  --where "_display_name='x.pdf'"`로 `_id`를 찾아 `am start -a android.intent.action.VIEW -t application/pdf -d content://media/external/file/<id> --grant-read-uri-permission -n art.zoomon.daylightpdf/.MainActivity`로 흉내 낸다.
+
 ## README 스크린샷과 데모
 
 - 영어 UI, 라이트·다크 1200x720(2배 해상도)로 `integration_test/readme_shots_test.dart`가 보여 주기용 문서(Quarterly Report, 주석 달린 사본, 12쪽 문서)로 화면을 찍는다
