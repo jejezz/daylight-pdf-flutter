@@ -74,6 +74,7 @@ flutter:
   assets:
     - assets/icon/app_icon.png
     - assets/licenses/
+    - assets/annotations/
   fonts:
     - family: SeoulNamsan
       fonts:

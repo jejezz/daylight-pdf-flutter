@@ -23,6 +23,10 @@ class UnderlineSpec extends PdfAnnotationSpec {
 }
 
 /// 스티커 메모(팝업 노트). [x], [y]는 아이콘 왼쪽 아래 위치.
+///
+/// [iconSvg]를 주면 그 SVG를 저장한 PDF 안의 메모 모양으로 넣어, 다른 뷰어에서도 같은 아이콘으로 보인다
+/// (`svgToAppearance` 참고, 단색 도형 위주·그라디언트 근사). 주지 않거나 변환할 수 없으면 뷰어의 기본 아이콘이 쓰인다.
+/// SVG 안의 `currentColor`는 [color]로 칠해진다.
 class NoteSpec extends PdfAnnotationSpec {
   const NoteSpec({
     required super.pageIndex,
@@ -30,10 +34,16 @@ class NoteSpec extends PdfAnnotationSpec {
     required this.x,
     required this.y,
     required this.text,
+    this.iconSvg,
   });
+
+  /// 메모 아이콘의 한 변 (pt).
+  static const iconSize = 24.0;
+
   final double x;
   final double y;
   final String text;
+  final String? iconSvg;
 }
 
 /// 손글씨. [strokes]마다 이어진 선 하나.

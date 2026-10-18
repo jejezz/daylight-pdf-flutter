@@ -150,4 +150,119 @@ void main() {
 
     File('${Directory.systemTemp.path}/daylight_pdf_annot_multiply.pdf').writeAsBytesSync(await document.encodePdf());
   });
+
+  group('note icon appearance', () {
+    late Directory dir;
+    late PdfDocument document;
+
+    setUp(() async {
+      await pdfrxFlutterInitialize();
+      dir = Directory.systemTemp.createTempSync('daylight_pdf_icon');
+      File('${dir.path}/b.png')
+          .writeAsBytesSync(img.encodePng(img.Image(width: 400, height: 300)..clear(img.ColorRgb8(255, 255, 255))));
+      await ImageToPdf.convert(['${dir.path}/b.png'], '${dir.path}/base.pdf');
+      document = await PdfDocument.openFile('${dir.path}/base.pdf');
+    });
+    tearDown(() {
+      document.dispose();
+      dir.deleteSync(recursive: true);
+    });
+
+    /// 저장하고 다시 열어 [scale]배로 그린 픽셀 읽기 (페이지 좌표 pt → 화면, y는 아래에서 위로).
+    Future<({PdfDocument saved, (int, int, int) Function(double x, double y) at})> saveAndRender(int scale) async {
+      final path = '${dir.path}/saved.pdf';
+      File(path).writeAsBytesSync(await document.encodePdf());
+      final saved = await PdfDocument.openFile(path);
+      addTearDown(saved.dispose);
+      final image = (await saved.pages.first.render(
+        fullWidth: 400.0 * scale,
+        fullHeight: 300.0 * scale,
+        backgroundColor: 0xFFFFFFFF,
+      ))!;
+      addTearDown(image.dispose);
+      (int, int, int) at(double x, double y) {
+        final px = (x * scale).round(), py = ((300 - y) * scale).round();
+        final i = (py * image.width + px) * 4;
+        return (image.pixels[i + 2], image.pixels[i + 1], image.pixels[i]); // R, G, B
+      }
+
+      return (saved: saved, at: at);
+    }
+
+    testWidgets('a custom SVG becomes the appearance of the note and survives save and reopen', (tester) async {
+      await PdfiumAnnotations.add(document, [
+        const NoteSpec(
+          pageIndex: 0,
+          color: 0xFFFFEB3B,
+          x: 100,
+          y: 100,
+          text: '아이콘 있는 메모',
+          iconSvg:
+              '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+              '<rect width="24" height="24" fill="#33b34d"/><rect x="6" y="6" width="12" height="12" fill="#ffffff"/></svg>',
+        ),
+      ]);
+      final r = await saveAndRender(4);
+      expect(r.at(102, 122), (51, 179, 77), reason: 'the corner of the icon is its green square');
+      expect(r.at(112, 112), (255, 255, 255), reason: 'the middle is the white inner square');
+      expect(r.at(200, 200), (255, 255, 255), reason: 'nothing is drawn outside the note');
+
+      final notes = await PdfiumAnnotations.read(r.saved);
+      expect(notes.single.subtype, 1, reason: 'it is still a standard text (note) annotation');
+      expect(notes.single.contents, '아이콘 있는 메모');
+      expect(
+        [notes.single.rect.left, notes.single.rect.bottom, notes.single.rect.right, notes.single.rect.top],
+        [100, 100, 124, 124],
+      );
+    });
+
+    testWidgets('the bundled sticker icon draws its paper and outline in the right places', (tester) async {
+      final svg = File('assets/annotations/note_icon.svg').readAsStringSync();
+      await PdfiumAnnotations.add(document, [
+        NoteSpec(pageIndex: 0, color: 0xFFFFEB3B, x: 50, y: 150, text: '스티커 메모', iconSvg: svg),
+      ]);
+      final r = await saveAndRender(8);
+      // 다른 뷰어(미리보기 등)로 열어 볼 수 있게 시스템 임시 폴더에도 남긴다.
+      File('${dir.path}/saved.pdf').copySync('${Directory.systemTemp.path}/daylight_pdf_note_icon.pdf');
+      // 100x100 아이콘이 (50,150)~(74,174) 24pt에 들어간다: 배율 0.24, 아이콘 (vx, vy) → 페이지 (50+0.24vx, 174-0.24vy)
+      (double, double) page(double vx, double vy) => (50 + 0.24 * vx, 174 - 0.24 * vy);
+      bool near((int, int, int) c, int r, int g, int b) =>
+          (c.$1 - r).abs() < 12 && (c.$2 - g).abs() < 12 && (c.$3 - b).abs() < 12;
+
+      final paper = page(50, 58);
+      expect(
+        near(r.at(paper.$1, paper.$2), 255, 227, 133),
+        isTrue,
+        reason: 'paper #ffe385 at ${r.at(paper.$1, paper.$2)}',
+      );
+      final outline = page(15.5, 50); // 왼쪽 남색 테두리 (x 14~17)
+      expect(
+        near(r.at(outline.$1, outline.$2), 64, 57, 110),
+        isTrue,
+        reason: 'outline #40396e at ${r.at(outline.$1, outline.$2)}',
+      );
+      final line = page(50, 28); // 첫째 주황 글줄
+      expect(near(r.at(line.$1, line.$2), 249, 184, 79), isTrue, reason: 'line #f9b84f at ${r.at(line.$1, line.$2)}');
+      expect(r.at(200, 100), (255, 255, 255), reason: 'nothing outside the note');
+    });
+
+    testWidgets('an SVG that cannot be converted still creates the note (the viewer shows its own icon)', (
+      tester,
+    ) async {
+      await PdfiumAnnotations.add(document, [
+        const NoteSpec(pageIndex: 0, color: 0xFFFFEB3B, x: 10, y: 10, text: '그래도 메모', iconSvg: '<svg'),
+        const NoteSpec(
+          pageIndex: 0,
+          color: 0xFFFFEB3B,
+          x: 50,
+          y: 10,
+          text: '그릴 게 없는 SVG',
+          iconSvg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><text>x</text></svg>',
+        ),
+      ]);
+      final notes = await PdfiumAnnotations.read(document);
+      expect(notes.map((n) => n.contents), ['그래도 메모', '그릴 게 없는 SVG']);
+      expect(notes.every((n) => n.subtype == 1), isTrue);
+    });
+  });
 }

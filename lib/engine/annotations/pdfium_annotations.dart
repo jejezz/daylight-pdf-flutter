@@ -6,6 +6,7 @@ import 'package:pdfium_dart/pdfium_dart.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 import 'annotation_specs.dart';
+import 'svg_appearance.dart';
 
 /// PDFium 주석 API(FFI)로 열린 문서에 주석을 쓰고 읽는다. 문서는 pdfrx의 `useNativeDocumentHandle`로 빌려 쓰므로
 /// 저장은 평소처럼 `encodePdf()`면 된다 (PDFium이 같은 메모리 문서를 저장한다).
@@ -133,9 +134,15 @@ abstract final class PdfiumAnnotations {
           for (final box in boxes) {
             _appendQuad(pdfium, annot, box);
           }
-        case NoteSpec(:final x, :final y, :final text):
-          _setRect(pdfium, annot, (left: x, bottom: y, right: x + 24, top: y + 24));
+        case NoteSpec(:final x, :final y, :final text, :final iconSvg):
+          final box = (left: x, bottom: y, right: x + NoteSpec.iconSize, top: y + NoteSpec.iconSize);
+          _setRect(pdfium, annot, box);
           _setString(pdfium, annot, 'Contents', text);
+          if (iconSvg != null) {
+            // 변환할 수 없는 SVG면 외형을 넣지 않아 뷰어의 기본 메모 아이콘이 쓰인다 (메모는 만들어진다).
+            final appearance = svgToAppearance(iconSvg, rect: box, currentColor: spec.color);
+            if (appearance != null) _setAppearance(pdfium, annot, appearance);
+          }
         case InkSpec(:final strokes, :final width):
           final box = _union([
             for (final s in strokes)
@@ -240,6 +247,20 @@ abstract final class PdfiumAnnotations {
       }
     } finally {
       calloc.free(nativeKey);
+    }
+  }
+
+  /// 주석의 보통(normal) 외형을 [operators](PDF 그리기 명령)로 정한다. 좌표는 페이지 기준 절대 좌표다
+  /// (실험으로 확인: 영역 기준 상대 좌표는 영역이 아니라 페이지 원점에 그려진다).
+  static void _setAppearance(PDFium pdfium, FPDF_ANNOTATION annot, String operators) {
+    final wide = calloc<FPDF_WCHAR>(operators.length + 1);
+    try {
+      for (var i = 0; i < operators.length; i++) {
+        wide[i] = operators.codeUnitAt(i);
+      }
+      _check(pdfium.FPDFAnnot_SetAP(annot, 0, wide), 'SetAP'); // 0 = normal
+    } finally {
+      calloc.free(wide);
     }
   }
 

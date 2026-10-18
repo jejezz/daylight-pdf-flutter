@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show LogicalKeyboardKey;
+import 'package:flutter/services.dart' show LogicalKeyboardKey, rootBundle;
 import 'package:path/path.dart' as p;
 import 'package:pdfrx/pdfrx.dart';
 
@@ -43,9 +43,26 @@ class _ViewerScreenState extends State<ViewerScreen> {
   bool _showList = false;
   bool _allowPop = false;
 
+  /// 새 메모에 넣을 아이콘 SVG (PDF 안의 메모 모양이 된다). 읽기 전이거나 실패하면 null → 뷰어 기본 아이콘.
+  String? _noteIconSvg;
+
   String get _name => p.basename(widget.path);
 
   PdfDocument? get _document => _controller.isReady ? _controller.document : null;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNoteIcon();
+  }
+
+  Future<void> _loadNoteIcon() async {
+    try {
+      _noteIconSvg = await rootBundle.loadString('assets/annotations/note_icon.svg');
+    } on Object {
+      _noteIconSvg = null; // 아이콘을 못 읽어도 메모는 달 수 있다 (뷰어 기본 아이콘)
+    }
+  }
 
   @override
   void dispose() {
@@ -120,8 +137,9 @@ class _ViewerScreenState extends State<ViewerScreen> {
         pageIndex: pageIndex,
         color: _annotations.color,
         x: at.x,
-        y: (at.y - 24).clamp(0, double.infinity),
+        y: (at.y - NoteSpec.iconSize).clamp(0, double.infinity),
         text: text,
+        iconSvg: _noteIconSvg,
       ),
     ]);
   }

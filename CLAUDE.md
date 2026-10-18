@@ -117,3 +117,18 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
   (`triggerMode: manual`), 누르기는 `PdfOverlayInteractionRegion`으로 받는다.
 - 뷰어는 더블탭과 구분하려고 누른 뒤 약 0.3초 기다린다(프레임 없는 타이머라 테스트에서는 `pump(500ms)`가 필요하다).
 - 메모를 고치는 일(`editNote`)은 실행 취소 기록에 넣지 않는다.
+
+## 메모 아이콘 (`assets/annotations/note_icon.svg`)
+
+새 메모는 이 SVG를 **저장하는 PDF 안의 메모 모양(appearance)** 으로 넣는다. 그래서 다른 뷰어(PDFium 계열, macOS PDFKit/미리보기)에서도
+같은 아이콘으로 보이고, 주석 종류는 표준 "메모(Text)"라서 다른 뷰어의 메모 동작도 그대로다. 이미 만든 옛 메모는 그대로(뷰어 기본 아이콘).
+
+- **바꾸는 법**: 같은 이름으로 SVG를 교체하고 `flutter test test/svg_appearance_test.dart`로 확인한다(번들 아이콘 시험이 색·위치를 점검).
+- **규격**: 정사각형 `viewBox`(예: 100×100, 24×24), 배경 투명. PDF에서는 **24×24pt**로 그려진다. 변환은 `svgToAppearance`.
+- **쓸 수 있는 것**: `path`(M L H V C S Q T A Z), `rect`, `circle`, `ellipse`, `line`, `polyline`, `polygon`, `g`, `transform`,
+  단색 `fill`/`stroke`, `fill-rule`, `stroke-width/linecap/linejoin`. 선형 그라디언트는 도형으로 잘라 띠(최대 24개)로 그려 보존한다.
+- **근사하는 것**: 방사형 그라디언트는 평균색 단색, 투명도(`opacity`)는 흰 바탕과 섞은 단색.
+- **무시하는 것**: 글자, `<image>`, `<use>`, 클리핑·마스크·필터, 점선. 이것만으로 된 SVG나 깨진 SVG는 메모가 뷰어 기본 아이콘으로 만들어진다.
+- 아이콘의 색은 고정이라 팔레트에서 고른 색은 모양에 반영되지 않는다. 팔레트 색을 따르게 하려면 SVG의 그 부분을 `fill="currentColor"`로 쓴다.
+- PDFium `FPDFAnnot_SetAP`의 좌표는 **페이지 기준 절대 좌표**다(영역 기준 상대 좌표는 페이지 원점에 그려진다 — 실험으로 확인).
+- 이미지(PNG)를 쓰려면 스탬프 주석(`FPDFAnnot_AppendObject`는 스탬프·잉크만 지원)이 되어 다른 뷰어에서 메모 동작을 잃으므로 쓰지 않았다.
