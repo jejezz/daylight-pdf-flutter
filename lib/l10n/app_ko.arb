@@ -463,5 +463,50 @@
         "type": "int"
       }
     }
+  },
+  "viewerSearchTip": "검색 ({shortcut})",
+  "searchHint": "PDF 안에서 찾기",
+  "searchNoResults": "찾지 못했어요",
+  "searchCount": "{current} / {total}",
+  "searchPrev": "이전 결과",
+  "searchNext": "다음 결과",
+  "searchClose": "검색 닫기",
+  "searchSearching": "찾는 중…",
+  "sidebarPages": "쪽",
+  "sidebarOutline": "목차",
+  "viewerFit": "보기 맞춤",
+  "viewerFitWidth": "너비에 맞춤",
+  "viewerFitPage": "쪽에 맞춤",
+  "viewerActualSize": "실제 크기 (100%)",
+  "passwordTitle": "암호가 필요해요",
+  "passwordBody": "{name}은(는) 암호로 보호되어 있어요.",
+  "passwordWrong": "암호가 맞지 않아요. 다시 입력해 주세요.",
+  "passwordHint": "암호",
+  "passwordShow": "암호 보기",
+  "passwordHide": "암호 숨기기",
+  "passwordOpen": "열기",
+  "@viewerSearchTip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "@searchCount": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@passwordBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

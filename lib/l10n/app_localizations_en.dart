@@ -732,4 +732,73 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get printGrayscaleHint =>
       'Pages are turned into grey images, so text becomes an image too. This is slower and the job can be larger.';
+
+  @override
+  String viewerSearchTip(String shortcut) {
+    return 'Search ($shortcut)';
+  }
+
+  @override
+  String get searchHint => 'Find in this PDF';
+
+  @override
+  String get searchNoResults => 'No results';
+
+  @override
+  String searchCount(int current, int total) {
+    return '$current / $total';
+  }
+
+  @override
+  String get searchPrev => 'Previous result';
+
+  @override
+  String get searchNext => 'Next result';
+
+  @override
+  String get searchClose => 'Close search';
+
+  @override
+  String get searchSearching => 'Searching…';
+
+  @override
+  String get sidebarPages => 'Pages';
+
+  @override
+  String get sidebarOutline => 'Outline';
+
+  @override
+  String get viewerFit => 'Fit';
+
+  @override
+  String get viewerFitWidth => 'Fit width';
+
+  @override
+  String get viewerFitPage => 'Fit page';
+
+  @override
+  String get viewerActualSize => 'Actual size (100%)';
+
+  @override
+  String get passwordTitle => 'Password required';
+
+  @override
+  String passwordBody(String name) {
+    return '$name is protected by a password.';
+  }
+
+  @override
+  String get passwordWrong => 'That password is not correct. Try again.';
+
+  @override
+  String get passwordHint => 'Password';
+
+  @override
+  String get passwordShow => 'Show password';
+
+  @override
+  String get passwordHide => 'Hide password';
+
+  @override
+  String get passwordOpen => 'Open';
 }

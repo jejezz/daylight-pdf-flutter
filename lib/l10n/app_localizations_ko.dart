@@ -726,4 +726,73 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get printGrayscaleHint =>
       '쪽을 회색 이미지로 바꿔 찍어서 글자도 이미지가 돼요. 오래 걸리고 파일이 커질 수 있어요.';
+
+  @override
+  String viewerSearchTip(String shortcut) {
+    return '검색 ($shortcut)';
+  }
+
+  @override
+  String get searchHint => 'PDF 안에서 찾기';
+
+  @override
+  String get searchNoResults => '찾지 못했어요';
+
+  @override
+  String searchCount(int current, int total) {
+    return '$current / $total';
+  }
+
+  @override
+  String get searchPrev => '이전 결과';
+
+  @override
+  String get searchNext => '다음 결과';
+
+  @override
+  String get searchClose => '검색 닫기';
+
+  @override
+  String get searchSearching => '찾는 중…';
+
+  @override
+  String get sidebarPages => '쪽';
+
+  @override
+  String get sidebarOutline => '목차';
+
+  @override
+  String get viewerFit => '보기 맞춤';
+
+  @override
+  String get viewerFitWidth => '너비에 맞춤';
+
+  @override
+  String get viewerFitPage => '쪽에 맞춤';
+
+  @override
+  String get viewerActualSize => '실제 크기 (100%)';
+
+  @override
+  String get passwordTitle => '암호가 필요해요';
+
+  @override
+  String passwordBody(String name) {
+    return '$name은(는) 암호로 보호되어 있어요.';
+  }
+
+  @override
+  String get passwordWrong => '암호가 맞지 않아요. 다시 입력해 주세요.';
+
+  @override
+  String get passwordHint => '암호';
+
+  @override
+  String get passwordShow => '암호 보기';
+
+  @override
+  String get passwordHide => '암호 숨기기';
+
+  @override
+  String get passwordOpen => '열기';
 }

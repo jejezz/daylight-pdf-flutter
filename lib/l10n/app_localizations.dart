@@ -1387,6 +1387,132 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'쪽을 회색 이미지로 바꿔 찍어서 글자도 이미지가 돼요. 오래 걸리고 파일이 커질 수 있어요.'**
   String get printGrayscaleHint;
+
+  /// No description provided for @viewerSearchTip.
+  ///
+  /// In ko, this message translates to:
+  /// **'검색 ({shortcut})'**
+  String viewerSearchTip(String shortcut);
+
+  /// No description provided for @searchHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF 안에서 찾기'**
+  String get searchHint;
+
+  /// No description provided for @searchNoResults.
+  ///
+  /// In ko, this message translates to:
+  /// **'찾지 못했어요'**
+  String get searchNoResults;
+
+  /// No description provided for @searchCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'{current} / {total}'**
+  String searchCount(int current, int total);
+
+  /// No description provided for @searchPrev.
+  ///
+  /// In ko, this message translates to:
+  /// **'이전 결과'**
+  String get searchPrev;
+
+  /// No description provided for @searchNext.
+  ///
+  /// In ko, this message translates to:
+  /// **'다음 결과'**
+  String get searchNext;
+
+  /// No description provided for @searchClose.
+  ///
+  /// In ko, this message translates to:
+  /// **'검색 닫기'**
+  String get searchClose;
+
+  /// No description provided for @searchSearching.
+  ///
+  /// In ko, this message translates to:
+  /// **'찾는 중…'**
+  String get searchSearching;
+
+  /// No description provided for @sidebarPages.
+  ///
+  /// In ko, this message translates to:
+  /// **'쪽'**
+  String get sidebarPages;
+
+  /// No description provided for @sidebarOutline.
+  ///
+  /// In ko, this message translates to:
+  /// **'목차'**
+  String get sidebarOutline;
+
+  /// No description provided for @viewerFit.
+  ///
+  /// In ko, this message translates to:
+  /// **'보기 맞춤'**
+  String get viewerFit;
+
+  /// No description provided for @viewerFitWidth.
+  ///
+  /// In ko, this message translates to:
+  /// **'너비에 맞춤'**
+  String get viewerFitWidth;
+
+  /// No description provided for @viewerFitPage.
+  ///
+  /// In ko, this message translates to:
+  /// **'쪽에 맞춤'**
+  String get viewerFitPage;
+
+  /// No description provided for @viewerActualSize.
+  ///
+  /// In ko, this message translates to:
+  /// **'실제 크기 (100%)'**
+  String get viewerActualSize;
+
+  /// No description provided for @passwordTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'암호가 필요해요'**
+  String get passwordTitle;
+
+  /// No description provided for @passwordBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name}은(는) 암호로 보호되어 있어요.'**
+  String passwordBody(String name);
+
+  /// No description provided for @passwordWrong.
+  ///
+  /// In ko, this message translates to:
+  /// **'암호가 맞지 않아요. 다시 입력해 주세요.'**
+  String get passwordWrong;
+
+  /// No description provided for @passwordHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'암호'**
+  String get passwordHint;
+
+  /// No description provided for @passwordShow.
+  ///
+  /// In ko, this message translates to:
+  /// **'암호 보기'**
+  String get passwordShow;
+
+  /// No description provided for @passwordHide.
+  ///
+  /// In ko, this message translates to:
+  /// **'암호 숨기기'**
+  String get passwordHide;
+
+  /// No description provided for @passwordOpen.
+  ///
+  /// In ko, this message translates to:
+  /// **'열기'**
+  String get passwordOpen;
 }
 
 class _AppLocalizationsDelegate

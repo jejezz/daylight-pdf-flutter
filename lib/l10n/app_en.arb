@@ -446,5 +446,50 @@
         "type": "int"
       }
     }
+  },
+  "viewerSearchTip": "Search ({shortcut})",
+  "searchHint": "Find in this PDF",
+  "searchNoResults": "No results",
+  "searchCount": "{current} / {total}",
+  "searchPrev": "Previous result",
+  "searchNext": "Next result",
+  "searchClose": "Close search",
+  "searchSearching": "Searching…",
+  "sidebarPages": "Pages",
+  "sidebarOutline": "Outline",
+  "viewerFit": "Fit",
+  "viewerFitWidth": "Fit width",
+  "viewerFitPage": "Fit page",
+  "viewerActualSize": "Actual size (100%)",
+  "passwordTitle": "Password required",
+  "passwordBody": "{name} is protected by a password.",
+  "passwordWrong": "That password is not correct. Try again.",
+  "passwordHint": "Password",
+  "passwordShow": "Show password",
+  "passwordHide": "Hide password",
+  "passwordOpen": "Open",
+  "@viewerSearchTip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "@searchCount": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@passwordBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

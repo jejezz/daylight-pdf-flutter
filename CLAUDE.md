@@ -65,6 +65,20 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
 
 규칙: 좌표는 PDF 사용자 공간(원점 왼쪽 아래, pt). 색은 0xAARRGGBB이고 알파는 불투명도가 된다.
 
+## 보기 기능 (`lib/viewer/`)
+
+- **글자 검색(⌘F / Ctrl+F)**: `ViewerSearchBar`가 pdfrx `PdfTextSearcher`를 쓴다. 찾기는 입력 0.5초 뒤 시작, Enter/Shift+Enter(또는 단추)로 이동, Esc로 닫는다.
+  함정: `PdfTextSearcher`는 **문서가 열린 뒤에야 만들 수 있고**(`onViewerReady`에서 만든다), 결과 사이를 옮긴 뒤에는 듣는 쪽에 알리지 않으므로
+  "3 / 12" 표시는 우리가 `setState`로 다시 그린다. 강조는 `pagePaintCallbacks`.
+- **목차(북마크)**: `document.loadOutline()` → 사이드바 "쪽 / 목차" 전환(목차가 있을 때만), `OutlinePanel`(펼침 트리), 누르면 `goToDest`.
+  사이드바 썸네일은 본문과 **같은 문서**를 쓴다(따로 열면 암호 PDF는 암호를 두 번 묻고 주석도 안 보인다).
+- **암호 PDF**: `PdfViewer.file(passwordProvider: _askPassword)` → `showPasswordDialog`. pdfrx는 null(취소)이나 맞는 암호가 나올 때까지 되풀이해 부르므로
+  두 번째부터 "암호가 맞지 않아요" 안내를 붙인다. 취소하면 "암호로 보호돼 있어요" 문구를 보인다. 페이지 도구(합치기 등)는 아직 암호 PDF를 열지 못하고 안내만 한다.
+- **보기 맞춤**: 확대/축소 옆 메뉴 — 너비에 맞춤(`calcMatrixFitWidthForPage`), 쪽에 맞춤(`calcMatrixForFit`), 실제 크기 100%(`calcMatrixFor(zoom: 1)`).
+  쪽 이어 보기만 지원한다(한 쪽씩/두 쪽 보기는 pdfrx `layoutPages`를 직접 짜야 해서 하지 않았다).
+- 시험(`integration_test/viewer_features_test.dart`): 검색 개수·이동·Esc, 목차 이동, 암호(틀림→맞음, RC4 40비트 PDF를 시험 안에서 직접 만든다), 맞춤 크기.
+  통합 시험 요령: 대화상자와 pdfrx 비동기 작업이 섞이면 프레임(`pump`)과 실제 시간(`runAsync`)을 번갈아 기다려야 하고, 입력칸은 `tap`으로 초점을 준 뒤 `enterText`.
+
 ## 주석 UI (`lib/viewer/`) — 6단계
 
 - 형광펜·밑줄은 "글자를 마우스로 고르고 도구 모음 버튼"(`lineBoxes`가 선택한 글자를 줄별 상자로 바꾼다).

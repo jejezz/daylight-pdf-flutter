@@ -24,6 +24,9 @@ import 'annotation_state.dart';
 import 'annotation_toolbar.dart';
 import 'draw_layer.dart';
 import 'note_dialog.dart';
+import 'outline_panel.dart';
+import 'password_dialog.dart';
+import 'search_bar.dart';
 import 'note_hit.dart';
 import 'text_boxes.dart';
 
@@ -40,8 +43,15 @@ class ViewerScreen extends StatefulWidget {
 
 class _ViewerScreenState extends State<ViewerScreen> {
   final _controller = PdfViewerController();
+
+  /// 글자 찾기. 문서가 열린 뒤에야 만들 수 있다 (`onViewerReady`).
+  PdfTextSearcher? _searcher;
   final _annotations = AnnotationState();
   bool _showThumbnails = true;
+  bool _showSearch = false;
+  _Sidebar _sidebar = _Sidebar.pages;
+  List<PdfOutlineNode> _outline = const [];
+  int _passwordAttempts = 0;
   bool _showList = false;
   bool _allowPop = false;
 
@@ -68,8 +78,48 @@ class _ViewerScreenState extends State<ViewerScreen> {
 
   @override
   void dispose() {
+    _searcher?.dispose();
     _annotations.dispose();
     super.dispose();
+  }
+
+  /// 암호로 보호된 PDF의 암호를 묻는다. pdfrx는 null(취소)이나 맞는 암호가 나올 때까지 이 함수를 되풀이해서 부른다.
+  Future<String?> _askPassword() async {
+    if (!mounted) return null;
+    return showPasswordDialog(context, fileName: _name, wrong: _passwordAttempts++ > 0);
+  }
+
+  Future<void> _loadOutline(PdfDocument document) async {
+    try {
+      final nodes = await document.loadOutline();
+      if (mounted) setState(() => _outline = nodes);
+    } on Object {
+      // 목차를 못 읽어도 문서는 볼 수 있다
+    }
+  }
+
+  void _toggleSearch() {
+    if (_searcher == null) return; // 문서가 아직 안 열렸다
+    setState(() => _showSearch = !_showSearch);
+    if (!_showSearch) _searcher?.resetTextSearch();
+  }
+
+  /// 보기 맞춤: 너비에 맞춤, 쪽에 맞춤, 실제 크기.
+  Future<void> _fit(_Fit fit) async {
+    if (!_controller.isReady) return;
+    final page = _controller.pageNumber ?? 1;
+    switch (fit) {
+      case _Fit.width:
+        final m = _controller.calcMatrixFitWidthForPage(pageNumber: page);
+        if (m != null) await _controller.goTo(m);
+      case _Fit.page:
+        final m = _controller.calcMatrixForFit(pageNumber: page);
+        if (m != null) await _controller.goTo(m);
+      case _Fit.actual:
+        final view = _controller.viewSize;
+        final center = _controller.localToDocument(Offset(view.width / 2, view.height / 2));
+        await _controller.goTo(_controller.calcMatrixFor(center, zoom: 1.0));
+    }
   }
 
   /// 그 쪽의 위에 맞춰 이동한다. 기본값은 마지막 쪽만 아래에 맞춰(pdfrx `pageAnchorEnd`) 3쪽짜리 문서의 3쪽을 누르면
@@ -305,6 +355,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
           bindings: {
             SingleActivator(LogicalKeyboardKey.keyZ, meta: _isMac, control: !_isMac): _undo,
             SingleActivator(LogicalKeyboardKey.keyP, meta: _isMac, control: !_isMac): _print,
+            SingleActivator(LogicalKeyboardKey.keyF, meta: _isMac, control: !_isMac): _toggleSearch,
           },
           child: Focus(
             autofocus: true,
@@ -321,7 +372,16 @@ class _ViewerScreenState extends State<ViewerScreen> {
                     },
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  _ZoomButtons(controller: _controller, zoomIn: l10n.viewerZoomIn, zoomOut: l10n.viewerZoomOut),
+                  _ZoomButtons(
+                    controller: _controller,
+                    zoomIn: l10n.viewerZoomIn,
+                    zoomOut: l10n.viewerZoomOut,
+                    fitLabel: l10n.viewerFit,
+                    fitWidth: l10n.viewerFitWidth,
+                    fitPage: l10n.viewerFitPage,
+                    actualSize: l10n.viewerActualSize,
+                    onFit: _fit,
+                  ),
                   const SizedBox(width: AppSpacing.md),
                   if (_annotations.dirty) ...[
                     StatusPill(label: l10n.annotUnsavedShort, tone: PillTone.warning),
@@ -333,6 +393,13 @@ class _ViewerScreenState extends State<ViewerScreen> {
                     label: Text(l10n.annotSave),
                   ),
                   const SizedBox(width: AppSpacing.xs),
+                  IconButton(
+                    tooltip: l10n.viewerSearchTip(_isMac ? '⌘F' : 'Ctrl+F'),
+                    isSelected: _showSearch,
+                    icon: const Icon(Icons.search_rounded),
+                    selectedIcon: const Icon(Icons.search_rounded),
+                    onPressed: _toggleSearch,
+                  ),
                   IconButton(
                     tooltip: l10n.printTip(_isMac ? '⌘P' : 'Ctrl+P'),
                     icon: const Icon(Icons.print_outlined),
@@ -371,6 +438,8 @@ class _ViewerScreenState extends State<ViewerScreen> {
                           undoShortcut: _isMac ? '⌘Z' : 'Ctrl+Z',
                         ),
                         const Divider(height: 1),
+                        if (_showSearch && _searcher != null)
+                          ViewerSearchBar(searcher: _searcher!, onClose: _toggleSearch),
                       ],
                     ),
                   ),
@@ -384,6 +453,27 @@ class _ViewerScreenState extends State<ViewerScreen> {
     );
   }
 
+  /// 쪽 썸네일 목록. 보기 본문과 같은 문서를 쓴다 (따로 열면 암호 PDF는 암호를 두 번 묻고 주석도 안 보인다).
+  Widget _thumbnails() => ListenableBuilder(
+    listenable: _controller,
+    builder: (context, _) {
+      if (!_controller.isReady) return const SizedBox.shrink();
+      final document = _controller.document;
+      final current = _controller.pageNumber;
+      return ListView.separated(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        itemCount: document.pages.length,
+        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
+        itemBuilder: (context, index) => _Thumbnail(
+          document: document,
+          pageNumber: index + 1,
+          selected: current == index + 1,
+          onTap: () => _goToPage(index + 1),
+        ),
+      );
+    },
+  );
+
   Widget _content(AppLocalizations l10n) {
     final scheme = Theme.of(context).colorScheme;
     final dark = scheme.brightness == Brightness.dark;
@@ -391,33 +481,33 @@ class _ViewerScreenState extends State<ViewerScreen> {
       children: [
         if (_showThumbnails)
           Container(
-            width: 148,
+            width: _sidebar == _Sidebar.outline ? 248 : 148,
             decoration: BoxDecoration(
               color: scheme.surface,
               border: Border(right: BorderSide(color: scheme.outlineVariant)),
             ),
-            child: PdfDocumentViewBuilder.file(
-              widget.path,
-              builder: (context, document) {
-                if (document == null) return const SizedBox.shrink();
-                return ListenableBuilder(
-                  listenable: _controller,
-                  builder: (context, _) {
-                    final current = _controller.isReady ? _controller.pageNumber : null;
-                    return ListView.separated(
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      itemCount: document.pages.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
-                      itemBuilder: (context, index) => _Thumbnail(
-                        document: document,
-                        pageNumber: index + 1,
-                        selected: current == index + 1,
-                        onTap: () => _goToPage(index + 1),
-                      ),
-                    );
-                  },
-                );
-              },
+            child: Column(
+              children: [
+                if (_outline.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.sm, AppSpacing.sm, 0),
+                    child: SegmentedButton<_Sidebar>(
+                      showSelectedIcon: false,
+                      style: const ButtonStyle(visualDensity: VisualDensity.compact),
+                      segments: [
+                        ButtonSegment(value: _Sidebar.pages, label: Text(l10n.sidebarPages)),
+                        ButtonSegment(value: _Sidebar.outline, label: Text(l10n.sidebarOutline)),
+                      ],
+                      selected: {_sidebar},
+                      onSelectionChanged: (v) => setState(() => _sidebar = v.first),
+                    ),
+                  ),
+                Expanded(
+                  child: _sidebar == _Sidebar.outline && _outline.isNotEmpty
+                      ? OutlinePanel(nodes: _outline, onTap: (node) => _controller.goToDest(node.dest))
+                      : _thumbnails(),
+                ),
+              ],
             ),
           ),
         Expanded(
@@ -426,6 +516,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
               PdfViewer.file(
                 widget.path,
                 controller: _controller,
+                passwordProvider: _askPassword,
                 params: PdfViewerParams(
                   backgroundColor: dark ? const Color(0xFF0F151C) : const Color(0xFFE8ECF2),
                   margin: 16,
@@ -437,8 +528,17 @@ class _ViewerScreenState extends State<ViewerScreen> {
                   // 그리는 도구가 켜져 있으면 끌기는 그리기에 쓰이므로 화면 끌기를 끈다 (휠 스크롤·확대는 그대로).
                   panEnabled: !_annotations.drawing,
                   pageOverlaysBuilder: (context, pageRect, page) => _noteHotspots(pageRect, page),
-                  onViewerReady: (document, controller) => _annotations.refresh(document),
-                  errorBannerBuilder: (context, error, stackTrace, documentRef) => Center(child: Text(l10n.openFailed)),
+                  pagePaintCallbacks: [
+                    (canvas, pageRect, page) => _searcher?.pageTextMatchPaintCallback(canvas, pageRect, page),
+                  ],
+                  onViewerReady: (document, controller) {
+                    _searcher ??= PdfTextSearcher(controller);
+                    _annotations.refresh(document);
+                    _loadOutline(document);
+                  },
+                  errorBannerBuilder: (context, error, stackTrace, documentRef) => Center(
+                    child: Text(error is PdfPasswordException ? l10n.errPasswordProtected(_name) : l10n.openFailed),
+                  ),
                 ),
               ),
               if (_annotations.drawing)
@@ -563,13 +663,31 @@ class _Thumbnail extends StatelessWidget {
   }
 }
 
-/// 확대/축소 묶음: 알약 하나 안에 단추 둘.
+enum _Sidebar { pages, outline }
+
+enum _Fit { width, page, actual }
+
+/// 확대/축소 묶음: 알약 하나 안에 단추 둘과 보기 맞춤 메뉴.
 class _ZoomButtons extends StatelessWidget {
-  const _ZoomButtons({required this.controller, required this.zoomIn, required this.zoomOut});
+  const _ZoomButtons({
+    required this.controller,
+    required this.zoomIn,
+    required this.zoomOut,
+    required this.fitLabel,
+    required this.fitWidth,
+    required this.fitPage,
+    required this.actualSize,
+    required this.onFit,
+  });
 
   final PdfViewerController controller;
   final String zoomIn;
   final String zoomOut;
+  final String fitLabel;
+  final String fitWidth;
+  final String fitPage;
+  final String actualSize;
+  final void Function(_Fit fit) onFit;
 
   @override
   Widget build(BuildContext context) {
@@ -593,6 +711,18 @@ class _ZoomButtons extends StatelessWidget {
             visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.add_rounded),
             onPressed: () => controller.isReady ? controller.zoomUp() : null,
+          ),
+          PopupMenuButton<_Fit>(
+            tooltip: fitLabel,
+            icon: const Icon(Icons.fit_screen_outlined),
+            iconSize: 20,
+            padding: EdgeInsets.zero,
+            onSelected: onFit,
+            itemBuilder: (_) => [
+              PopupMenuItem(value: _Fit.width, child: Text(fitWidth)),
+              PopupMenuItem(value: _Fit.page, child: Text(fitPage)),
+              PopupMenuItem(value: _Fit.actual, child: Text(actualSize)),
+            ],
           ),
         ],
       ),
