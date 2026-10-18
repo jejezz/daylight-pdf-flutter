@@ -85,22 +85,33 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
 ## 인쇄 (`lib/print/`)
 
 - 보기 화면의 인쇄 단추(⌘P / Ctrl+P) → `showPrintDialog`: 왼쪽에서 설정, 오른쪽에서 가공 결과 미리보기(앞 12쪽만), "인쇄 창 열기"가
-  `printing`의 `Printing.layoutPdf`로 **운영체제 인쇄 창**을 연다. 프린터·매수·양면·컬러·용지함은 그 창이 맡고, 앱은 PDF를 찍기 전에
-  가공하는 설정만 둔다: 범위(전체/현재 쪽/`1-3, 5, 8-`), 홀수·짝수, 거꾸로, 주석 포함 여부, 크기(맞춤/큰 쪽만 줄임/원래 크기),
-  여백, 용지, 쪽 방향에 맞춰 용지 돌리기. 열린 문서를 `encodePdf()`로 넘기므로 저장 안 한 주석도 찍힌다.
-- 가공은 `PrintProcessor.build`(PDFium FFI, 벡터 유지): 고른 쪽을 새 문서로 모으고(`pages =`는 저장할 때 모으므로 `encodePdf` 뒤 다시 열어서
-  손본다), 주석을 지우거나(`FPDFPage_RemoveAnnot`) 모양(AP)을 만들어 두고, `FPDFPage_TransFormWithClip`으로 내용을 배율+이동하고,
-  주석은 영역(Rect)·글자 사각형(QuadPoints)만 같은 행렬로 옮긴다. 쪽 회전(`/Rotate`)은 **그대로 둔다**(풀어서 내용에 녹이면 주석 모양이
-  따라 돌지 않는다). 쪽 상자는 용지 크기(90°/270°면 가로세로 바뀜). 배치 계산은 순수 함수 `placePage`(`test/print_layout_test.dart`).
-- **PDFium 함정 (실제 앱이 죽었다)**: PDFium의 주석 목록(`CPDF_AnnotList`)을 만드는 호출은 내용이 있는 주석마다 팝업을 만들며 글꼴을 찾는데,
-  글꼴 대체 콜백이 pdfrx 작업 스레드에만 등록돼 있어 **메인 스레드에서 부르면 "Cannot invoke native callback from a different
-  isolate"로 앱이 죽는다.** 해당: `FPDF_RenderPageBitmap`(주석 포함), `FPDFPage_TransformAnnots`. 그래서 모양을 만드는 그리기는
-  `PdfPage.render`(작업 스레드)로 하고, 주석은 `FPDFAnnot_*`(주석 하나씩)로만 만진다. 글자 있는 메모·형광펜 시험이 이를 지킨다.
-  또 `FPDFPage_Flatten`은 이 문서에서 빈 내용을 내서 쓰지 않고, `TransFormWithClip`의 자르기 상자는 행렬이 닿기 전 좌표(= 새 쪽 상자 좌표)로 준다.
-- 운영체제 창에서 용지를 바꾸면 `onLayout`이 새 크기로 다시 가공한다(`optionsForFormat`).
-- 미리보기 `PdfViewer`는 바뀔 때마다 새 키로 만든다(쓰던 뷰어의 문서를 바꾸면 pdfrx가 배치 도중 null 오류).
-- 시험한 것: 실제 PDFium으로 쪽 선택·용지·주석 포함 여부·여백·원래 크기·회전(픽셀 확인), 설정 창 구동, macOS 인쇄 창이 가공 결과를
-  미리 보여 주는 것. **못 시험한 것**: 실제 프린터 출력(이 맥에 프린터 없음), Windows·Linux 인쇄 창, 다른 뷰어에서 주석이 찍히는지.
+  `printing`의 `Printing.layoutPdf`로 **운영체제 인쇄 창**을 연다(사용자가 거기서 취소하면 설정 창은 남고, 인쇄·PDF 저장이 되면 닫힌다).
+  프린터·매수·양면·컬러·용지함은 그 창이 맡고, 앱은 PDF를 찍기 전에 가공하는 설정만 둔다. 열린 문서를 `encodePdf()`로 넘기므로
+  저장 안 한 주석도 찍힌다.
+- **1차 옵션**: 범위(전체/현재 쪽/`1-3, 5, 8-`), 홀수·짝수, 거꾸로, 주석 포함 여부, 크기(맞춤/큰 쪽만 줄임/원래 크기), 여백, 용지, 쪽 방향에 맞춰 용지 돌리기.
+  **2차 옵션**: 한 장에 2/4/6/9쪽 모으기(`planSheet`: 첫 쪽 모양에 칸이 가장 가까운 용지 방향을 고름), 소책자(`bookletOrder`: 접어 철하는
+  순서, 4의 배수로 빈 쪽), 쪽마다 테두리, 쪽 번호(원래 쪽 번호, 자리 4곳, "3 / 12" 선택), 워터마크 글자(한글 가능), 흑백 강제.
+- 가공은 `PrintProcessor.build`(PDFium FFI): ① 고른 쪽을 새 문서로 모은다(`pages =`는 저장할 때 모으므로 `encodePdf` 뒤 다시 연다)
+  ② 주석을 지우거나(`FPDFPage_RemoveAnnot`) 쪽 내용에 굽는다(`FPDFPage_Flatten(page, 0)`) ③ 쪽마다 용지(또는 모으기 칸)에 배율·여백대로
+  놓는다(`FPDFPage_TransFormWithClip`, 쪽 회전 `/Rotate`는 그대로 둔다. 배치 계산은 순수 함수 `placePage`) ④ 쪽 번호·워터마크·테두리를
+  `pdf` 패키지로 만든 겹침 PDF에서 폼 객체로 입힌다(`FPDF_NewXObjectFromPage`, 회전된 쪽은 `visibleToUser`로 되돌려 입힘)
+  ⑤ 모으기·소책자는 `FPDF_ImportNPagesToOne`(+ `FPDF_ImportPagesByIndex`, 저장은 `saveDocumentBytes`) ⑥ 흑백이면 쪽을 그려
+  회색 JPEG 쪽으로 바꾼다(`rasterizeToGray`, 인쇄 200dpi / 미리보기 96dpi). ⑥만 아니면 글자·그림은 벡터 그대로다.
+- **PDFium 함정 (실제 앱이 두 번 죽었다)**: PDFium은 글꼴이 필요할 때 시스템 글꼴 대체 콜백을 부르는데, 그 콜백은 pdfrx 작업 스레드(isolate)에만
+  등록돼 있어 **메인 스레드에서 글꼴을 읽게 되면 "Cannot invoke native callback from a different isolate"로 앱이 죽는다.** 안전한 것과 위험한 것:
+  - 위험: `FPDF_RenderPageBitmap`(주석 포함), `FPDFPage_TransformAnnots`(주석 목록을 만들며 내용 있는 주석마다 팝업+글꼴), PDFium으로 글자 넣기,
+    **pdfrx가 열지 않은 새 문서(예: `FPDF_ImportNPagesToOne` 결과)의 쪽을 `FPDF_LoadPage`** (쪽 안 폼에 글꼴 미포함 글자가 있으면 죽는다).
+  - 안전: pdfrx가 연 문서의 `FPDF_LoadPage`(작업 스레드가 글꼴을 이미 읽어 캐시됨), `FPDFAnnot_*`(주석 하나씩), `FPDFPage_Flatten`(그리기 뒤),
+    `FPDF_ImportNPagesToOne`·`FPDF_ImportPagesByIndex`·`FPDF_SaveAsCopy` 자체.
+  - 그래서: 주석 모양(AP)은 `PdfPage.render`(작업 스레드)로 만들고, 글자는 `pdf` 패키지 겹침으로 넣고, 모은 결과의 쪽은 열지 않는다.
+  시험은 글꼴 미포함 TrueType 글자가 든 PDF와 글자 있는 메모로 이를 지킨다(`print_extra_test`, `print_test`).
+- 그 밖의 함정: `FPDFPage_Flatten`의 인쇄 모양(1)은 인쇄 플래그 없는 주석을 건너뛴다 → 화면 모양(0)을 쓰고, 새 주석에도 인쇄 플래그(4)를 단다.
+  `TransFormWithClip`의 자르기 상자는 행렬이 닿기 전 좌표(= 새 쪽 상자 좌표)다. `ImportNPagesToOne`은 주석을 버리므로 먼저 구워야 한다.
+  한 채널 JPEG는 `pdf` 패키지가 색 공간을 잘못 읽어 빨갛게 나온다(채널 셋에 같은 값).
+- 운영체제 창에서 용지를 바꾸면 `onLayout`이 새 크기로 다시 가공한다(`optionsForFormat`). 미리보기 `PdfViewer`는 바뀔 때마다 새 키로 만든다.
+- 시험한 것: 실제 PDFium으로 쪽 선택·용지·주석·여백·크기·회전·모으기·소책자 순서·쪽 번호(회전한 쪽 포함)·워터마크·흑백(픽셀 확인), 설정 창 구동,
+  macOS 인쇄 창이 가공 결과를 미리 보여 주는 것. **못 시험한 것**: 실제 프린터 출력(이 맥에 프린터 없음), Windows·Linux 인쇄 창, 소책자를
+  실제 양면으로 접어 보는 것, 다른 뷰어에서 주석이 찍히는지.
 
 ## 화면 구성과 공통 위젯 (`lib/widgets/`)
 

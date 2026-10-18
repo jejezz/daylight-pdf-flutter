@@ -680,4 +680,56 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get printContinue => 'Open print window';
+
+  @override
+  String get printPerSheet => 'Pages per sheet';
+
+  @override
+  String printPerSheetValue(int n) {
+    return '$n';
+  }
+
+  @override
+  String get printBooklet => 'Booklet (fold and staple)';
+
+  @override
+  String get printBookletHint =>
+      'Print double-sided (flip on short edge) and fold in half. The page count is padded to a multiple of 4 with blank pages.';
+
+  @override
+  String get printSheetBorder => 'Draw a border around each page';
+
+  @override
+  String get printNumbers => 'Page numbers';
+
+  @override
+  String get printNumbersNone => 'None';
+
+  @override
+  String get printNumbersBottomCenter => 'Bottom centre';
+
+  @override
+  String get printNumbersBottomRight => 'Bottom right';
+
+  @override
+  String get printNumbersBottomLeft => 'Bottom left';
+
+  @override
+  String get printNumbersTopRight => 'Top right';
+
+  @override
+  String get printNumberTotal => 'Include the total (3 / 12)';
+
+  @override
+  String get printWatermark => 'Watermark text';
+
+  @override
+  String get printWatermarkHint => 'e.g. Copy, Confidential, DRAFT';
+
+  @override
+  String get printGrayscale => 'Force black and white';
+
+  @override
+  String get printGrayscaleHint =>
+      'Pages are turned into grey images, so text becomes an image too. This is slower and the job can be larger.';
 }

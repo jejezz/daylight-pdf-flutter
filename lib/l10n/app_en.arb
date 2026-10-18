@@ -423,5 +423,28 @@
         "type": "int"
       }
     }
+  },
+  "printPerSheet": "Pages per sheet",
+  "printPerSheetValue": "{n}",
+  "printBooklet": "Booklet (fold and staple)",
+  "printBookletHint": "Print double-sided (flip on short edge) and fold in half. The page count is padded to a multiple of 4 with blank pages.",
+  "printSheetBorder": "Draw a border around each page",
+  "printNumbers": "Page numbers",
+  "printNumbersNone": "None",
+  "printNumbersBottomCenter": "Bottom centre",
+  "printNumbersBottomRight": "Bottom right",
+  "printNumbersBottomLeft": "Bottom left",
+  "printNumbersTopRight": "Top right",
+  "printNumberTotal": "Include the total (3 / 12)",
+  "printWatermark": "Watermark text",
+  "printWatermarkHint": "e.g. Copy, Confidential, DRAFT",
+  "printGrayscale": "Force black and white",
+  "printGrayscaleHint": "Pages are turned into grey images, so text becomes an image too. This is slower and the job can be larger.",
+  "@printPerSheetValue": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   }
 }

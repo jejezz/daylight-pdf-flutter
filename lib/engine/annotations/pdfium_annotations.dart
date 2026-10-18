@@ -12,6 +12,7 @@ import 'svg_appearance.dart';
 /// 저장은 평소처럼 `encodePdf()`면 된다 (PDFium이 같은 메모리 문서를 저장한다).
 abstract final class PdfiumAnnotations {
   // PDFium FPDF_ANNOT_* 상수
+  static const _flagPrint = 4;
   static const _text = 1;
   static const _square = 5;
   static const _circle = 6;
@@ -126,6 +127,8 @@ abstract final class PdfiumAnnotations {
     final annot = pdfium.FPDFPage_CreateAnnot(page, subtype);
     if (annot == ffi.nullptr) throw StateError('PDFium cannot create annotation subtype $subtype');
     try {
+      // 인쇄 플래그(Print): 다른 뷰어·프린터 드라이버도 이 주석을 찍는다. 없으면 많은 곳에서 화면에만 보이고 인쇄에서 빠진다.
+      pdfium.FPDFAnnot_SetFlags(annot, _flagPrint);
       final a = (spec.color >> 24) & 0xFF, r = (spec.color >> 16) & 0xFF, g = (spec.color >> 8) & 0xFF;
       final b = spec.color & 0xFF;
       _check(pdfium.FPDFAnnot_SetColor(annot, FPDFANNOT_COLORTYPE.FPDFANNOT_COLORTYPE_Color, r, g, b, a), 'SetColor');

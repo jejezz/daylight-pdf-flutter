@@ -92,7 +92,7 @@ PageBox _clipInUserSpace(PageBox newBox, int rot, double m, double pw, double ph
   final lo = (x: m, y: m), hi = (x: pw - m, y: ph - m);
   final pts = <({double x, double y})>[];
   for (final c in [lo, hi, (x: lo.x, y: hi.y), (x: hi.x, y: lo.y)]) {
-    pts.add(_userFromVisible(newBox, rot, c.x, c.y));
+    pts.add(userFromVisible(newBox, rot, c.x, c.y));
   }
   return (
     left: pts.map((p) => p.x).reduce(math.min),
@@ -103,7 +103,7 @@ PageBox _clipInUserSpace(PageBox newBox, int rot, double m, double pw, double ph
 }
 
 /// [visiblePoint]의 역: 화면 좌표 (vx, vy)가 놓이는 쪽 좌표.
-({double x, double y}) _userFromVisible(PageBox box, int rot, double vx, double vy) {
+({double x, double y}) userFromVisible(PageBox box, int rot, double vx, double vy) {
   final w = box.right - box.left, h = box.top - box.bottom;
   final (u, v) = switch (rot) {
     90 => (w - vy, vx),
@@ -137,4 +137,13 @@ PageBox intersectBoxes(PageBox a, PageBox b) {
     right: math.max(l, math.min(a.right, b.right)),
     top: math.max(bt, math.min(a.top, b.top)),
   );
+}
+
+/// 눈에 보이는 쪽 좌표(왼쪽 아래 원점)를 쪽 상자 [box]·회전 [rotation]인 쪽의 쪽 좌표로 보내는 행렬.
+/// 눈에 보이는 크기로 만든 겹침(쪽 번호·워터마크)을 회전된 쪽에 입힐 때 쓴다.
+Matrix6 visibleToUser(PageBox box, int rotation) {
+  final rot = ((rotation % 360) + 360) % 360;
+  final o = userFromVisible(box, rot, 0, 0);
+  final ex = userFromVisible(box, rot, 1, 0), ey = userFromVisible(box, rot, 0, 1);
+  return (a: ex.x - o.x, b: ex.y - o.y, c: ey.x - o.x, d: ey.y - o.y, e: o.x, f: o.y);
 }

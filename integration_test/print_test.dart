@@ -181,13 +181,13 @@ void main() {
       }
       final out = await run(a4, from: annotated);
       expect(await sizes(out), ['595x842', '595x842', '842x595', '595x842']);
-      final check = await PdfDocument.openData(out as dynamic, sourceName: 'check');
-      try {
-        final read = await PdfiumAnnotations.read(check);
-        expect(read.where((a) => a.pageIndex == 1).length, 4);
-      } finally {
-        check.dispose();
-      }
+      // 주석은 쪽 내용에 구워져 있다: 손글씨(파란 선)가 보이는 자리에 그대로 찍힌다
+      final scale = 841.89 / 400, indent = (595.28 - 200 * scale) / 2;
+      expect(
+        near(await pixel(out, 1, indent + 100 * scale, 841.89 - 50 * scale), (0, 0, 255)),
+        isTrue,
+        reason: 'ink stroke printed at the right place',
+      );
       // 주석을 뺀 출력에는 주석이 없다
       final bare = await run(a4.copyWith(includeAnnotations: false), from: annotated);
       final bareDoc = await PdfDocument.openData(bare as dynamic, sourceName: 'bare');

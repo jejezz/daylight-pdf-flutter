@@ -168,4 +168,93 @@ void main() {
     expect(find.text('1쪽 인쇄'), findsNothing, reason: 'the dialog closes after handing over to the system print window');
     await settle(tester);
   });
+
+  testWidgets(
+    'N-up, booklet, page numbers, watermark and grayscale are chosen in the dialog and reach the system print',
+    (tester) async {
+      final bytes = await File(pdfPath).readAsBytes();
+      PrintOptions? got;
+      await pumpApp(
+        tester,
+        Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) => Dialog(
+                  child: SizedBox(
+                    width: 980,
+                    height: 640,
+                    child: PrintDialog(
+                      pdfBytes: bytes,
+                      pageCount: 5,
+                      currentPage: 1,
+                      jobName: 'test',
+                      openSystemPrint: (options, pdf, current, name) async {
+                        got = options;
+                        return true;
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pump();
+      await settle(tester);
+
+      // 설정 목록은 길어서 아래쪽 항목은 스크롤해야 만들어진다
+      final list = find.descendant(of: find.byType(ListView).first, matching: find.byType(Scrollable));
+      Future<void> show(String text) async {
+        await tester.scrollUntilVisible(find.text(text), 150, scrollable: list.first);
+        await tester.pump();
+      }
+
+      await show('4쪽');
+      await tester.tap(find.text('4쪽'));
+      await settle(tester);
+      await show('쪽마다 테두리 그리기');
+      await tester.tap(find.text('쪽마다 테두리 그리기'));
+      await settle(tester);
+
+      await show('소책자 (접어서 철하기)');
+      await tester.tap(find.text('소책자 (접어서 철하기)'));
+      await settle(tester);
+      expect(find.textContaining('4의 배수'), findsOneWidget, reason: 'booklet hint');
+      await tester.tap(find.text('소책자 (접어서 철하기)'));
+      await settle(tester);
+
+      await show('쪽 번호');
+      await tester.tap(find.byType(DropdownButton<PrintPageNumbers>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('아래 가운데').last);
+      await settle(tester);
+      await show('전체 쪽수와 함께 (3 / 12)');
+      await tester.tap(find.text('전체 쪽수와 함께 (3 / 12)'));
+      await settle(tester);
+
+      await show('워터마크 글자');
+      await tester.enterText(find.widgetWithText(TextField, '').last, '사본');
+      await settle(tester);
+      await show('흑백으로 확실히 찍기');
+      await tester.tap(find.text('흑백으로 확실히 찍기'));
+      await settle(tester);
+
+      await tester.tap(find.text('인쇄 창 열기'));
+      await tester.pumpAndSettle();
+      final o = got!;
+      expect(o.perSheet, 4);
+      expect(o.booklet, isFalse);
+      expect(o.sheetBorder, isTrue);
+      expect(o.pageNumbers, PrintPageNumbers.bottomCenter);
+      expect(o.pageNumberTotal, isTrue);
+      expect(o.watermark, '사본');
+      expect(o.grayscale, isTrue);
+      await settle(tester);
+    },
+  );
 }

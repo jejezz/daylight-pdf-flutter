@@ -674,4 +674,56 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get printContinue => '인쇄 창 열기';
+
+  @override
+  String get printPerSheet => '한 장에 모아 찍기';
+
+  @override
+  String printPerSheetValue(int n) {
+    return '$n쪽';
+  }
+
+  @override
+  String get printBooklet => '소책자 (접어서 철하기)';
+
+  @override
+  String get printBookletHint =>
+      '양면 인쇄(짧은 쪽 넘김)로 찍고 반으로 접으세요. 쪽 수는 4의 배수로 빈 쪽이 채워져요.';
+
+  @override
+  String get printSheetBorder => '쪽마다 테두리 그리기';
+
+  @override
+  String get printNumbers => '쪽 번호';
+
+  @override
+  String get printNumbersNone => '없음';
+
+  @override
+  String get printNumbersBottomCenter => '아래 가운데';
+
+  @override
+  String get printNumbersBottomRight => '아래 오른쪽';
+
+  @override
+  String get printNumbersBottomLeft => '아래 왼쪽';
+
+  @override
+  String get printNumbersTopRight => '위 오른쪽';
+
+  @override
+  String get printNumberTotal => '전체 쪽수와 함께 (3 / 12)';
+
+  @override
+  String get printWatermark => '워터마크 글자';
+
+  @override
+  String get printWatermarkHint => '예: 사본, 기밀, DRAFT';
+
+  @override
+  String get printGrayscale => '흑백으로 확실히 찍기';
+
+  @override
+  String get printGrayscaleHint =>
+      '쪽을 회색 이미지로 바꿔 찍어서 글자도 이미지가 돼요. 오래 걸리고 파일이 커질 수 있어요.';
 }

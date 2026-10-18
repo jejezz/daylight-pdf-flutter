@@ -1291,6 +1291,102 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'인쇄 창 열기'**
   String get printContinue;
+
+  /// No description provided for @printPerSheet.
+  ///
+  /// In ko, this message translates to:
+  /// **'한 장에 모아 찍기'**
+  String get printPerSheet;
+
+  /// No description provided for @printPerSheetValue.
+  ///
+  /// In ko, this message translates to:
+  /// **'{n}쪽'**
+  String printPerSheetValue(int n);
+
+  /// No description provided for @printBooklet.
+  ///
+  /// In ko, this message translates to:
+  /// **'소책자 (접어서 철하기)'**
+  String get printBooklet;
+
+  /// No description provided for @printBookletHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'양면 인쇄(짧은 쪽 넘김)로 찍고 반으로 접으세요. 쪽 수는 4의 배수로 빈 쪽이 채워져요.'**
+  String get printBookletHint;
+
+  /// No description provided for @printSheetBorder.
+  ///
+  /// In ko, this message translates to:
+  /// **'쪽마다 테두리 그리기'**
+  String get printSheetBorder;
+
+  /// No description provided for @printNumbers.
+  ///
+  /// In ko, this message translates to:
+  /// **'쪽 번호'**
+  String get printNumbers;
+
+  /// No description provided for @printNumbersNone.
+  ///
+  /// In ko, this message translates to:
+  /// **'없음'**
+  String get printNumbersNone;
+
+  /// No description provided for @printNumbersBottomCenter.
+  ///
+  /// In ko, this message translates to:
+  /// **'아래 가운데'**
+  String get printNumbersBottomCenter;
+
+  /// No description provided for @printNumbersBottomRight.
+  ///
+  /// In ko, this message translates to:
+  /// **'아래 오른쪽'**
+  String get printNumbersBottomRight;
+
+  /// No description provided for @printNumbersBottomLeft.
+  ///
+  /// In ko, this message translates to:
+  /// **'아래 왼쪽'**
+  String get printNumbersBottomLeft;
+
+  /// No description provided for @printNumbersTopRight.
+  ///
+  /// In ko, this message translates to:
+  /// **'위 오른쪽'**
+  String get printNumbersTopRight;
+
+  /// No description provided for @printNumberTotal.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체 쪽수와 함께 (3 / 12)'**
+  String get printNumberTotal;
+
+  /// No description provided for @printWatermark.
+  ///
+  /// In ko, this message translates to:
+  /// **'워터마크 글자'**
+  String get printWatermark;
+
+  /// No description provided for @printWatermarkHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'예: 사본, 기밀, DRAFT'**
+  String get printWatermarkHint;
+
+  /// No description provided for @printGrayscale.
+  ///
+  /// In ko, this message translates to:
+  /// **'흑백으로 확실히 찍기'**
+  String get printGrayscale;
+
+  /// No description provided for @printGrayscaleHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'쪽을 회색 이미지로 바꿔 찍어서 글자도 이미지가 돼요. 오래 걸리고 파일이 커질 수 있어요.'**
+  String get printGrayscaleHint;
 }
 
 class _AppLocalizationsDelegate

@@ -74,12 +74,7 @@ class PrintDialog extends StatefulWidget {
   final Future<bool> Function(PrintOptions options, Uint8List pdfBytes, int currentPage, String jobName)
   openSystemPrint;
 
-  static Future<bool> _openSystemPrint(
-    PrintOptions options,
-    Uint8List pdfBytes,
-    int currentPage,
-    String jobName,
-  ) {
+  static Future<bool> _openSystemPrint(PrintOptions options, Uint8List pdfBytes, int currentPage, String jobName) {
     return Printing.layoutPdf(
       name: jobName,
       format: PdfPageFormat(options.paperWidth, options.paperHeight),
@@ -100,6 +95,7 @@ class _PrintDialogState extends State<PrintDialog> {
   PrintOptions _options = const PrintOptions();
   _RangeMode _rangeMode = _RangeMode.all;
   final _rangeText = TextEditingController();
+  final _watermarkText = TextEditingController();
   String _paper = 'A4';
 
   Timer? _debounce;
@@ -121,6 +117,7 @@ class _PrintDialogState extends State<PrintDialog> {
   void dispose() {
     _debounce?.cancel();
     _rangeText.dispose();
+    _watermarkText.dispose();
     super.dispose();
   }
 
@@ -153,6 +150,7 @@ class _PrintDialogState extends State<PrintDialog> {
         options,
         currentPage: widget.currentPage,
         limit: printPreviewLimit,
+        grayDpi: 96, // 미리보기는 거칠어도 빠르게
       );
       if (!mounted || generation != _generation) return;
       setState(() {
@@ -376,9 +374,93 @@ class _PrintDialogState extends State<PrintDialog> {
           value: _options.autoOrientation,
           onChanged: (v) => _change((o) => o.copyWith(autoOrientation: v)),
         ),
+        const Divider(height: AppSpacing.xl),
+        _section(
+          l10n.printPerSheet,
+          Wrap(
+            spacing: AppSpacing.sm,
+            children: [
+              for (final n in const [1, 2, 4, 6, 9])
+                ChoiceChip(
+                  label: Text(l10n.printPerSheetValue(n)),
+                  selected: !_options.booklet && _options.perSheet == n,
+                  onSelected: _options.booklet ? null : (_) => _change((o) => o.copyWith(perSheet: n)),
+                ),
+            ],
+          ),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          title: Text(l10n.printBooklet),
+          subtitle: _options.booklet ? Text(l10n.printBookletHint, style: theme.textTheme.bodySmall) : null,
+          value: _options.booklet,
+          onChanged: (v) => _change((o) => o.copyWith(booklet: v)),
+        ),
+        if (_options.combines)
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            title: Text(l10n.printSheetBorder),
+            value: _options.sheetBorder,
+            onChanged: (v) => _change((o) => o.copyWith(sheetBorder: v)),
+          ),
+        const Divider(height: AppSpacing.xl),
+        _section(
+          l10n.printNumbers,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DropdownButton<PrintPageNumbers>(
+                value: _options.pageNumbers,
+                isDense: true,
+                items: [
+                  for (final where in PrintPageNumbers.values)
+                    DropdownMenuItem(value: where, child: Text(_numbersLabel(l10n, where))),
+                ],
+                onChanged: (where) {
+                  if (where != null) _change((o) => o.copyWith(pageNumbers: where));
+                },
+              ),
+              if (_options.pageNumbers != PrintPageNumbers.none)
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  title: Text(l10n.printNumberTotal),
+                  value: _options.pageNumberTotal,
+                  onChanged: (v) => _change((o) => o.copyWith(pageNumberTotal: v)),
+                ),
+            ],
+          ),
+        ),
+        _section(
+          l10n.printWatermark,
+          TextField(
+            controller: _watermarkText,
+            decoration: InputDecoration(isDense: true, hintText: l10n.printWatermarkHint),
+            onChanged: (v) => _change((o) => o.copyWith(watermark: v)),
+          ),
+        ),
+        const Divider(height: AppSpacing.xl),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          title: Text(l10n.printGrayscale),
+          subtitle: _options.grayscale ? Text(l10n.printGrayscaleHint, style: theme.textTheme.bodySmall) : null,
+          value: _options.grayscale,
+          onChanged: (v) => _change((o) => o.copyWith(grayscale: v)),
+        ),
       ],
     );
   }
+
+  String _numbersLabel(AppLocalizations l10n, PrintPageNumbers where) => switch (where) {
+    PrintPageNumbers.none => l10n.printNumbersNone,
+    PrintPageNumbers.bottomCenter => l10n.printNumbersBottomCenter,
+    PrintPageNumbers.bottomRight => l10n.printNumbersBottomRight,
+    PrintPageNumbers.bottomLeft => l10n.printNumbersBottomLeft,
+    PrintPageNumbers.topRight => l10n.printNumbersTopRight,
+  };
 
   Widget _previewPane(AppLocalizations l10n, ThemeData theme) {
     final bytes = _preview;

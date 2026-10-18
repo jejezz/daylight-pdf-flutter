@@ -16,6 +16,9 @@ enum PrintScale {
   actual,
 }
 
+/// 쪽 번호를 찍을 자리.
+enum PrintPageNumbers { none, bottomCenter, bottomRight, bottomLeft, topRight }
+
 /// 출력 설정. 프린터·매수·양면·컬러·용지함 같은 프린터 설정은 운영체제 인쇄 창이 맡고,
 /// 여기서는 PDF를 찍기 전에 가공하는 설정만 둔다.
 class PrintOptions {
@@ -29,6 +32,13 @@ class PrintOptions {
     this.paperWidth = 595.28,
     this.paperHeight = 841.89,
     this.autoOrientation = true,
+    this.perSheet = 1,
+    this.booklet = false,
+    this.sheetBorder = false,
+    this.pageNumbers = PrintPageNumbers.none,
+    this.pageNumberTotal = false,
+    this.watermark = '',
+    this.grayscale = false,
   });
 
   /// `1-3, 5, 8-` 형식 (비우면 전체). 쉼표로 이은 순서와 중복을 그대로 따른다.
@@ -50,6 +60,30 @@ class PrintOptions {
   /// 가로로 긴 쪽은 용지를 가로로 돌려 쓴다.
   final bool autoOrientation;
 
+  /// 한 장에 모을 쪽 수 (1, 2, 4, 6, 9). 소책자면 무시한다.
+  final int perSheet;
+
+  /// 소책자: 접어서 철하는 순서로 한 장에 두 쪽씩 (양면 인쇄, 짧은 쪽 넘김). 쪽 수는 4의 배수로 빈 쪽을 채운다.
+  final bool booklet;
+
+  /// 한 장에 여러 쪽을 모을 때 쪽마다 테두리를 그린다.
+  final bool sheetBorder;
+
+  /// 쪽 번호(원래 문서의 쪽 번호)를 찍을 자리.
+  final PrintPageNumbers pageNumbers;
+
+  /// 쪽 번호를 "3 / 12"처럼 전체 쪽수와 함께 찍는다.
+  final bool pageNumberTotal;
+
+  /// 비스듬히 크게 찍을 글자(비우면 없음).
+  final String watermark;
+
+  /// 쪽을 회색 이미지로 바꿔 흑백으로 확실히 찍는다 (글자가 벡터에서 이미지가 되고 오래 걸린다).
+  final bool grayscale;
+
+  /// 한 장에 모아 찍는지 (N쪽 모으기 또는 소책자).
+  bool get combines => booklet || perSheet > 1;
+
   PrintOptions copyWith({
     String? range,
     PrintParity? parity,
@@ -60,6 +94,13 @@ class PrintOptions {
     double? paperWidth,
     double? paperHeight,
     bool? autoOrientation,
+    int? perSheet,
+    bool? booklet,
+    bool? sheetBorder,
+    PrintPageNumbers? pageNumbers,
+    bool? pageNumberTotal,
+    String? watermark,
+    bool? grayscale,
   }) => PrintOptions(
     range: range ?? this.range,
     parity: parity ?? this.parity,
@@ -70,6 +111,13 @@ class PrintOptions {
     paperWidth: paperWidth ?? this.paperWidth,
     paperHeight: paperHeight ?? this.paperHeight,
     autoOrientation: autoOrientation ?? this.autoOrientation,
+    perSheet: perSheet ?? this.perSheet,
+    booklet: booklet ?? this.booklet,
+    sheetBorder: sheetBorder ?? this.sheetBorder,
+    pageNumbers: pageNumbers ?? this.pageNumbers,
+    pageNumberTotal: pageNumberTotal ?? this.pageNumberTotal,
+    watermark: watermark ?? this.watermark,
+    grayscale: grayscale ?? this.grayscale,
   );
 
   double get marginPt => marginMm * 72 / 25.4;

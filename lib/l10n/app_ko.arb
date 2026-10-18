@@ -440,5 +440,28 @@
         "type": "int"
       }
     }
+  },
+  "printPerSheet": "한 장에 모아 찍기",
+  "printPerSheetValue": "{n}쪽",
+  "printBooklet": "소책자 (접어서 철하기)",
+  "printBookletHint": "양면 인쇄(짧은 쪽 넘김)로 찍고 반으로 접으세요. 쪽 수는 4의 배수로 빈 쪽이 채워져요.",
+  "printSheetBorder": "쪽마다 테두리 그리기",
+  "printNumbers": "쪽 번호",
+  "printNumbersNone": "없음",
+  "printNumbersBottomCenter": "아래 가운데",
+  "printNumbersBottomRight": "아래 오른쪽",
+  "printNumbersBottomLeft": "아래 왼쪽",
+  "printNumbersTopRight": "위 오른쪽",
+  "printNumberTotal": "전체 쪽수와 함께 (3 / 12)",
+  "printWatermark": "워터마크 글자",
+  "printWatermarkHint": "예: 사본, 기밀, DRAFT",
+  "printGrayscale": "흑백으로 확실히 찍기",
+  "printGrayscaleHint": "쪽을 회색 이미지로 바꿔 찍어서 글자도 이미지가 돼요. 오래 걸리고 파일이 커질 수 있어요.",
+  "@printPerSheetValue": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   }
 }
