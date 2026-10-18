@@ -848,4 +848,28 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get annotFingerDrawsTip => '켜면 손가락으로도 그려요. 끄면 펜으로만 그리고 손가락은 쪽을 옮겨요';
+
+  @override
+  String get sidebarBookmarks => '북마크';
+
+  @override
+  String bookmarkAddTip(String shortcut) {
+    return '이 쪽에 북마크 ($shortcut)';
+  }
+
+  @override
+  String bookmarkRemoveTip(String shortcut) {
+    return '북마크 지우기 ($shortcut)';
+  }
+
+  @override
+  String get bookmarksEmpty => '아직 북마크가 없어요. 북마크 단추로 쪽에 표시해 두세요.';
+
+  @override
+  String bookmarkPage(int page) {
+    return '$page쪽';
+  }
+
+  @override
+  String get bookmarkDelete => '북마크 지우기';
 }

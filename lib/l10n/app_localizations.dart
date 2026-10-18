@@ -1615,6 +1615,42 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'켜면 손가락으로도 그려요. 끄면 펜으로만 그리고 손가락은 쪽을 옮겨요'**
   String get annotFingerDrawsTip;
+
+  /// No description provided for @sidebarBookmarks.
+  ///
+  /// In ko, this message translates to:
+  /// **'북마크'**
+  String get sidebarBookmarks;
+
+  /// No description provided for @bookmarkAddTip.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 쪽에 북마크 ({shortcut})'**
+  String bookmarkAddTip(String shortcut);
+
+  /// No description provided for @bookmarkRemoveTip.
+  ///
+  /// In ko, this message translates to:
+  /// **'북마크 지우기 ({shortcut})'**
+  String bookmarkRemoveTip(String shortcut);
+
+  /// No description provided for @bookmarksEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 북마크가 없어요. 북마크 단추로 쪽에 표시해 두세요.'**
+  String get bookmarksEmpty;
+
+  /// No description provided for @bookmarkPage.
+  ///
+  /// In ko, this message translates to:
+  /// **'{page}쪽'**
+  String bookmarkPage(int page);
+
+  /// No description provided for @bookmarkDelete.
+  ///
+  /// In ko, this message translates to:
+  /// **'북마크 지우기'**
+  String get bookmarkDelete;
 }
 
 class _AppLocalizationsDelegate

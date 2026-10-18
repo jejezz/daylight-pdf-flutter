@@ -858,4 +858,29 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get annotFingerDrawsTip =>
       'On: fingers draw too. Off: only the pen draws and fingers move the page';
+
+  @override
+  String get sidebarBookmarks => 'Bookmarks';
+
+  @override
+  String bookmarkAddTip(String shortcut) {
+    return 'Bookmark this page ($shortcut)';
+  }
+
+  @override
+  String bookmarkRemoveTip(String shortcut) {
+    return 'Remove bookmark ($shortcut)';
+  }
+
+  @override
+  String get bookmarksEmpty =>
+      'No bookmarks yet. Tap the bookmark button to mark a page.';
+
+  @override
+  String bookmarkPage(int page) {
+    return 'Page $page';
+  }
+
+  @override
+  String get bookmarkDelete => 'Delete bookmark';
 }

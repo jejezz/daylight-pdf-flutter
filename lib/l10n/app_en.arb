@@ -518,5 +518,32 @@
   "annotWidthThick": "Thick",
   "annotFingerDraws": "Draw with finger",
   "annotPenOnly": "Pen only",
-  "annotFingerDrawsTip": "On: fingers draw too. Off: only the pen draws and fingers move the page"
+  "annotFingerDrawsTip": "On: fingers draw too. Off: only the pen draws and fingers move the page",
+  "sidebarBookmarks": "Bookmarks",
+  "bookmarkAddTip": "Bookmark this page ({shortcut})",
+  "bookmarkRemoveTip": "Remove bookmark ({shortcut})",
+  "bookmarksEmpty": "No bookmarks yet. Tap the bookmark button to mark a page.",
+  "bookmarkPage": "Page {page}",
+  "bookmarkDelete": "Delete bookmark",
+  "@bookmarkAddTip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "@bookmarkRemoveTip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "@bookmarkPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  }
 }

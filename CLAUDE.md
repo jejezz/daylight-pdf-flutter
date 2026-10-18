@@ -79,6 +79,11 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
 - 시험(`integration_test/viewer_features_test.dart`): 검색 개수·이동·Esc, 목차 이동, 암호(틀림→맞음, RC4 40비트 PDF를 시험 안에서 직접 만든다), 맞춤 크기.
   통합 시험 요령: 대화상자와 pdfrx 비동기 작업이 섞이면 프레임(`pump`)과 실제 시간(`runAsync`)을 번갈아 기다려야 하고, 입력칸은 `tap`으로 초점을 준 뒤 `enterText`.
 
+- **북마크(⌘D / Ctrl+D, 앱 바 단추, 사이드바 "북마크" 탭)**: 현재 쪽에 달고 지운다. `BookmarkStore`(`lib/viewer/bookmarks.dart`)가 설정(`bookmarks` 키)에
+  **파일 경로별 쪽 번호**로 저장한다 — PDFium에는 북마크를 쓰는 API가 없고 원본 PDF를 건드리지 않기 위해서다. 그래서 다른 경로로 저장한 사본이나
+  옮긴 파일에는 따라가지 않는다(모바일은 앱 보관함 복사본의 경로가 같으니 그대로 유지). 사이드바 탭은 목차가 없어도 항상 보인다. 시험: `bookmarks_test`,
+  `bookmarks_panel_test`, `integration_test/bookmark_test.dart`.
+
 ## 주석 UI (`lib/viewer/`) — 6단계
 
 - 형광펜·밑줄은 "글자를 마우스로 고르고 도구 모음 버튼"(`lineBoxes`가 선택한 글자를 줄별 상자로 바꾼다).

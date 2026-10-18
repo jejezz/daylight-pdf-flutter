@@ -535,5 +535,32 @@
   "annotWidthThick": "굵게",
   "annotFingerDraws": "손가락으로 그리기",
   "annotPenOnly": "펜으로만 그리기",
-  "annotFingerDrawsTip": "켜면 손가락으로도 그려요. 끄면 펜으로만 그리고 손가락은 쪽을 옮겨요"
+  "annotFingerDrawsTip": "켜면 손가락으로도 그려요. 끄면 펜으로만 그리고 손가락은 쪽을 옮겨요",
+  "sidebarBookmarks": "북마크",
+  "bookmarkAddTip": "이 쪽에 북마크 ({shortcut})",
+  "bookmarkRemoveTip": "북마크 지우기 ({shortcut})",
+  "bookmarksEmpty": "아직 북마크가 없어요. 북마크 단추로 쪽에 표시해 두세요.",
+  "bookmarkPage": "{page}쪽",
+  "bookmarkDelete": "북마크 지우기",
+  "@bookmarkAddTip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "@bookmarkRemoveTip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "@bookmarkPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  }
 }

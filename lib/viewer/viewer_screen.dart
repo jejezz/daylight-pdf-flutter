@@ -26,6 +26,8 @@ import '../window/focus_tint.dart';
 import 'annotation_panel.dart';
 import 'annotation_state.dart';
 import 'annotation_toolbar.dart';
+import 'bookmarks.dart';
+import 'bookmarks_panel.dart';
 import 'draw_layer.dart';
 import 'note_dialog.dart';
 import 'outline_panel.dart';
@@ -55,6 +57,8 @@ class _ViewerScreenState extends State<ViewerScreen> {
   bool _showSearch = false;
   _Sidebar _sidebar = _Sidebar.pages;
   List<PdfOutlineNode> _outline = const [];
+  final _bookmarkStore = BookmarkStore();
+  List<int> _bookmarks = const [];
   int _passwordAttempts = 0;
   bool _showList = false;
   bool _allowPop = false;
@@ -72,6 +76,9 @@ class _ViewerScreenState extends State<ViewerScreen> {
   void initState() {
     super.initState();
     _loadNoteIcon();
+    _bookmarkStore.load(widget.path).then((pages) {
+      if (mounted) setState(() => _bookmarks = pages);
+    });
   }
 
   @override
@@ -112,6 +119,18 @@ class _ViewerScreenState extends State<ViewerScreen> {
     } on Object {
       // 목차를 못 읽어도 문서는 볼 수 있다
     }
+  }
+
+  /// 지금 보는 쪽에 북마크를 달거나 지운다.
+  Future<void> _toggleBookmark() async {
+    if (!_controller.isReady) return;
+    final pages = await _bookmarkStore.toggle(widget.path, _controller.pageNumber ?? 1);
+    if (mounted) setState(() => _bookmarks = pages);
+  }
+
+  Future<void> _removeBookmark(int page) async {
+    final pages = await _bookmarkStore.remove(widget.path, page);
+    if (mounted) setState(() => _bookmarks = pages);
   }
 
   void _toggleSearch() {
@@ -454,6 +473,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
             SingleActivator(LogicalKeyboardKey.keyZ, meta: _isMac, control: !_isMac): _undo,
             SingleActivator(LogicalKeyboardKey.keyP, meta: _isMac, control: !_isMac): _print,
             SingleActivator(LogicalKeyboardKey.keyF, meta: _isMac, control: !_isMac): _toggleSearch,
+            SingleActivator(LogicalKeyboardKey.keyD, meta: _isMac, control: !_isMac): _toggleBookmark,
           },
           child: Focus(
             autofocus: true,
@@ -491,6 +511,20 @@ class _ViewerScreenState extends State<ViewerScreen> {
                     label: Text(l10n.annotSave),
                   ),
                   const SizedBox(width: AppSpacing.xs),
+                  ListenableBuilder(
+                    listenable: _controller,
+                    builder: (context, _) {
+                      final marked = _controller.isReady && _bookmarks.contains(_controller.pageNumber ?? 1);
+                      final shortcut = _isMac ? '⌘D' : 'Ctrl+D';
+                      return IconButton(
+                        tooltip: marked ? l10n.bookmarkRemoveTip(shortcut) : l10n.bookmarkAddTip(shortcut),
+                        isSelected: marked,
+                        icon: const Icon(Icons.bookmark_border_rounded),
+                        selectedIcon: const Icon(Icons.bookmark_rounded),
+                        onPressed: _toggleBookmark,
+                      );
+                    },
+                  ),
                   IconButton(
                     tooltip: l10n.viewerSearchTip(_isMac ? '⌘F' : 'Ctrl+F'),
                     isSelected: _showSearch,
@@ -582,31 +616,44 @@ class _ViewerScreenState extends State<ViewerScreen> {
       children: [
         if (_showThumbnails)
           Container(
-            width: _sidebar == _Sidebar.outline ? 248 : 148,
+            width: _sidebar == _Sidebar.pages ? 148 : 248,
             decoration: BoxDecoration(
               color: scheme.surface,
               border: Border(right: BorderSide(color: scheme.outlineVariant)),
             ),
             child: Column(
               children: [
-                if (_outline.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.sm, AppSpacing.sm, 0),
-                    child: SegmentedButton<_Sidebar>(
-                      showSelectedIcon: false,
-                      style: const ButtonStyle(visualDensity: VisualDensity.compact),
-                      segments: [
-                        ButtonSegment(value: _Sidebar.pages, label: Text(l10n.sidebarPages)),
-                        ButtonSegment(value: _Sidebar.outline, label: Text(l10n.sidebarOutline)),
-                      ],
-                      selected: {_sidebar},
-                      onSelectionChanged: (v) => setState(() => _sidebar = v.first),
-                    ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.sm, AppSpacing.sm, 0),
+                  child: SegmentedButton<_Sidebar>(
+                    showSelectedIcon: false,
+                    style: const ButtonStyle(visualDensity: VisualDensity.compact),
+                    segments: [
+                      ButtonSegment(value: _Sidebar.pages, label: Text(l10n.sidebarPages)),
+                      if (_outline.isNotEmpty) ButtonSegment(value: _Sidebar.outline, label: Text(l10n.sidebarOutline)),
+                      ButtonSegment(value: _Sidebar.bookmarks, label: Text(l10n.sidebarBookmarks)),
+                    ],
+                    selected: {_sidebar},
+                    onSelectionChanged: (v) => setState(() => _sidebar = v.first),
                   ),
+                ),
                 Expanded(
-                  child: _sidebar == _Sidebar.outline && _outline.isNotEmpty
-                      ? OutlinePanel(nodes: _outline, onTap: (node) => _controller.goToDest(node.dest))
-                      : _thumbnails(),
+                  child: switch (_sidebar) {
+                    _Sidebar.outline when _outline.isNotEmpty => OutlinePanel(
+                      nodes: _outline,
+                      onTap: (node) => _controller.goToDest(node.dest),
+                    ),
+                    _Sidebar.bookmarks => ListenableBuilder(
+                      listenable: _controller,
+                      builder: (context, _) => BookmarksPanel(
+                        pages: _bookmarks,
+                        current: _controller.isReady ? _controller.pageNumber ?? 1 : 1,
+                        onTap: _goToPage,
+                        onDelete: _removeBookmark,
+                      ),
+                    ),
+                    _ => _thumbnails(),
+                  },
                 ),
               ],
             ),
@@ -790,7 +837,7 @@ class _Thumbnail extends StatelessWidget {
   }
 }
 
-enum _Sidebar { pages, outline }
+enum _Sidebar { pages, outline, bookmarks }
 
 enum _Fit { width, page, actual }
 
