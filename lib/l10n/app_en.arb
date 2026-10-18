@@ -545,5 +545,8 @@
         "type": "int"
       }
     }
-  }
+  },
+  "annotFilterHint": "Search notes",
+  "annotFilterClear": "Clear search",
+  "annotFilterNone": "No matching annotations"
 }

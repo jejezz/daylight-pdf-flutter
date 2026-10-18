@@ -872,4 +872,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get bookmarkDelete => '북마크 지우기';
+
+  @override
+  String get annotFilterHint => '메모 내용 검색';
+
+  @override
+  String get annotFilterClear => '검색어 지우기';
+
+  @override
+  String get annotFilterNone => '일치하는 주석이 없어요';
 }

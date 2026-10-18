@@ -883,4 +883,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bookmarkDelete => 'Delete bookmark';
+
+  @override
+  String get annotFilterHint => 'Search notes';
+
+  @override
+  String get annotFilterClear => 'Clear search';
+
+  @override
+  String get annotFilterNone => 'No matching annotations';
 }

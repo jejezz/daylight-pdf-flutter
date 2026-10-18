@@ -1651,6 +1651,24 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'북마크 지우기'**
   String get bookmarkDelete;
+
+  /// No description provided for @annotFilterHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 내용 검색'**
+  String get annotFilterHint;
+
+  /// No description provided for @annotFilterClear.
+  ///
+  /// In ko, this message translates to:
+  /// **'검색어 지우기'**
+  String get annotFilterClear;
+
+  /// No description provided for @annotFilterNone.
+  ///
+  /// In ko, this message translates to:
+  /// **'일치하는 주석이 없어요'**
+  String get annotFilterNone;
 }
 
 class _AppLocalizationsDelegate

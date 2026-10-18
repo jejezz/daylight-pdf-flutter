@@ -84,6 +84,9 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
   옮긴 파일에는 따라가지 않는다(모바일은 앱 보관함 복사본의 경로가 같으니 그대로 유지). 사이드바 탭은 목차가 없어도 항상 보인다. 시험: `bookmarks_test`,
   `bookmarks_panel_test`, `integration_test/bookmark_test.dart`.
 
+- **주석 목록 검색**: 주석이 있으면 목록 위에 검색칸이 뜨고 `filterAnnotations`가 **메모 내용**(대소문자·앞뒤 공백 무시)으로 거른다. 형광펜·도형처럼 내용이 없는 주석은
+  검색어가 있으면 빠진다. 본문 검색(⌘F, `PdfTextSearcher`)과는 별개다. 시험: `test/annotation_panel_test.dart`.
+
 ## 주석 UI (`lib/viewer/`) — 6단계
 
 - 형광펜·밑줄은 "글자를 마우스로 고르고 도구 모음 버튼"(`lineBoxes`가 선택한 글자를 줄별 상자로 바꾼다).
