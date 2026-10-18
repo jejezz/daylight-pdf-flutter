@@ -93,6 +93,7 @@ void main() {
     final bytes = Uint8List.fromList(await File(pdfPath).readAsBytes());
     PrintOptions? got;
     int? gotCurrent;
+    var cancelNext = true; // 처음에는 운영체제 인쇄 창에서 취소한 것처럼
     await pumpApp(
       tester,
       Scaffold(
@@ -112,6 +113,7 @@ void main() {
                     openSystemPrint: (options, pdf, current, name) async {
                       got = options;
                       gotCurrent = current;
+                      return !cancelNext;
                     },
                   ),
                 ),
@@ -151,6 +153,12 @@ void main() {
     await settle(tester);
     expect(find.text('1쪽 인쇄'), findsOneWidget); // 현재 쪽 = 3쪽, 홀수라서 남는다
 
+    await tester.tap(find.text('인쇄 창 열기'));
+    await tester.pumpAndSettle();
+    expect(got, isNotNull);
+    expect(find.text('1쪽 인쇄'), findsOneWidget, reason: 'cancelling the system window keeps the settings window open');
+    got = null;
+    cancelNext = false;
     await tester.tap(find.text('인쇄 창 열기'));
     await tester.pumpAndSettle();
     expect(got, isNotNull);

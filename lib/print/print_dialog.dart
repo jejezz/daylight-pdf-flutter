@@ -69,17 +69,18 @@ class PrintDialog extends StatefulWidget {
   final int currentPage;
   final String jobName;
 
-  /// 가공된 PDF를 운영체제 인쇄 창으로 넘기는 함수. 시험에서 바꿔 끼운다.
-  final Future<void> Function(PrintOptions options, Uint8List pdfBytes, int currentPage, String jobName)
+  /// 가공된 PDF를 운영체제 인쇄 창으로 넘기는 함수. 인쇄(또는 PDF 저장)가 됐으면 true, 사용자가 취소했으면 false.
+  /// 시험에서 바꿔 끼운다.
+  final Future<bool> Function(PrintOptions options, Uint8List pdfBytes, int currentPage, String jobName)
   openSystemPrint;
 
-  static Future<void> _openSystemPrint(
+  static Future<bool> _openSystemPrint(
     PrintOptions options,
     Uint8List pdfBytes,
     int currentPage,
     String jobName,
-  ) async {
-    await Printing.layoutPdf(
+  ) {
+    return Printing.layoutPdf(
       name: jobName,
       format: PdfPageFormat(options.paperWidth, options.paperHeight),
       // 운영체제 창에서 용지를 바꾸면 그 크기로 다시 가공한다.
@@ -175,8 +176,14 @@ class _PrintDialogState extends State<PrintDialog> {
     final l10n = AppLocalizations.of(context);
     setState(() => _opening = true);
     try {
-      await widget.openSystemPrint(_effective, widget.pdfBytes, widget.currentPage, widget.jobName);
-      if (mounted) Navigator.of(context).pop();
+      final done = await widget.openSystemPrint(_effective, widget.pdfBytes, widget.currentPage, widget.jobName);
+      if (!mounted) return;
+      // 운영체제 창에서 취소했으면 설정 창은 그대로 둔다 (설정을 고쳐 다시 시도할 수 있게).
+      if (done) {
+        Navigator.of(context).pop();
+      } else {
+        setState(() => _opening = false);
+      }
     } on Object {
       if (mounted) {
         setState(() => _opening = false);
