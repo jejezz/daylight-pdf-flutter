@@ -13,6 +13,7 @@ import '../engine/annotations/pdfium_annotations.dart';
 import '../l10n/app_localizations.dart';
 import '../pages/page_tools_screen.dart';
 import '../pages/pdf_dialogs.dart';
+import '../print/print_dialog.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/page_thumbnail.dart';
@@ -219,6 +220,26 @@ class _ViewerScreenState extends State<ViewerScreen> {
     }
   }
 
+  /// 지금 문서(저장 안 한 주석 포함)를 인쇄 설정 창에 넘긴다.
+  Future<void> _print() async {
+    final document = _document;
+    if (document == null || _annotations.busy) return;
+    final l10n = AppLocalizations.of(context);
+    try {
+      final bytes = await document.encodePdf();
+      if (!mounted) return;
+      await showPrintDialog(
+        context,
+        pdfBytes: bytes,
+        pageCount: document.pages.length,
+        currentPage: _controller.pageNumber ?? 1,
+        jobName: _name,
+      );
+    } on Object {
+      if (mounted) showMessage(context, l10n.printFailed);
+    }
+  }
+
   /// 주석이 든 PDF를 저장한다. 저장했으면 true.
   Future<bool> _save() async {
     final l10n = AppLocalizations.of(context);
@@ -281,7 +302,10 @@ class _ViewerScreenState extends State<ViewerScreen> {
           if (!didPop) _confirmLeave();
         },
         child: CallbackShortcuts(
-          bindings: {SingleActivator(LogicalKeyboardKey.keyZ, meta: _isMac, control: !_isMac): _undo},
+          bindings: {
+            SingleActivator(LogicalKeyboardKey.keyZ, meta: _isMac, control: !_isMac): _undo,
+            SingleActivator(LogicalKeyboardKey.keyP, meta: _isMac, control: !_isMac): _print,
+          },
           child: Focus(
             autofocus: true,
             child: Scaffold(
@@ -309,6 +333,11 @@ class _ViewerScreenState extends State<ViewerScreen> {
                     label: Text(l10n.annotSave),
                   ),
                   const SizedBox(width: AppSpacing.xs),
+                  IconButton(
+                    tooltip: l10n.printTip(_isMac ? '⌘P' : 'Ctrl+P'),
+                    icon: const Icon(Icons.print_outlined),
+                    onPressed: _print,
+                  ),
                   IconButton(
                     tooltip: l10n.viewerEditPages,
                     icon: const Icon(Icons.dashboard_customize_outlined),

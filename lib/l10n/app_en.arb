@@ -374,5 +374,54 @@
   },
   "homeRecentTitle": "Recent files",
   "homeRecentClear": "Clear list",
-  "homeRecentRemove": "Remove from list"
+  "homeRecentRemove": "Remove from list",
+  "printTitle": "Print",
+  "printTip": "Print ({shortcut})",
+  "printAction": "Print",
+  "printRange": "Pages to print",
+  "printRangeAll": "All",
+  "printRangeCurrent": "Current page",
+  "printRangeCustom": "Pages",
+  "printRangeHint": "e.g. 1-3, 5, 8-",
+  "printParity": "Odd / even",
+  "printParityAll": "All",
+  "printParityOdd": "Odd pages",
+  "printParityEven": "Even pages",
+  "printReverse": "Reverse order (last page first)",
+  "printAnnotations": "Include annotations (notes, highlights, drawings)",
+  "printScale": "Size",
+  "printScaleFit": "Fit to paper",
+  "printScaleShrink": "Shrink large pages only",
+  "printScaleActual": "Actual size",
+  "printMargin": "Margin",
+  "printMarginNone": "None",
+  "printPaper": "Paper",
+  "printAutoOrientation": "Turn the paper to match each page",
+  "printPageCount": "{count} to print",
+  "printPreviewNote": "The preview shows the first {count} pages",
+  "printPreviewing": "Preparing preview…",
+  "printFailed": "Could not prepare printing",
+  "printNextStep": "Printer, copies, duplex and colour are set in the system print window that opens next.",
+  "printContinue": "Open print window",
+  "@printTip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "@printPageCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@printPreviewNote": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

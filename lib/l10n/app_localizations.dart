@@ -1123,6 +1123,174 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'목록에서 지우기'**
   String get homeRecentRemove;
+
+  /// No description provided for @printTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'인쇄'**
+  String get printTitle;
+
+  /// No description provided for @printTip.
+  ///
+  /// In ko, this message translates to:
+  /// **'인쇄 ({shortcut})'**
+  String printTip(String shortcut);
+
+  /// No description provided for @printAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'인쇄'**
+  String get printAction;
+
+  /// No description provided for @printRange.
+  ///
+  /// In ko, this message translates to:
+  /// **'인쇄할 쪽'**
+  String get printRange;
+
+  /// No description provided for @printRangeAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체'**
+  String get printRangeAll;
+
+  /// No description provided for @printRangeCurrent.
+  ///
+  /// In ko, this message translates to:
+  /// **'현재 쪽'**
+  String get printRangeCurrent;
+
+  /// No description provided for @printRangeCustom.
+  ///
+  /// In ko, this message translates to:
+  /// **'쪽 지정'**
+  String get printRangeCustom;
+
+  /// No description provided for @printRangeHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'예: 1-3, 5, 8-'**
+  String get printRangeHint;
+
+  /// No description provided for @printParity.
+  ///
+  /// In ko, this message translates to:
+  /// **'홀수·짝수'**
+  String get printParity;
+
+  /// No description provided for @printParityAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'모두'**
+  String get printParityAll;
+
+  /// No description provided for @printParityOdd.
+  ///
+  /// In ko, this message translates to:
+  /// **'홀수 쪽'**
+  String get printParityOdd;
+
+  /// No description provided for @printParityEven.
+  ///
+  /// In ko, this message translates to:
+  /// **'짝수 쪽'**
+  String get printParityEven;
+
+  /// No description provided for @printReverse.
+  ///
+  /// In ko, this message translates to:
+  /// **'마지막 쪽부터 거꾸로'**
+  String get printReverse;
+
+  /// No description provided for @printAnnotations.
+  ///
+  /// In ko, this message translates to:
+  /// **'주석 포함 (메모·형광펜·그림)'**
+  String get printAnnotations;
+
+  /// No description provided for @printScale.
+  ///
+  /// In ko, this message translates to:
+  /// **'크기'**
+  String get printScale;
+
+  /// No description provided for @printScaleFit.
+  ///
+  /// In ko, this message translates to:
+  /// **'용지에 맞춤'**
+  String get printScaleFit;
+
+  /// No description provided for @printScaleShrink.
+  ///
+  /// In ko, this message translates to:
+  /// **'큰 쪽만 줄임'**
+  String get printScaleShrink;
+
+  /// No description provided for @printScaleActual.
+  ///
+  /// In ko, this message translates to:
+  /// **'원래 크기'**
+  String get printScaleActual;
+
+  /// No description provided for @printMargin.
+  ///
+  /// In ko, this message translates to:
+  /// **'여백'**
+  String get printMargin;
+
+  /// No description provided for @printMarginNone.
+  ///
+  /// In ko, this message translates to:
+  /// **'없음'**
+  String get printMarginNone;
+
+  /// No description provided for @printPaper.
+  ///
+  /// In ko, this message translates to:
+  /// **'용지'**
+  String get printPaper;
+
+  /// No description provided for @printAutoOrientation.
+  ///
+  /// In ko, this message translates to:
+  /// **'쪽 방향에 맞춰 용지 돌리기'**
+  String get printAutoOrientation;
+
+  /// No description provided for @printPageCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}쪽 인쇄'**
+  String printPageCount(int count);
+
+  /// No description provided for @printPreviewNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'미리보기는 처음 {count}쪽까지 보여요'**
+  String printPreviewNote(int count);
+
+  /// No description provided for @printPreviewing.
+  ///
+  /// In ko, this message translates to:
+  /// **'미리보기 만드는 중…'**
+  String get printPreviewing;
+
+  /// No description provided for @printFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'인쇄를 준비하지 못했어요'**
+  String get printFailed;
+
+  /// No description provided for @printNextStep.
+  ///
+  /// In ko, this message translates to:
+  /// **'프린터, 매수, 양면, 컬러는 다음에 뜨는 인쇄 창에서 정해요.'**
+  String get printNextStep;
+
+  /// No description provided for @printContinue.
+  ///
+  /// In ko, this message translates to:
+  /// **'인쇄 창 열기'**
+  String get printContinue;
 }
 
 class _AppLocalizationsDelegate

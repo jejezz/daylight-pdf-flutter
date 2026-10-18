@@ -584,4 +584,94 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get homeRecentRemove => '목록에서 지우기';
+
+  @override
+  String get printTitle => '인쇄';
+
+  @override
+  String printTip(String shortcut) {
+    return '인쇄 ($shortcut)';
+  }
+
+  @override
+  String get printAction => '인쇄';
+
+  @override
+  String get printRange => '인쇄할 쪽';
+
+  @override
+  String get printRangeAll => '전체';
+
+  @override
+  String get printRangeCurrent => '현재 쪽';
+
+  @override
+  String get printRangeCustom => '쪽 지정';
+
+  @override
+  String get printRangeHint => '예: 1-3, 5, 8-';
+
+  @override
+  String get printParity => '홀수·짝수';
+
+  @override
+  String get printParityAll => '모두';
+
+  @override
+  String get printParityOdd => '홀수 쪽';
+
+  @override
+  String get printParityEven => '짝수 쪽';
+
+  @override
+  String get printReverse => '마지막 쪽부터 거꾸로';
+
+  @override
+  String get printAnnotations => '주석 포함 (메모·형광펜·그림)';
+
+  @override
+  String get printScale => '크기';
+
+  @override
+  String get printScaleFit => '용지에 맞춤';
+
+  @override
+  String get printScaleShrink => '큰 쪽만 줄임';
+
+  @override
+  String get printScaleActual => '원래 크기';
+
+  @override
+  String get printMargin => '여백';
+
+  @override
+  String get printMarginNone => '없음';
+
+  @override
+  String get printPaper => '용지';
+
+  @override
+  String get printAutoOrientation => '쪽 방향에 맞춰 용지 돌리기';
+
+  @override
+  String printPageCount(int count) {
+    return '$count쪽 인쇄';
+  }
+
+  @override
+  String printPreviewNote(int count) {
+    return '미리보기는 처음 $count쪽까지 보여요';
+  }
+
+  @override
+  String get printPreviewing => '미리보기 만드는 중…';
+
+  @override
+  String get printFailed => '인쇄를 준비하지 못했어요';
+
+  @override
+  String get printNextStep => '프린터, 매수, 양면, 컬러는 다음에 뜨는 인쇄 창에서 정해요.';
+
+  @override
+  String get printContinue => '인쇄 창 열기';
 }

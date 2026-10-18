@@ -82,6 +82,22 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
 - 시험한 것: macOS의 실제 화면 구동(그리기·메모·형광펜·삭제·나가기 확인), 평평한 쪽과 90° 회전한 쪽에서 그린 위치.
   **못 시험한 것**: 저장 창(네이티브)을 통한 저장 클릭, Windows·Linux.
 
+## 인쇄 (`lib/print/`)
+
+- 보기 화면의 인쇄 단추(⌘P / Ctrl+P) → `showPrintDialog`: 왼쪽에서 설정, 오른쪽에서 가공 결과 미리보기(앞 12쪽만), "인쇄 창 열기"가
+  `printing`의 `Printing.layoutPdf`로 **운영체제 인쇄 창**을 연다. 프린터·매수·양면·컬러·용지함은 그 창이 맡고, 앱은 PDF를 찍기 전에
+  가공하는 설정만 둔다: 범위(전체/현재 쪽/`1-3, 5, 8-`), 홀수·짝수, 거꾸로, 주석 포함 여부, 크기(맞춤/큰 쪽만 줄임/원래 크기),
+  여백, 용지, 쪽 방향에 맞춰 용지 돌리기. 열린 문서를 `encodePdf()`로 넘기므로 저장 안 한 주석도 찍힌다.
+- 가공은 `PrintProcessor.build`(PDFium FFI, 벡터 유지): 고른 쪽을 새 문서로 모으고(`pages =`는 저장할 때 모으므로 `encodePdf` 뒤 다시 열어서
+  손본다), 주석을 지우거나(`FPDFPage_RemoveAnnot`) 모양(AP)을 한 번 그려 만들어 두고, `FPDFPage_TransFormWithClip`(회전을 행렬에 녹임)과
+  `FPDFPage_TransformAnnots`로 용지 크기의 쪽에 놓는다. 배치 계산은 순수 함수 `placePage`(`test/print_layout_test.dart`).
+- **PDFium 함정**: `FPDFPage_Flatten`은 이 문서에서 빈 내용을 내서 쓰지 않는다. `TransFormWithClip`의 자르기 상자는 행렬이 닿기 전 좌표
+  (= 용지 좌표)로 준다. 사각형·형광펜 같은 주석의 AP는 그릴 때 PDFium이 만들므로 가공 전에 1×1로 한 번 그린다.
+- 운영체제 창에서 용지를 바꾸면 `onLayout`이 새 크기로 다시 가공한다(`optionsForFormat`).
+- 미리보기 `PdfViewer`는 바뀔 때마다 새 키로 만든다(쓰던 뷰어의 문서를 바꾸면 pdfrx가 배치 도중 null 오류).
+- 시험한 것: 실제 PDFium으로 쪽 선택·용지·주석 포함 여부·여백·원래 크기·회전(픽셀 확인), 설정 창 구동, macOS 인쇄 창이 가공 결과를
+  미리 보여 주는 것. **못 시험한 것**: 실제 프린터 출력(이 맥에 프린터 없음), Windows·Linux 인쇄 창, 다른 뷰어에서 주석이 찍히는지.
+
 ## 화면 구성과 공통 위젯 (`lib/widgets/`)
 
 규약의 Saturn 디자인 언어(카드 24/20, 상태 알약, 간격 4의 배수)를 화면에 드러내는 앱 전용 위젯이다.

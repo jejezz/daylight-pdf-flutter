@@ -588,4 +588,96 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeRecentRemove => 'Remove from list';
+
+  @override
+  String get printTitle => 'Print';
+
+  @override
+  String printTip(String shortcut) {
+    return 'Print ($shortcut)';
+  }
+
+  @override
+  String get printAction => 'Print';
+
+  @override
+  String get printRange => 'Pages to print';
+
+  @override
+  String get printRangeAll => 'All';
+
+  @override
+  String get printRangeCurrent => 'Current page';
+
+  @override
+  String get printRangeCustom => 'Pages';
+
+  @override
+  String get printRangeHint => 'e.g. 1-3, 5, 8-';
+
+  @override
+  String get printParity => 'Odd / even';
+
+  @override
+  String get printParityAll => 'All';
+
+  @override
+  String get printParityOdd => 'Odd pages';
+
+  @override
+  String get printParityEven => 'Even pages';
+
+  @override
+  String get printReverse => 'Reverse order (last page first)';
+
+  @override
+  String get printAnnotations =>
+      'Include annotations (notes, highlights, drawings)';
+
+  @override
+  String get printScale => 'Size';
+
+  @override
+  String get printScaleFit => 'Fit to paper';
+
+  @override
+  String get printScaleShrink => 'Shrink large pages only';
+
+  @override
+  String get printScaleActual => 'Actual size';
+
+  @override
+  String get printMargin => 'Margin';
+
+  @override
+  String get printMarginNone => 'None';
+
+  @override
+  String get printPaper => 'Paper';
+
+  @override
+  String get printAutoOrientation => 'Turn the paper to match each page';
+
+  @override
+  String printPageCount(int count) {
+    return '$count to print';
+  }
+
+  @override
+  String printPreviewNote(int count) {
+    return 'The preview shows the first $count pages';
+  }
+
+  @override
+  String get printPreviewing => 'Preparing preview…';
+
+  @override
+  String get printFailed => 'Could not prepare printing';
+
+  @override
+  String get printNextStep =>
+      'Printer, copies, duplex and colour are set in the system print window that opens next.';
+
+  @override
+  String get printContinue => 'Open print window';
 }
