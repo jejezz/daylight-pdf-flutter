@@ -130,6 +130,20 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
   macOS 인쇄 창이 가공 결과를 미리 보여 주는 것. **못 시험한 것**: 실제 프린터 출력(이 맥에 프린터 없음), Windows·Linux 인쇄 창, 소책자를
   실제 양면으로 접어 보는 것, 다른 뷰어에서 주석이 찍히는지.
 
+## Android 스파이크 (`feat/android-spike`) — 읽기 + 주석 전용 앱 가능성 확인
+
+목표: 인쇄·페이지 도구·변환은 빼고 **PDF를 읽고 스케치 메모처럼 주석만 다는** 폰·태블릿 앱. 실기기(Lenovo Idea Tab, 2560x1600, S펜)에서 확인했다.
+
+- **되는 것(실기기 확인)**: Android 빌드(`flutter build apk --debug`, 라이선스 동의 없이 됨), 앱 시작, 시스템 파일 선택 창으로 PDF 열기(`file_selector`가 앱 캐시로 복사해 준다),
+  PDFium 렌더링, 썸네일, 최근 파일, **손가락 손글씨**(그리기 층이 `Listener`라 터치 그대로), 메모 놓기(SVG 아이콘 모양 포함), 길게 눌러 글자 선택 후 형광펜,
+  저장(시스템 "문서 만들기" 창). 메모 입력은 소프트 키보드가 올라온다. 메인 스레드 PDFium 크래시는 이번 범위에서 나지 않았다.
+- **고친 것**: ① `getSaveLocation`이 Android에 없어(`UnimplementedError`) 모바일 저장은 `FilePicker.saveFile(bytes:)`로 한다(`_saveMobile`).
+  ② pdfrx 기본 글자 선택 도구줄이 Android에서 "No MaterialLocalizations found" 오류 화면을 낸다 → `buildContextMenu`로 직접 만든 도구줄(`_selectionMenu`: 형광펜·밑줄·복사·모두 선택)을 쓴다.
+- **아직 데스크톱 모양 그대로인 것(다음 일)**: 폰 화면 재배치(사이드바·도구 줄), "쪽을 클릭해…" 같은 마우스 문구, 홈의 "끌어다 놓으세요", 인쇄·페이지 도구·변환 단추 숨기기,
+  그리는 도구가 켜졌을 때 두 손가락 이동·확대, 펜 굵기, 선택 도구줄 위치(글자를 가린다), 저장 후 알림(내부 번호가 아닌 이름).
+- **주의**: `adb`는 기기가 둘 이상일 때 `-s <기기>`를 꼭 붙인다(실기기와 에뮬레이터). 에뮬레이터는 시작 직후 `offline`일 수 있다. 큰 APK(디버그 200MB)는 설치에 1~2분 걸린다.
+- 식별자는 `art.zoomon.daylightpdf`(Android `applicationId`·`namespace`), 표시 이름 `Daylight PDF`. 릴리스 서명·Play 트랙은 아직 구성하지 않았다.
+
 ## README 스크린샷과 데모
 
 - 영어 UI, 라이트·다크 1200x720(2배 해상도)로 `integration_test/readme_shots_test.dart`가 보여 주기용 문서(Quarterly Report, 주석 달린 사본, 12쪽 문서)로 화면을 찍는다

@@ -801,4 +801,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passwordOpen => 'Open';
+
+  @override
+  String get viewerCopy => 'Copy';
 }

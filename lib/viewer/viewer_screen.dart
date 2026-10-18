@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:math' as math;
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show LogicalKeyboardKey, rootBundle;
@@ -120,6 +122,47 @@ class _ViewerScreenState extends State<ViewerScreen> {
         final center = _controller.localToDocument(Offset(view.width / 2, view.height / 2));
         await _controller.goTo(_controller.calcMatrixFor(center, zoom: 1.0));
     }
+  }
+
+  /// 글자를 고르면(터치는 길게 눌러서) 그 자리에 뜨는 도구줄: 형광펜, 밑줄, 복사, 모두 선택.
+  /// pdfrx 기본 도구줄은 Material 문구가 없으면 오류 화면이 뜨고(Android에서 확인), 우리 문구로 쓰고 싶어서 직접 만든다.
+  Widget? _selectionMenu(BuildContext context, PdfViewerContextMenuBuilderParams params) {
+    if (!params.isTextSelectionEnabled) return null;
+    final l10n = AppLocalizations.of(context);
+    final delegate = params.textSelectionDelegate;
+    final entries = <(String, VoidCallback)>[
+      if (delegate.hasSelectedText) ...[
+        (l10n.annotTypeHighlight, () => _applyToSelection(underline: false)),
+        (l10n.annotTypeUnderline, () => _applyToSelection(underline: true)),
+        if (delegate.isCopyAllowed) (l10n.viewerCopy, delegate.copyTextSelection),
+      ],
+      if (!delegate.isSelectingAllText) (l10n.pagesSelectAll, delegate.selectAllText),
+    ];
+    if (entries.isEmpty) return null;
+    final size = MediaQuery.sizeOf(context);
+    final left = (params.anchorA.dx - 110).clamp(8.0, math.max(8.0, size.width - 330)).toDouble();
+    return Positioned(
+      left: left,
+      top: params.anchorA.dy + 14,
+      child: Material(
+        elevation: 6,
+        borderRadius: BorderRadius.circular(AppRadius.chip),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (label, action) in entries)
+              TextButton(
+                onPressed: () {
+                  params.dismissContextMenu();
+                  action();
+                },
+                child: Text(label),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// 그 쪽의 위에 맞춰 이동한다. 기본값은 마지막 쪽만 아래에 맞춰(pdfrx `pageAnchorEnd`) 3쪽짜리 문서의 3쪽을 누르면
@@ -290,11 +333,36 @@ class _ViewerScreenState extends State<ViewerScreen> {
     }
   }
 
+  /// 모바일 저장: 경로를 고르는 저장 창(`getSaveLocation`)이 Android에 없어서, 시스템 "문서 만들기" 창에 바이트를 넘겨 사본으로 저장한다.
+  Future<bool> _saveMobile(PdfDocument document) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      final bytes = await document.encodePdf();
+      final fileName = '${p.basenameWithoutExtension(widget.path)}-annotated.pdf';
+      final saved = await FilePicker.saveFile(
+        dialogTitle: l10n.annotSave,
+        fileName: fileName,
+        mimeType: 'application/pdf',
+        bytes: bytes,
+      );
+      if (saved == null || !mounted) return false; // 사용자가 취소했다
+      _annotations.markSaved();
+      showMessage(context, l10n.pagesSaved(fileName)); // 저장 위치의 이름은 내부 번호라, 제안한 이름을 보여 준다
+      return true;
+    } on Object {
+      if (mounted) showMessage(context, l10n.annotFailed);
+      return false;
+    }
+  }
+
   /// 주석이 든 PDF를 저장한다. 저장했으면 true.
   Future<bool> _save() async {
     final l10n = AppLocalizations.of(context);
     final document = _document;
     if (document == null) return false;
+    if (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
+      return _saveMobile(document);
+    }
     final target = await pickPdfSavePath(
       l10n,
       suggestedName: '${p.basenameWithoutExtension(widget.path)}-annotated.pdf',
@@ -528,6 +596,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
                   // 그리는 도구가 켜져 있으면 끌기는 그리기에 쓰이므로 화면 끌기를 끈다 (휠 스크롤·확대는 그대로).
                   panEnabled: !_annotations.drawing,
                   pageOverlaysBuilder: (context, pageRect, page) => _noteHotspots(pageRect, page),
+                  buildContextMenu: _selectionMenu,
                   pagePaintCallbacks: [
                     (canvas, pageRect, page) => _searcher?.pageTextMatchPaintCallback(canvas, pageRect, page),
                   ],

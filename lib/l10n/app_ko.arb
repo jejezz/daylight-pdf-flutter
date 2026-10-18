@@ -508,5 +508,6 @@
         "type": "String"
       }
     }
-  }
+  },
+  "viewerCopy": "복사"
 }

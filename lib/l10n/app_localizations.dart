@@ -1513,6 +1513,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'열기'**
   String get passwordOpen;
+
+  /// No description provided for @viewerCopy.
+  ///
+  /// In ko, this message translates to:
+  /// **'복사'**
+  String get viewerCopy;
 }
 
 class _AppLocalizationsDelegate

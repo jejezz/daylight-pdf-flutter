@@ -795,4 +795,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get passwordOpen => '열기';
+
+  @override
+  String get viewerCopy => '복사';
 }

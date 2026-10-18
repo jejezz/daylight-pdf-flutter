@@ -491,5 +491,6 @@
         "type": "String"
       }
     }
-  }
+  },
+  "viewerCopy": "Copy"
 }
