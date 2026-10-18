@@ -33,9 +33,14 @@ class StatusPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[Icon(icon, size: 13, color: color), const SizedBox(width: 4)],
-          Text(
-            label,
-            style: theme.textTheme.labelMedium?.copyWith(color: color, fontWeight: FontWeight.w700),
+          // 자리가 모자라면 말줄임으로 줄어든다 (좁은 도구 줄에서 넘치지 않게)
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelMedium?.copyWith(color: color, fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),

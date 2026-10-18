@@ -5,6 +5,7 @@
 //   언어 해석 · macOS 앱 메뉴 About · 앱 바 [테마 | 언어 | 정보] · 빈 상태.
 // 기존 앱에는 통째로 덮어쓰지 말고 필요한 부분만 옮긴다.
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -16,6 +17,9 @@ import 'about/app_menu_bar.dart';
 import 'about/extra_licenses.dart';
 import 'app_identity.dart';
 import 'home/home_screen.dart';
+import 'home/open_pdf.dart';
+import 'home/recent_files.dart';
+import 'platform/incoming_files.dart';
 import 'l10n/app_localizations.dart';
 import 'settings/app_settings.dart';
 import 'theme/app_theme.dart';
@@ -48,7 +52,12 @@ Future<void> main() async {
   // 데스크톱이 아니거나 UPDATE_SERVER 가 비어 있으면 null — 업데이트 확인 없음.
   final updates = await UpdateService.create();
   // UpdateScope 는 MaterialApp 위에 둔다 — 정보 창이 이것을 읽어 "업데이트 확인" 단추를 붙인다.
-  runApp(UpdateScope(service: updates, child: App(settings: settings, updates: updates)));
+  runApp(
+    UpdateScope(
+      service: updates,
+      child: App(settings: settings, updates: updates),
+    ),
+  );
 }
 
 class App extends StatefulWidget {
@@ -63,10 +72,23 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> with WidgetsBindingObserver {
   final _navigatorKey = GlobalKey<NavigatorState>();
+  final _incoming = IncomingFiles();
+  StreamSubscription<String>? _incomingSubscription;
+
+  /// 다른 앱이 PDF를 이 앱으로 열었을 때(Android): 앱 보관함에 복사하고 보기 화면으로 간다.
+  void _openIncoming(String path) {
+    final navigator = _navigatorKey.currentState;
+    if (navigator != null) openPdf(navigator, path, recents: RecentFiles());
+  }
 
   @override
   void initState() {
     super.initState();
+    _incomingSubscription = _incoming.opened.listen(_openIncoming);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final first = await _incoming.start();
+      if (first != null) _openIncoming(first);
+    });
     WidgetsBinding.instance.addObserver(this);
     widget.settings.addListener(_syncWindowBrightness);
     _syncWindowBrightness();
@@ -75,6 +97,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _incomingSubscription?.cancel();
+    _incoming.dispose();
     widget.settings.removeListener(_syncWindowBrightness);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -119,6 +143,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         listenable: widget.settings,
         builder: (context, _) => MaterialApp(
           navigatorKey: _navigatorKey,
+          navigatorObservers: [homeRouteObserver],
           title: AppIdentity.displayName,
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light(dense: _isDesktop),

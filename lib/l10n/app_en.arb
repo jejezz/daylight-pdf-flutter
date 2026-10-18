@@ -491,5 +491,62 @@
         "type": "String"
       }
     }
-  }
+  },
+  "viewerCopy": "Copy",
+  "homeMobileOpenTitle": "Open a PDF",
+  "homeMobileOpenHint": "Pick a file from this device or the cloud",
+  "homeMobileEmptyTitle": "Open a PDF to read and take notes",
+  "homeMobileEmptyHint": "You can also tap a PDF in the Files app or another app and open it here",
+  "homeRecentMeta": "{date} · {size}",
+  "@homeRecentMeta": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "annotHintNoteTouch": "Tap the page to place a note",
+  "annotHintInkFinger": "Draw with one finger, move and zoom with two",
+  "annotHintInkPen": "Draw with the pen, move and zoom with your fingers",
+  "annotHintShapeTouch": "Drag to draw the shape",
+  "annotWidth": "Line width",
+  "annotWidthThin": "Thin",
+  "annotWidthMedium": "Medium",
+  "annotWidthThick": "Thick",
+  "annotFingerDraws": "Draw with finger",
+  "annotPenOnly": "Pen only",
+  "annotFingerDrawsTip": "On: fingers draw too. Off: only the pen draws and fingers move the page",
+  "sidebarBookmarks": "Bookmarks",
+  "bookmarkAddTip": "Bookmark this page ({shortcut})",
+  "bookmarkRemoveTip": "Remove bookmark ({shortcut})",
+  "bookmarksEmpty": "No bookmarks yet. Tap the bookmark button to mark a page.",
+  "bookmarkPage": "Page {page}",
+  "bookmarkDelete": "Delete bookmark",
+  "@bookmarkAddTip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "@bookmarkRemoveTip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "@bookmarkPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "annotFilterHint": "Search notes",
+  "annotFilterClear": "Clear search",
+  "annotFilterNone": "No matching annotations"
 }

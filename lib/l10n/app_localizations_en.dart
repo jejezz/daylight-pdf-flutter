@@ -801,4 +801,95 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passwordOpen => 'Open';
+
+  @override
+  String get viewerCopy => 'Copy';
+
+  @override
+  String get homeMobileOpenTitle => 'Open a PDF';
+
+  @override
+  String get homeMobileOpenHint => 'Pick a file from this device or the cloud';
+
+  @override
+  String get homeMobileEmptyTitle => 'Open a PDF to read and take notes';
+
+  @override
+  String get homeMobileEmptyHint =>
+      'You can also tap a PDF in the Files app or another app and open it here';
+
+  @override
+  String homeRecentMeta(String date, String size) {
+    return '$date · $size';
+  }
+
+  @override
+  String get annotHintNoteTouch => 'Tap the page to place a note';
+
+  @override
+  String get annotHintInkFinger =>
+      'Draw with one finger, move and zoom with two';
+
+  @override
+  String get annotHintInkPen =>
+      'Draw with the pen, move and zoom with your fingers';
+
+  @override
+  String get annotHintShapeTouch => 'Drag to draw the shape';
+
+  @override
+  String get annotWidth => 'Line width';
+
+  @override
+  String get annotWidthThin => 'Thin';
+
+  @override
+  String get annotWidthMedium => 'Medium';
+
+  @override
+  String get annotWidthThick => 'Thick';
+
+  @override
+  String get annotFingerDraws => 'Draw with finger';
+
+  @override
+  String get annotPenOnly => 'Pen only';
+
+  @override
+  String get annotFingerDrawsTip =>
+      'On: fingers draw too. Off: only the pen draws and fingers move the page';
+
+  @override
+  String get sidebarBookmarks => 'Bookmarks';
+
+  @override
+  String bookmarkAddTip(String shortcut) {
+    return 'Bookmark this page ($shortcut)';
+  }
+
+  @override
+  String bookmarkRemoveTip(String shortcut) {
+    return 'Remove bookmark ($shortcut)';
+  }
+
+  @override
+  String get bookmarksEmpty =>
+      'No bookmarks yet. Tap the bookmark button to mark a page.';
+
+  @override
+  String bookmarkPage(int page) {
+    return 'Page $page';
+  }
+
+  @override
+  String get bookmarkDelete => 'Delete bookmark';
+
+  @override
+  String get annotFilterHint => 'Search notes';
+
+  @override
+  String get annotFilterClear => 'Clear search';
+
+  @override
+  String get annotFilterNone => 'No matching annotations';
 }

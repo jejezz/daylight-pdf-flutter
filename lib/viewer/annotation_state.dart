@@ -52,8 +52,14 @@ class AnnotationState extends ChangeNotifier {
     0xFFFB8C00, // 주황
   ];
 
+  /// 손글씨·사각형·원의 선 굵기 선택지 (PDF pt): 가늘게, 보통, 굵게.
+  static const strokeWidths = <double>[1.5, 3.0, 6.0];
+
   DrawTool _tool = DrawTool.none;
   int _color = palette.first;
+  int _widthIndex = 1;
+  bool _fingerDraws = true;
+  bool _stylusSeen = false;
   bool _dirty = false;
   bool _busy = false;
   int _revision = 0;
@@ -64,6 +70,12 @@ class AnnotationState extends ChangeNotifier {
 
   DrawTool get tool => _tool;
   int get color => _color;
+  int get widthIndex => _widthIndex;
+  double get strokeWidth => strokeWidths[_widthIndex];
+
+  /// 손가락으로도 그리는지. 꺼져 있으면 펜(스타일러스)만 그리고 손가락은 쪽을 옮기고 확대한다.
+  /// 펜 입력이 처음 보이면 저절로 꺼진다 (손바닥이 닿아도 그려지지 않게). 도구 줄에서 다시 켤 수 있다.
+  bool get fingerDraws => _fingerDraws;
   bool get dirty => _dirty;
   bool get busy => _busy;
   List<ReadAnnotation> get items => _items;
@@ -81,6 +93,26 @@ class AnnotationState extends ChangeNotifier {
   void toggleTool(DrawTool tool) {
     _tool = _tool == tool ? DrawTool.none : tool;
     notifyListeners();
+  }
+
+  void setWidthIndex(int index) {
+    _widthIndex = index.clamp(0, strokeWidths.length - 1);
+    notifyListeners();
+  }
+
+  void setFingerDraws(bool value) {
+    _fingerDraws = value;
+    notifyListeners();
+  }
+
+  /// 펜(스타일러스) 입력을 처음 받았을 때 부른다: 그 뒤로는 손가락이 그리지 않고 쪽을 옮기는 데 쓰인다.
+  void noteStylus() {
+    if (_stylusSeen) return;
+    _stylusSeen = true;
+    if (_fingerDraws) {
+      _fingerDraws = false;
+      notifyListeners();
+    }
   }
 
   void setColor(int color) {

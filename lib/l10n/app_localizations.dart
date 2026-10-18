@@ -1513,6 +1513,162 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'열기'**
   String get passwordOpen;
+
+  /// No description provided for @viewerCopy.
+  ///
+  /// In ko, this message translates to:
+  /// **'복사'**
+  String get viewerCopy;
+
+  /// No description provided for @homeMobileOpenTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF 열기'**
+  String get homeMobileOpenTitle;
+
+  /// No description provided for @homeMobileOpenHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 기기나 클라우드에서 파일을 골라요'**
+  String get homeMobileOpenHint;
+
+  /// No description provided for @homeMobileEmptyTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF를 열어 읽고 메모해 보세요'**
+  String get homeMobileEmptyTitle;
+
+  /// No description provided for @homeMobileEmptyHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 앱이나 다른 앱에서 PDF를 눌러도 이 앱으로 열 수 있어요'**
+  String get homeMobileEmptyHint;
+
+  /// No description provided for @homeRecentMeta.
+  ///
+  /// In ko, this message translates to:
+  /// **'{date} · {size}'**
+  String homeRecentMeta(String date, String size);
+
+  /// No description provided for @annotHintNoteTouch.
+  ///
+  /// In ko, this message translates to:
+  /// **'쪽을 눌러 메모를 놓으세요'**
+  String get annotHintNoteTouch;
+
+  /// No description provided for @annotHintInkFinger.
+  ///
+  /// In ko, this message translates to:
+  /// **'한 손가락으로 그리고, 두 손가락으로 이동·확대해요'**
+  String get annotHintInkFinger;
+
+  /// No description provided for @annotHintInkPen.
+  ///
+  /// In ko, this message translates to:
+  /// **'펜으로 그리고, 손가락으로 이동·확대해요'**
+  String get annotHintInkPen;
+
+  /// No description provided for @annotHintShapeTouch.
+  ///
+  /// In ko, this message translates to:
+  /// **'끌어서 모양을 그리세요'**
+  String get annotHintShapeTouch;
+
+  /// No description provided for @annotWidth.
+  ///
+  /// In ko, this message translates to:
+  /// **'선 굵기'**
+  String get annotWidth;
+
+  /// No description provided for @annotWidthThin.
+  ///
+  /// In ko, this message translates to:
+  /// **'가늘게'**
+  String get annotWidthThin;
+
+  /// No description provided for @annotWidthMedium.
+  ///
+  /// In ko, this message translates to:
+  /// **'보통'**
+  String get annotWidthMedium;
+
+  /// No description provided for @annotWidthThick.
+  ///
+  /// In ko, this message translates to:
+  /// **'굵게'**
+  String get annotWidthThick;
+
+  /// No description provided for @annotFingerDraws.
+  ///
+  /// In ko, this message translates to:
+  /// **'손가락으로 그리기'**
+  String get annotFingerDraws;
+
+  /// No description provided for @annotPenOnly.
+  ///
+  /// In ko, this message translates to:
+  /// **'펜으로만 그리기'**
+  String get annotPenOnly;
+
+  /// No description provided for @annotFingerDrawsTip.
+  ///
+  /// In ko, this message translates to:
+  /// **'켜면 손가락으로도 그려요. 끄면 펜으로만 그리고 손가락은 쪽을 옮겨요'**
+  String get annotFingerDrawsTip;
+
+  /// No description provided for @sidebarBookmarks.
+  ///
+  /// In ko, this message translates to:
+  /// **'북마크'**
+  String get sidebarBookmarks;
+
+  /// No description provided for @bookmarkAddTip.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 쪽에 북마크 ({shortcut})'**
+  String bookmarkAddTip(String shortcut);
+
+  /// No description provided for @bookmarkRemoveTip.
+  ///
+  /// In ko, this message translates to:
+  /// **'북마크 지우기 ({shortcut})'**
+  String bookmarkRemoveTip(String shortcut);
+
+  /// No description provided for @bookmarksEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 북마크가 없어요. 북마크 단추로 쪽에 표시해 두세요.'**
+  String get bookmarksEmpty;
+
+  /// No description provided for @bookmarkPage.
+  ///
+  /// In ko, this message translates to:
+  /// **'{page}쪽'**
+  String bookmarkPage(int page);
+
+  /// No description provided for @bookmarkDelete.
+  ///
+  /// In ko, this message translates to:
+  /// **'북마크 지우기'**
+  String get bookmarkDelete;
+
+  /// No description provided for @annotFilterHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 내용 검색'**
+  String get annotFilterHint;
+
+  /// No description provided for @annotFilterClear.
+  ///
+  /// In ko, this message translates to:
+  /// **'검색어 지우기'**
+  String get annotFilterClear;
+
+  /// No description provided for @annotFilterNone.
+  ///
+  /// In ko, this message translates to:
+  /// **'일치하는 주석이 없어요'**
+  String get annotFilterNone;
 }
 
 class _AppLocalizationsDelegate

@@ -1,10 +1,14 @@
 import 'dart:io';
+import 'dart:math' as math;
 
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show LogicalKeyboardKey, rootBundle;
 import 'package:path/path.dart' as p;
 import 'package:pdfrx/pdfrx.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../convert/conversion_error.dart';
 import '../convert/error_text.dart';
@@ -12,6 +16,7 @@ import '../engine/annotations/annotation_specs.dart';
 import '../engine/annotations/pdfium_annotations.dart';
 import '../l10n/app_localizations.dart';
 import '../pages/page_tools_screen.dart';
+import '../platform/platform_kind.dart';
 import '../pages/pdf_dialogs.dart';
 import '../print/print_dialog.dart';
 import '../theme/app_theme.dart';
@@ -22,6 +27,8 @@ import '../window/focus_tint.dart';
 import 'annotation_panel.dart';
 import 'annotation_state.dart';
 import 'annotation_toolbar.dart';
+import 'bookmarks.dart';
+import 'bookmarks_panel.dart';
 import 'draw_layer.dart';
 import 'note_dialog.dart';
 import 'outline_panel.dart';
@@ -51,6 +58,14 @@ class _ViewerScreenState extends State<ViewerScreen> {
   bool _showSearch = false;
   _Sidebar _sidebar = _Sidebar.pages;
   List<PdfOutlineNode> _outline = const [];
+  final _bookmarkStore = BookmarkStore();
+  List<int> _bookmarks = const [];
+
+  /// 사용자가 끌어서 정한 왼쪽 사이드바 너비. 없으면 탭마다 기본 너비.
+  double? _sidebarWidth;
+  static const _sidebarWidthKey = 'viewer_sidebar_width';
+  static const _sidebarMin = 148.0;
+  static const _sidebarMax = 480.0;
   int _passwordAttempts = 0;
   bool _showList = false;
   bool _allowPop = false;
@@ -62,11 +77,48 @@ class _ViewerScreenState extends State<ViewerScreen> {
 
   PdfDocument? get _document => _controller.isReady ? _controller.document : null;
 
+  bool _sidebarDecided = false;
+
   @override
   void initState() {
     super.initState();
     _loadNoteIcon();
+    _loadSidebarWidth();
+    _bookmarkStore.load(widget.path).then((pages) {
+      if (mounted) setState(() => _bookmarks = pages);
+    });
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_sidebarDecided) {
+      _sidebarDecided = true;
+      // 좁은 화면(세로로 든 태블릿, 폰)에서는 썸네일 사이드바가 쪽을 가리므로 처음엔 닫아 둔다.
+      if (isMobilePlatform && MediaQuery.sizeOf(context).width < 900) _showThumbnails = false;
+    }
+  }
+
+  Future<void> _loadSidebarWidth() async {
+    try {
+      final saved = (await SharedPreferences.getInstance()).getDouble(_sidebarWidthKey);
+      if (saved != null && mounted) setState(() => _sidebarWidth = saved.clamp(_sidebarMin, _sidebarMax));
+    } on Object {
+      // 못 읽으면 기본 너비
+    }
+  }
+
+  Future<void> _saveSidebarWidth() async {
+    final width = _sidebarWidth;
+    if (width == null) return;
+    try {
+      await (await SharedPreferences.getInstance()).setDouble(_sidebarWidthKey, width);
+    } on Object {
+      // 저장 못 해도 이번에는 바뀐 채로 쓴다
+    }
+  }
+
+  double get _effectiveSidebarWidth => _sidebarWidth ?? (_sidebar == _Sidebar.pages ? 148.0 : 248.0);
 
   Future<void> _loadNoteIcon() async {
     try {
@@ -98,6 +150,18 @@ class _ViewerScreenState extends State<ViewerScreen> {
     }
   }
 
+  /// 지금 보는 쪽에 북마크를 달거나 지운다.
+  Future<void> _toggleBookmark() async {
+    if (!_controller.isReady) return;
+    final pages = await _bookmarkStore.toggle(widget.path, _controller.pageNumber ?? 1);
+    if (mounted) setState(() => _bookmarks = pages);
+  }
+
+  Future<void> _removeBookmark(int page) async {
+    final pages = await _bookmarkStore.remove(widget.path, page);
+    if (mounted) setState(() => _bookmarks = pages);
+  }
+
   void _toggleSearch() {
     if (_searcher == null) return; // 문서가 아직 안 열렸다
     setState(() => _showSearch = !_showSearch);
@@ -120,6 +184,47 @@ class _ViewerScreenState extends State<ViewerScreen> {
         final center = _controller.localToDocument(Offset(view.width / 2, view.height / 2));
         await _controller.goTo(_controller.calcMatrixFor(center, zoom: 1.0));
     }
+  }
+
+  /// 글자를 고르면(터치는 길게 눌러서) 그 자리에 뜨는 도구줄: 형광펜, 밑줄, 복사, 모두 선택.
+  /// pdfrx 기본 도구줄은 Material 문구가 없으면 오류 화면이 뜨고(Android에서 확인), 우리 문구로 쓰고 싶어서 직접 만든다.
+  Widget? _selectionMenu(BuildContext context, PdfViewerContextMenuBuilderParams params) {
+    if (!params.isTextSelectionEnabled) return null;
+    final l10n = AppLocalizations.of(context);
+    final delegate = params.textSelectionDelegate;
+    final entries = <(String, VoidCallback)>[
+      if (delegate.hasSelectedText) ...[
+        (l10n.annotTypeHighlight, () => _applyToSelection(underline: false)),
+        (l10n.annotTypeUnderline, () => _applyToSelection(underline: true)),
+        if (delegate.isCopyAllowed) (l10n.viewerCopy, delegate.copyTextSelection),
+      ],
+      if (!delegate.isSelectingAllText) (l10n.pagesSelectAll, delegate.selectAllText),
+    ];
+    if (entries.isEmpty) return null;
+    final size = MediaQuery.sizeOf(context);
+    final left = (params.anchorA.dx - 110).clamp(8.0, math.max(8.0, size.width - 330)).toDouble();
+    return Positioned(
+      left: left,
+      top: params.anchorA.dy + 14,
+      child: Material(
+        elevation: 6,
+        borderRadius: BorderRadius.circular(AppRadius.chip),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (label, action) in entries)
+              TextButton(
+                onPressed: () {
+                  params.dismissContextMenu();
+                  action();
+                },
+                child: Text(label),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// 그 쪽의 위에 맞춰 이동한다. 기본값은 마지막 쪽만 아래에 맞춰(pdfrx `pageAnchorEnd`) 3쪽짜리 문서의 3쪽을 누르면
@@ -167,7 +272,12 @@ class _ViewerScreenState extends State<ViewerScreen> {
     if (_annotations.tool == DrawTool.note) _annotations.toggleTool(DrawTool.note);
   }
 
+  /// 메모 창이 열려 있는 동안 같은 누르기가 한 번 더 들어와도 창을 또 열지 않는다.
+  /// (입력이 뷰어와 그리기 층 양쪽에 전달되므로, 타이밍에 따라 두 처리기가 모두 불릴 수 있다.)
+  bool _noteDialogOpen = false;
+
   Future<void> _addNote(int pageIndex, PdfPoint at) async {
+    if (_noteDialogOpen) return;
     // 기존 메모 아이콘을 누른 것이면 새 메모를 놓는 대신 그 메모를 연다.
     final existing = noteAt(_annotations.items, pageIndex, at);
     if (existing != null) {
@@ -176,6 +286,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
       return;
     }
     final l10n = AppLocalizations.of(context);
+    _noteDialogOpen = true;
     final text = await showDialog<String>(
       context: context,
       builder: (context) {
@@ -196,6 +307,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
         );
       },
     );
+    _noteDialogOpen = false;
     if (text == null || text.isEmpty) return;
     _endNotePlacement();
     await _add([
@@ -226,8 +338,14 @@ class _ViewerScreenState extends State<ViewerScreen> {
   /// 메모를 열어 내용을 읽고, 고치고, 지운다 (쪽의 메모 아이콘이나 주석 목록의 메모 행에서).
   Future<void> _openNote(ReadAnnotation note) async {
     final document = _document;
-    if (document == null) return;
-    final result = await showNoteDialog(context, initialText: note.contents, pageNumber: note.pageIndex + 1);
+    if (document == null || _noteDialogOpen) return;
+    _noteDialogOpen = true;
+    final NoteDialogResult? result;
+    try {
+      result = await showNoteDialog(context, initialText: note.contents, pageNumber: note.pageIndex + 1);
+    } finally {
+      _noteDialogOpen = false;
+    }
     if (result == null || !mounted) return;
     try {
       switch (result.action) {
@@ -244,6 +362,9 @@ class _ViewerScreenState extends State<ViewerScreen> {
   /// 쪽 위의 메모 아이콘 자리에 얹는 투명한 영역: 마우스를 올리면 내용이 툴팁으로 보이고, 누르면 메모 창이 열린다.
   /// 누르기는 pdfrx가 권하는 [PdfOverlayInteractionRegion]으로 받아 뷰어의 끌기·글자 선택을 방해하지 않는다.
   List<Widget> _noteHotspots(Rect pageRect, PdfPage page) {
+    // 그리는 도구가 켜져 있는 동안은 그리기 층이 메모 아이콘 누르기(기존 메모 열기)를 처리한다. 입력이 아래 뷰어에도 전달되므로
+    // 여기서도 처리하면 메모 창이 두 번 뜬다.
+    if (_annotations.drawing) return const [];
     final notes = _annotations.items.where((a) => a.subtype == 1 && a.pageIndex == page.pageNumber - 1);
     return [
       for (final note in notes)
@@ -290,11 +411,36 @@ class _ViewerScreenState extends State<ViewerScreen> {
     }
   }
 
+  /// 모바일 저장: 경로를 고르는 저장 창(`getSaveLocation`)이 Android에 없어서, 시스템 "문서 만들기" 창에 바이트를 넘겨 사본으로 저장한다.
+  Future<bool> _saveMobile(PdfDocument document) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      final bytes = await document.encodePdf();
+      final fileName = '${p.basenameWithoutExtension(widget.path)}-annotated.pdf';
+      final saved = await FilePicker.saveFile(
+        dialogTitle: l10n.annotSave,
+        fileName: fileName,
+        mimeType: 'application/pdf',
+        bytes: bytes,
+      );
+      if (saved == null || !mounted) return false; // 사용자가 취소했다
+      _annotations.markSaved();
+      showMessage(context, l10n.pagesSaved(fileName)); // 저장 위치의 이름은 내부 번호라, 제안한 이름을 보여 준다
+      return true;
+    } on Object {
+      if (mounted) showMessage(context, l10n.annotFailed);
+      return false;
+    }
+  }
+
   /// 주석이 든 PDF를 저장한다. 저장했으면 true.
   Future<bool> _save() async {
     final l10n = AppLocalizations.of(context);
     final document = _document;
     if (document == null) return false;
+    if (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
+      return _saveMobile(document);
+    }
     final target = await pickPdfSavePath(
       l10n,
       suggestedName: '${p.basenameWithoutExtension(widget.path)}-annotated.pdf',
@@ -356,6 +502,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
             SingleActivator(LogicalKeyboardKey.keyZ, meta: _isMac, control: !_isMac): _undo,
             SingleActivator(LogicalKeyboardKey.keyP, meta: _isMac, control: !_isMac): _print,
             SingleActivator(LogicalKeyboardKey.keyF, meta: _isMac, control: !_isMac): _toggleSearch,
+            SingleActivator(LogicalKeyboardKey.keyD, meta: _isMac, control: !_isMac): _toggleBookmark,
           },
           child: Focus(
             autofocus: true,
@@ -393,6 +540,20 @@ class _ViewerScreenState extends State<ViewerScreen> {
                     label: Text(l10n.annotSave),
                   ),
                   const SizedBox(width: AppSpacing.xs),
+                  ListenableBuilder(
+                    listenable: _controller,
+                    builder: (context, _) {
+                      final marked = _controller.isReady && _bookmarks.contains(_controller.pageNumber ?? 1);
+                      final shortcut = _isMac ? '⌘D' : 'Ctrl+D';
+                      return IconButton(
+                        tooltip: marked ? l10n.bookmarkRemoveTip(shortcut) : l10n.bookmarkAddTip(shortcut),
+                        isSelected: marked,
+                        icon: const Icon(Icons.bookmark_border_rounded),
+                        selectedIcon: const Icon(Icons.bookmark_rounded),
+                        onPressed: _toggleBookmark,
+                      );
+                    },
+                  ),
                   IconButton(
                     tooltip: l10n.viewerSearchTip(_isMac ? '⌘F' : 'Ctrl+F'),
                     isSelected: _showSearch,
@@ -400,18 +561,21 @@ class _ViewerScreenState extends State<ViewerScreen> {
                     selectedIcon: const Icon(Icons.search_rounded),
                     onPressed: _toggleSearch,
                   ),
-                  IconButton(
-                    tooltip: l10n.printTip(_isMac ? '⌘P' : 'Ctrl+P'),
-                    icon: const Icon(Icons.print_outlined),
-                    onPressed: _print,
-                  ),
-                  IconButton(
-                    tooltip: l10n.viewerEditPages,
-                    icon: const Icon(Icons.dashboard_customize_outlined),
-                    onPressed: () =>
-                        Navigator.of(context)
-                            .push(MaterialPageRoute<void>(builder: (_) => PageToolsScreen(initialPath: widget.path))),
-                  ),
+                  // 인쇄와 페이지 도구는 데스크톱 기능이다 (폰·태블릿 앱은 읽기와 메모에 집중한다).
+                  if (!isMobilePlatform) ...[
+                    IconButton(
+                      tooltip: l10n.printTip(_isMac ? '⌘P' : 'Ctrl+P'),
+                      icon: const Icon(Icons.print_outlined),
+                      onPressed: _print,
+                    ),
+                    IconButton(
+                      tooltip: l10n.viewerEditPages,
+                      icon: const Icon(Icons.dashboard_customize_outlined),
+                      onPressed: () =>
+                          Navigator.of(context)
+                              .push(MaterialPageRoute<void>(builder: (_) => PageToolsScreen(initialPath: widget.path))),
+                    ),
+                  ],
                   IconButton(
                     tooltip: l10n.viewerThumbnails,
                     isSelected: _showThumbnails,
@@ -465,6 +629,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
         itemCount: document.pages.length,
         separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
         itemBuilder: (context, index) => _Thumbnail(
+          height: ((_effectiveSidebarWidth - 40) * 1.04).clamp(80.0, 420.0),
           document: document,
           pageNumber: index + 1,
           selected: current == index + 1,
@@ -480,32 +645,67 @@ class _ViewerScreenState extends State<ViewerScreen> {
     return Row(
       children: [
         if (_showThumbnails)
-          Container(
-            width: _sidebar == _Sidebar.outline ? 248 : 148,
-            decoration: BoxDecoration(
-              color: scheme.surface,
-              border: Border(right: BorderSide(color: scheme.outlineVariant)),
-            ),
-            child: Column(
+          SizedBox(
+            width: _effectiveSidebarWidth,
+            child: Stack(
               children: [
-                if (_outline.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.sm, AppSpacing.sm, 0),
-                    child: SegmentedButton<_Sidebar>(
-                      showSelectedIcon: false,
-                      style: const ButtonStyle(visualDensity: VisualDensity.compact),
-                      segments: [
-                        ButtonSegment(value: _Sidebar.pages, label: Text(l10n.sidebarPages)),
-                        ButtonSegment(value: _Sidebar.outline, label: Text(l10n.sidebarOutline)),
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: scheme.surface,
+                      border: Border(right: BorderSide(color: scheme.outlineVariant)),
+                    ),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.sm, AppSpacing.sm, 0),
+                          child: SegmentedButton<_Sidebar>(
+                            showSelectedIcon: false,
+                            style: const ButtonStyle(visualDensity: VisualDensity.compact),
+                            segments: [
+                              ButtonSegment(value: _Sidebar.pages, label: Text(l10n.sidebarPages)),
+                              if (_outline.isNotEmpty)
+                                ButtonSegment(value: _Sidebar.outline, label: Text(l10n.sidebarOutline)),
+                              ButtonSegment(value: _Sidebar.bookmarks, label: Text(l10n.sidebarBookmarks)),
+                            ],
+                            selected: {_sidebar},
+                            onSelectionChanged: (v) => setState(() => _sidebar = v.first),
+                          ),
+                        ),
+                        Expanded(
+                          child: switch (_sidebar) {
+                            _Sidebar.outline when _outline.isNotEmpty => OutlinePanel(
+                              nodes: _outline,
+                              onTap: (node) => _controller.goToDest(node.dest),
+                            ),
+                            _Sidebar.bookmarks => ListenableBuilder(
+                              listenable: _controller,
+                              builder: (context, _) => BookmarksPanel(
+                                pages: _bookmarks,
+                                current: _controller.isReady ? _controller.pageNumber ?? 1 : 1,
+                                onTap: _goToPage,
+                                onDelete: _removeBookmark,
+                              ),
+                            ),
+                            _ => _thumbnails(),
+                          },
+                        ),
                       ],
-                      selected: {_sidebar},
-                      onSelectionChanged: (v) => setState(() => _sidebar = v.first),
                     ),
                   ),
-                Expanded(
-                  child: _sidebar == _Sidebar.outline && _outline.isNotEmpty
-                      ? OutlinePanel(nodes: _outline, onTap: (node) => _controller.goToDest(node.dest))
-                      : _thumbnails(),
+                ),
+                Positioned(
+                  top: 0,
+                  bottom: 0,
+                  right: 0,
+                  child: _SidebarResizeHandle(
+                    width: isMobilePlatform ? 24 : 10,
+                    onDrag: (dx) => setState(() {
+                      final max = math.min(_sidebarMax, MediaQuery.sizeOf(context).width * 0.5);
+                      _sidebarWidth = (_effectiveSidebarWidth + dx).clamp(_sidebarMin, math.max(_sidebarMin, max));
+                    }),
+                    onEnd: _saveSidebarWidth,
+                  ),
                 ),
               ],
             ),
@@ -526,8 +726,15 @@ class _ViewerScreenState extends State<ViewerScreen> {
                     offset: const Offset(0, 3),
                   ),
                   // 그리는 도구가 켜져 있으면 끌기는 그리기에 쓰이므로 화면 끌기를 끈다 (휠 스크롤·확대는 그대로).
-                  panEnabled: !_annotations.drawing,
+                  // 그리는 도구가 켜져 있으면 손가락 하나는 그리기에 쓰이므로 화면 끌기를 끈다(두 손가락 이동·확대는 그대로).
+                  // 펜 전용이면(펜이 그리고 손가락이 쪽을 옮긴다) 끌기를 켜되 펜·마우스는 쪽을 옮기지 못하게 한다.
+                  panEnabled: !(_annotations.drawing && _annotations.fingerDraws),
+                  interactionDevices: _annotations.drawing && !_annotations.fingerDraws
+                      ? {PointerDeviceKind.touch}
+                      : null,
+                  textSelectionParams: PdfTextSelectionParams(enabled: !_annotations.drawing),
                   pageOverlaysBuilder: (context, pageRect, page) => _noteHotspots(pageRect, page),
+                  buildContextMenu: _selectionMenu,
                   pagePaintCallbacks: [
                     (canvas, pageRect, page) => _searcher?.pageTextMatchPaintCallback(canvas, pageRect, page),
                   ],
@@ -594,6 +801,13 @@ class _NoteHotspot extends StatefulWidget {
 class _NoteHotspotState extends State<_NoteHotspot> {
   final _tooltip = GlobalKey<TooltipState>();
 
+  // 이 아이콘 위에서 시작해 거의 움직이지 않고 짧게 끝난 누르기만 "열기"로 본다.
+  // 뷰어의 누르기 처리(더블탭과 구분하려고 0.3초 늦게 온다)를 쓰지 않는 이유: 메모를 막 놓은 자리에 새로 생긴 이 아이콘이
+  // 놓기 위해 누른 그 누르기를 늦게 받아 메모를 곧바로 다시 여는 일이 생겼다.
+  int? _pointer;
+  Offset? _downAt;
+  Duration? _downTime;
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -613,11 +827,23 @@ class _NoteHotspotState extends State<_NoteHotspot> {
               child: const SizedBox.expand(),
             ),
           ),
-          PdfOverlayInteractionRegion(
-            onTap: (_) {
-              widget.onOpen();
-              return true; // 처리했다는 뜻 (뷰어가 같은 누르기를 다시 쓰지 않는다)
+          Listener(
+            behavior: HitTestBehavior.translucent, // 뷰어의 끌기·확대는 그대로 아래에서 받는다
+            onPointerDown: (e) {
+              _pointer = e.pointer;
+              _downAt = e.position;
+              _downTime = e.timeStamp;
             },
+            onPointerUp: (e) {
+              final isTap =
+                  e.pointer == _pointer &&
+                  _downAt != null &&
+                  (e.position - _downAt!).distance <= 10 &&
+                  e.timeStamp - _downTime! <= const Duration(milliseconds: 600);
+              _pointer = null;
+              if (isTap) widget.onOpen();
+            },
+            onPointerCancel: (_) => _pointer = null,
             child: const SizedBox.expand(),
           ),
         ],
@@ -628,8 +854,15 @@ class _NoteHotspotState extends State<_NoteHotspot> {
 
 /// 사이드바 썸네일: 지금 보는 쪽은 강조 테두리, 아래에 쪽 번호.
 class _Thumbnail extends StatelessWidget {
-  const _Thumbnail({required this.document, required this.pageNumber, required this.selected, required this.onTap});
+  const _Thumbnail({
+    required this.height,
+    required this.document,
+    required this.pageNumber,
+    required this.selected,
+    required this.onTap,
+  });
 
+  final double height;
   final PdfDocument document;
   final int pageNumber;
   final bool selected;
@@ -646,7 +879,7 @@ class _Thumbnail extends StatelessWidget {
       child: Column(
         children: [
           SizedBox(
-            height: 112,
+            height: height,
             child: PageThumbnail(document: document, pageNumber: pageNumber),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -663,7 +896,53 @@ class _Thumbnail extends StatelessWidget {
   }
 }
 
-enum _Sidebar { pages, outline }
+/// 사이드바 오른쪽 가장자리의 끌개: 좌우로 끌어 너비를 바꾼다 (마우스를 올리면 커서가 바뀌고 선이 진해진다).
+class _SidebarResizeHandle extends StatefulWidget {
+  const _SidebarResizeHandle({required this.width, required this.onDrag, required this.onEnd});
+
+  final double width;
+  final void Function(double dx) onDrag;
+  final VoidCallback onEnd;
+
+  @override
+  State<_SidebarResizeHandle> createState() => _SidebarResizeHandleState();
+}
+
+class _SidebarResizeHandleState extends State<_SidebarResizeHandle> {
+  bool _active = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeColumn,
+      onEnter: (_) => setState(() => _active = true),
+      onExit: (_) => setState(() => _active = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onHorizontalDragStart: (_) => setState(() => _active = true),
+        onHorizontalDragUpdate: (d) => widget.onDrag(d.delta.dx),
+        onHorizontalDragEnd: (_) {
+          setState(() => _active = false);
+          widget.onEnd();
+        },
+        child: SizedBox(
+          width: widget.width,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              width: _active ? 3 : 1,
+              color: _active ? scheme.primary : Colors.transparent,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+enum _Sidebar { pages, outline, bookmarks }
 
 enum _Fit { width, page, actual }
 

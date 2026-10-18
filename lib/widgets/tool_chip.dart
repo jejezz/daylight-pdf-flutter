@@ -14,6 +14,7 @@ class ToolChip extends StatelessWidget {
     this.selected = false,
     this.compact = false,
     this.danger = false,
+    this.touch = false,
   });
 
   final IconData icon;
@@ -23,6 +24,9 @@ class ToolChip extends StatelessWidget {
   final bool selected;
   final bool compact;
   final bool danger;
+
+  /// 손가락으로 누르기 좋은 크기 (높이 48 이상, 글자와 아이콘 크게).
+  final bool touch;
 
   @override
   Widget build(BuildContext context) {
@@ -43,17 +47,23 @@ class ToolChip extends StatelessWidget {
         child: InkWell(
           onTap: onPressed,
           borderRadius: BorderRadius.circular(AppRadius.button),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: compact ? AppSpacing.sm : AppSpacing.md, vertical: AppSpacing.sm),
+          child: Container(
+            alignment: touch ? Alignment.center : null,
+            constraints: touch ? const BoxConstraints(minHeight: 48, minWidth: 48) : null,
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? AppSpacing.sm : AppSpacing.md,
+              vertical: touch ? AppSpacing.md : AppSpacing.sm,
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 18, color: color),
+                Icon(icon, size: touch ? 22 : 18, color: color),
                 if (!compact) ...[
                   const SizedBox(width: 6),
                   Text(
                     label,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color, fontWeight: FontWeight.w600),
+                    style: (touch ? Theme.of(context).textTheme.titleSmall : Theme.of(context).textTheme.labelLarge)
+                        ?.copyWith(color: color, fontWeight: FontWeight.w600),
                   ),
                 ],
               ],

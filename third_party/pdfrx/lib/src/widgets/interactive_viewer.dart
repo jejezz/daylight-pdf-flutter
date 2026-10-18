@@ -77,6 +77,7 @@ class InteractiveViewer extends StatefulWidget {
     this.onInteractionStart,
     this.onInteractionUpdate,
     this.panEnabled = true,
+    this.interactionDevices, // DAYLIGHT PATCH
     this.scaleEnabled = true,
     this.scaleFactor = kDefaultMouseScrollToScaleFactor,
     this.transformationController,
@@ -126,6 +127,7 @@ class InteractiveViewer extends StatefulWidget {
     this.onInteractionStart,
     this.onInteractionUpdate,
     this.panEnabled = true,
+    this.interactionDevices, // DAYLIGHT PATCH
     this.scaleEnabled = true,
     this.scaleFactor = 200.0,
     this.transformationController,
@@ -252,6 +254,9 @@ class InteractiveViewer extends StatefulWidget {
   ///
   ///   * [scaleEnabled], which is similar but for scale.
   final bool panEnabled;
+
+  /// DAYLIGHT PATCH: which pointer devices drag/zoom the view (null = all). Lets a stylus draw while fingers move the page.
+  final Set<PointerDeviceKind>? interactionDevices;
 
   /// If false, the user will be prevented from scaling.
   ///
@@ -1559,6 +1564,7 @@ class InteractiveViewerState extends State<InteractiveViewer> with TickerProvide
         onScaleEnd: _onScaleEnd,
         onScaleStart: _onScaleStart,
         onScaleUpdate: _onScaleUpdate,
+        supportedDevices: widget.interactionDevices, // DAYLIGHT PATCH
         trackpadScrollCausesScale: widget.trackpadScrollCausesScale,
         trackpadScrollToScaleFactor: Offset(0, -1 / widget.scaleFactor),
         child: child,

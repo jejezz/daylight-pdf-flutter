@@ -9,9 +9,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// `flutter test`의 기본 플랫폼은 Android라서, 화면이 플랫폼에 따라 다르면 어느 쪽을 시험하는지 정해 준다.
+void testDesktop(String description, WidgetTesterCallback callback) =>
+    testWidgets(description, callback, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
+
 void main() {
   late Directory dir;
-  setUp(() => dir = Directory.systemTemp.createTempSync('daylight_pdf_home_recent'));
+  setUp(() {
+    dir = Directory.systemTemp.createTempSync('daylight_pdf_home_recent');
+    // `flutter test`의 기본 플랫폼은 Android라서, 데스크톱 홈 화면을 시험하려면 데스크톱으로 지정한다.
+  });
   tearDown(() => dir.deleteSync(recursive: true));
 
   /// 실제 파일 [count]개를 만들고, 최신순(마지막이 맨 앞)으로 최근 목록에 심은 뒤 홈 화면을 띄운다.
@@ -38,13 +45,13 @@ void main() {
     return files;
   }
 
-  testWidgets('without recent files there is no recent section', (tester) async {
+  testDesktop('without recent files there is no recent section', (tester) async {
     await pumpHome(tester, count: 0);
     expect(find.text('최근 파일'), findsNothing);
     expect(find.text('파일 열기'), findsOneWidget);
   });
 
-  testWidgets('shows recent files newest first, with name and folder', (tester) async {
+  testDesktop('shows recent files newest first, with name and folder', (tester) async {
     await pumpHome(tester, count: 3);
     expect(find.text('최근 파일'), findsOneWidget);
     final names = tester.widgetList<Text>(find.textContaining(RegExp(r'^doc\d\.pdf$'))).map((t) => t.data).toList();
@@ -56,12 +63,12 @@ void main() {
     );
   });
 
-  testWidgets('all ten recent files are visible at once in the default window', (tester) async {
+  testDesktop('all ten recent files are visible at once in the default window', (tester) async {
     await pumpHome(tester, count: 10);
     expect(find.textContaining(RegExp(r'^doc\d\.pdf$')), findsNWidgets(10));
   });
 
-  testWidgets('in the smallest window the list scrolls but the main actions stay visible', (tester) async {
+  testDesktop('in the smallest window the list scrolls but the main actions stay visible', (tester) async {
     await pumpHome(tester, count: 10, size: const Size(960, 600));
     expect(find.textContaining(RegExp(r'^doc\d\.pdf$')).evaluate().length, greaterThanOrEqualTo(6));
     expect(find.text('변환'), findsOneWidget);
@@ -69,7 +76,7 @@ void main() {
   });
 
   for (final size in [const Size(1200, 720), const Size(960, 600)]) {
-    testWidgets('ten recent files fit without overflow at ${size.width.toInt()}x${size.height.toInt()}', (
+    testDesktop('ten recent files fit without overflow at ${size.width.toInt()}x${size.height.toInt()}', (
       tester,
     ) async {
       await pumpHome(tester, count: 10, size: size);
@@ -81,7 +88,7 @@ void main() {
     });
   }
 
-  testWidgets('removing one entry and clearing the list update the screen and the store', (tester) async {
+  testDesktop('removing one entry and clearing the list update the screen and the store', (tester) async {
     await pumpHome(tester, count: 3);
     await tester.tap(find.byTooltip('목록에서 지우기').first); // 맨 앞 = doc2
     await tester.pumpAndSettle();
@@ -95,7 +102,7 @@ void main() {
     expect(await RecentFiles().load(), isEmpty);
   });
 
-  testWidgets('a recent file that disappeared is reported and dropped when tapped', (tester) async {
+  testDesktop('a recent file that disappeared is reported and dropped when tapped', (tester) async {
     final files = await pumpHome(tester, count: 2);
     File(files[1]).deleteSync(); // doc1이 맨 앞인데 그새 지워진 상황
     await tester.tap(find.text('doc1.pdf'));

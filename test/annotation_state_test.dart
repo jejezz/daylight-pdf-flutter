@@ -205,4 +205,31 @@ void main() {
       expect(state.items.map((a) => a.contents), ['b', '고친 c']);
     });
   });
+
+  group('pen width and finger/stylus', () {
+    test('width defaults to medium, can be changed and stays inside the choices', () {
+      expect(state.strokeWidth, AnnotationState.strokeWidths[1]);
+      state.setWidthIndex(2);
+      expect(state.strokeWidth, AnnotationState.strokeWidths[2]);
+      state.setWidthIndex(99);
+      expect(state.widthIndex, AnnotationState.strokeWidths.length - 1);
+      state.setWidthIndex(-3);
+      expect(state.widthIndex, 0);
+      expect(AnnotationState.strokeWidths, orderedEquals([...AnnotationState.strokeWidths]..sort()));
+    });
+
+    test('fingers draw until a stylus is seen, then only the pen draws (until turned back on)', () {
+      expect(state.fingerDraws, isTrue);
+      var notified = 0;
+      state.addListener(() => notified++);
+      state.noteStylus();
+      expect(state.fingerDraws, isFalse);
+      expect(notified, 1);
+      state.noteStylus(); // 두 번째부터는 아무 일도 없다
+      expect(notified, 1);
+      state.setFingerDraws(true); // 사용자가 다시 켰다
+      state.noteStylus(); // 이미 본 펜이라 다시 끄지 않는다
+      expect(state.fingerDraws, isTrue);
+    });
+  });
 }

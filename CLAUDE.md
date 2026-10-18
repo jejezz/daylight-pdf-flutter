@@ -79,6 +79,18 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
 - 시험(`integration_test/viewer_features_test.dart`): 검색 개수·이동·Esc, 목차 이동, 암호(틀림→맞음, RC4 40비트 PDF를 시험 안에서 직접 만든다), 맞춤 크기.
   통합 시험 요령: 대화상자와 pdfrx 비동기 작업이 섞이면 프레임(`pump`)과 실제 시간(`runAsync`)을 번갈아 기다려야 하고, 입력칸은 `tap`으로 초점을 준 뒤 `enterText`.
 
+- **북마크(⌘D / Ctrl+D, 앱 바 단추, 사이드바 "북마크" 탭)**: 현재 쪽에 달고 지운다. `BookmarkStore`(`lib/viewer/bookmarks.dart`)가 설정(`bookmarks` 키)에
+  **파일 경로별 쪽 번호**로 저장한다 — PDFium에는 북마크를 쓰는 API가 없고 원본 PDF를 건드리지 않기 위해서다. 그래서 다른 경로로 저장한 사본이나
+  옮긴 파일에는 따라가지 않는다(모바일은 앱 보관함 복사본의 경로가 같으니 그대로 유지). 사이드바 탭은 목차가 없어도 항상 보인다. 시험: `bookmarks_test`,
+  `bookmarks_panel_test`, `integration_test/bookmark_test.dart`.
+
+- **주석 목록 검색**: 주석이 있으면 목록 위에 검색칸이 뜨고 `filterAnnotations`가 **메모 내용**(대소문자·앞뒤 공백 무시)으로 거른다. 형광펜·도형처럼 내용이 없는 주석은
+  검색어가 있으면 빠진다. 본문 검색(⌘F, `PdfTextSearcher`)과는 별개다. 시험: `test/annotation_panel_test.dart`.
+
+- **왼쪽 사이드바(쪽·목차·북마크) 너비 조절**: 오른쪽 가장자리의 끌개(`_SidebarResizeHandle`, 마우스 10px·터치 24px)를 좌우로 끈다. 148~480px(보기 창 너비의 절반 이하)로 제한하고,
+  끌기를 마치면 설정(`viewer_sidebar_width` 키)에 저장해 다음에 연 문서에도 쓴다. 정한 적이 없으면 쪽 148, 목차·북마크 248. 쪽 썸네일 높이는 너비에 비례해 커진다.
+  시험: `integration_test/sidebar_resize_test.dart`.
+
 ## 주석 UI (`lib/viewer/`) — 6단계
 
 - 형광펜·밑줄은 "글자를 마우스로 고르고 도구 모음 버튼"(`lineBoxes`가 선택한 글자를 줄별 상자로 바꾼다).
@@ -129,6 +141,48 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
 - 시험한 것: 실제 PDFium으로 쪽 선택·용지·주석·여백·크기·회전·모으기·소책자 순서·쪽 번호(회전한 쪽 포함)·워터마크·흑백(픽셀 확인), 설정 창 구동,
   macOS 인쇄 창이 가공 결과를 미리 보여 주는 것. **못 시험한 것**: 실제 프린터 출력(이 맥에 프린터 없음), Windows·Linux 인쇄 창, 소책자를
   실제 양면으로 접어 보는 것, 다른 뷰어에서 주석이 찍히는지.
+
+## Android 스파이크 (`feat/android-spike`) — 읽기 + 주석 전용 앱 가능성 확인
+
+목표: 인쇄·페이지 도구·변환은 빼고 **PDF를 읽고 스케치 메모처럼 주석만 다는** 폰·태블릿 앱. 실기기(Lenovo Idea Tab, 2560x1600, S펜)에서 확인했다.
+
+- **되는 것(실기기 확인)**: Android 빌드(`flutter build apk --debug`, 라이선스 동의 없이 됨), 앱 시작, 시스템 파일 선택 창으로 PDF 열기(`file_selector`가 앱 캐시로 복사해 준다),
+  PDFium 렌더링, 썸네일, 최근 파일, **손가락 손글씨**(그리기 층이 `Listener`라 터치 그대로), 메모 놓기(SVG 아이콘 모양 포함), 길게 눌러 글자 선택 후 형광펜,
+  저장(시스템 "문서 만들기" 창). 메모 입력은 소프트 키보드가 올라온다. 메인 스레드 PDFium 크래시는 이번 범위에서 나지 않았다.
+- **고친 것**: ① `getSaveLocation`이 Android에 없어(`UnimplementedError`) 모바일 저장은 `FilePicker.saveFile(bytes:)`로 한다(`_saveMobile`).
+  ② pdfrx 기본 글자 선택 도구줄이 Android에서 "No MaterialLocalizations found" 오류 화면을 낸다 → `buildContextMenu`로 직접 만든 도구줄(`_selectionMenu`: 형광펜·밑줄·복사·모두 선택)을 쓴다.
+- **아직 데스크톱 모양 그대로인 것(다음 일)**: 폰 화면 재배치(사이드바·도구 줄), "쪽을 클릭해…" 같은 마우스 문구, 홈의 "끌어다 놓으세요", 인쇄·페이지 도구·변환 단추 숨기기,
+  그리는 도구가 켜졌을 때 두 손가락 이동·확대, 펜 굵기, 선택 도구줄 위치(글자를 가린다), 저장 후 알림(내부 번호가 아닌 이름).
+- **주의**: `adb`는 기기가 둘 이상일 때 `-s <기기>`를 꼭 붙인다(실기기와 에뮬레이터). 에뮬레이터는 시작 직후 `offline`일 수 있다. 큰 APK(디버그 200MB)는 설치에 1~2분 걸린다.
+- 식별자는 `art.zoomon.daylightpdf`(Android `applicationId`·`namespace`), 표시 이름 `Daylight PDF`. 릴리스 서명·Play 트랙은 아직 구성하지 않았다.
+
+## 모바일(Android 태블릿) 시작 화면과 파일 열기
+
+- 모바일 판별은 `isMobilePlatform`(`lib/platform/platform_kind.dart`, `defaultTargetPlatform` 기준 Android·iOS). **`flutter test`의 기본 플랫폼은 Android**라서 화면이 플랫폼마다 다른 위젯 시험은
+  `testWidgets(..., variant: TargetPlatformVariant.only(...))`로 어느 쪽인지 정한다 (`debugDefaultTargetPlatformOverride`를 직접 바꾸면 테스트 틀이 "값이 바뀌었다"고 실패한다).
+  통합 시험(macOS)은 데스크톱이다.
+- **모바일 홈**(`HomeScreen._mobile`): 큰 "PDF 열기" 카드 하나 + 최근 파일 카드(이름, "날짜 · 크기", 너비에 따라 1~3열, 높이 84). 끌어놓기·변환·페이지 도구는 없다. 보기 화면에서도 인쇄·페이지 도구 단추는 숨긴다.
+- **열린 파일은 앱 보관함에 복사**한다(`OpenedFiles`, `getApplicationSupportDirectory()/opened/<시각>/이름.pdf`): 파일 선택 창과 다른 앱이 주는 파일은 캐시 복사본이라 시스템이 지울 수 있어
+  최근 파일이 열리지 않게 되기 때문이다. 같은 파일을 다시 열면 내용이 같은 기존 복사본을 재사용한다(`adopt`가 64KB씩 비교; 없으면 최근 목록에 중복이 쌓인다). 최근 목록에서 빠진 복사본은 `prune`이 지운다. 열기의 공통 경로는 `openPdf`(보관함 복사 → 최근 목록 → 보기 화면).
+- **다른 앱에서 열기**: `AndroidManifest.xml`의 `VIEW`/`SEND` + `application/pdf` 필터, `MainActivity.kt`가 `content://` 주소를 앱 캐시로 복사해(표시 이름을 지킨다)
+  MethodChannel `art.zoomon.daylightpdf/incoming`으로 Dart에 넘긴다(시작할 때는 `initialFile`, 켜져 있을 때는 `fileOpened`; `IncomingFiles`가 받고 `main.dart`가 `openPdf`로 연다).
+  같은 intent를 두 번 처리하지 않게 표시를 달아 둔다. 홈은 `homeRouteObserver`(`RouteAware`)로 보기 화면이 닫히면 최근 목록을 다시 읽는다.
+- **실기기 시험 요령**: `adb -s <기기>`를 항상 붙이고, 절전 중이면 스크린샷이 까맣다(`input keyevent KEYCODE_WAKEUP`). 다른 앱에서 열기는 `adb shell content query --uri content://media/external/file
+  --where "_display_name='x.pdf'"`로 `_id`를 찾아 `am start -a android.intent.action.VIEW -t application/pdf -d content://media/external/file/<id> --grant-read-uri-permission -n art.zoomon.daylightpdf/.MainActivity`로 흉내 낸다.
+
+## 터치·펜 그리기 (`lib/viewer/draw_layer.dart`)
+
+- **입력 규칙**: 손가락 하나는 그린다. 두 번째 손가락이 닿으면 그리던 획을 버리고 **두 손가락 이동·확대**를 뷰어에 맡긴다. 펜(스타일러스)이 처음 보이면(`AnnotationState.noteStylus`)
+  `fingerDraws`가 꺼져 펜만 그리고 손가락은 쪽을 옮긴다(도구 줄의 "펜으로만 그리기" 단추로 다시 켤 수 있다). 펜이 그리는 동안·직후 1.2초에 닿는 손가락은 손바닥이라 무시한다.
+- **그리기 층은 입력을 가로채지 않는다**: `Listener(translucent)` 아래 `IgnorePointer(CustomPaint)`라서 같은 입력이 아래 뷰어에도 간다(두 손가락 이동·확대, 휠이 그대로 된다).
+  `CustomPaint`가 가로채던 때는 뷰어가 터치를 못 받아 두 손가락 확대가 안 됐다(시험 `touch_draw_test`가 잡았다). 그래서 그리는 도구가 켜져 있는 동안 뷰어 쪽은 이렇게 맞춘다:
+  `panEnabled: !(drawing && fingerDraws)`(손가락이 그리면 끌기 끔), `interactionDevices: drawing && !fingerDraws ? {touch} : null`(펜 전용이면 손가락만 쪽을 옮김, pdfrx 패치),
+  `textSelectionParams.enabled: !drawing`, 메모 아이콘 자리(`_noteHotspots`)는 비운다.
+- **메모 아이콘 누르기**는 뷰어의 늦은 누르기 처리(`PdfOverlayInteractionRegion`, 0.3초 늦게 온다) 대신 아이콘 위의 `Listener`가 직접 감지한다(그 자리에서 시작해 10px 안, 0.6초 안에 끝난 누르기만).
+  막 놓은 메모의 새 아이콘이 놓으려고 누른 그 누르기를 늦게 받아 메모 창이 다시 열리던 문제 때문이다. `_noteDialogOpen`으로 메모 창이 이미 열려 있으면 또 열지 않는다.
+- **펜 굵기**: `AnnotationState.strokeWidths = [1.5, 3, 6]`pt(기본 보통). 미리 보이는 선은 `굵기 × 확대 비율` 픽셀이다. 도구 줄의 점 세 개로 고르고(손글씨·사각형·원에서만 보임), 저장 굵기는 `InkSpec.width`·`ShapeSpec.width`다.
+- **손가락용 도구 줄**: `ToolChip(touch: true)`는 높이 48 이상, 색 점·굵기 점도 크다(`isMobilePlatform`일 때). 안내 문구는 터치 문구("눌러", "두 손가락으로 이동·확대"). 좁은 화면에서는 썸네일 사이드바를 처음엔 닫는다(900 미만).
+  도구가 많아 한 줄에 안 들어가므로 터치 도구 줄은 가로로 스크롤되고 안내 알약은 그 아래 줄에 둔다(실기기에서 87px 넘침이 나서 고침, `annotation_toolbar_test`가 1280/800/412 너비를 점검한다).
 
 ## README 스크린샷과 데모
 
