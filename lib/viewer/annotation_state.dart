@@ -7,7 +7,7 @@ import '../engine/annotations/pdfium_annotations.dart';
 /// 문서에 주석을 쓰고 읽고 지우는 일. 실제로는 PDFium이지만, 상태 로직을 PDFium 없이 시험할 수 있게 틈을 둔다.
 abstract interface class AnnotationBackend {
   Future<void> add(PdfDocument document, List<PdfAnnotationSpec> specs);
-  Future<List<ReadAnnotation>> read(PdfDocument document);
+  Future<List<ReadAnnotation>> read(PdfDocument document, {Set<int>? pages});
   Future<void> remove(PdfDocument document, int pageIndex, int index);
   Future<void> setContents(PdfDocument document, int pageIndex, int index, String text);
 }
@@ -19,7 +19,8 @@ class PdfiumAnnotationBackend implements AnnotationBackend {
   Future<void> add(PdfDocument document, List<PdfAnnotationSpec> specs) => PdfiumAnnotations.add(document, specs);
 
   @override
-  Future<List<ReadAnnotation>> read(PdfDocument document) => PdfiumAnnotations.read(document);
+  Future<List<ReadAnnotation>> read(PdfDocument document, {Set<int>? pages}) =>
+      PdfiumAnnotations.read(document, pages: pages);
 
   @override
   Future<void> remove(PdfDocument document, int pageIndex, int index) =>
@@ -70,8 +71,7 @@ class AnnotationState extends ChangeNotifier {
   /// 되돌릴 일이 있는지.
   bool get canUndo => _undo.isNotEmpty;
 
-  /// 문서 내용이 바뀐 횟수. 뷰어는 쪽 크기가 같으면 이미 그린 쪽을 다시 그리지 않으므로, 이 값의 홀짝으로
-  /// `PdfViewerParams.annotationRenderingMode`를 바꿔 캐시를 비우게 한다 (viewer_screen.dart).
+  /// 문서 내용이 바뀐 횟수. (쪽을 다시 그리는 일은 `third_party/pdfrx`의 사본이 맡는다.)
   int get revision => _revision;
 
   /// 그리는 도구가 켜져 있으면 쪽 끌기(스크롤)는 꺼진다.
@@ -93,8 +93,15 @@ class AnnotationState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> refresh(PdfDocument document) async {
-    _items = await _backend.read(document);
+  /// 주석 목록을 문서에서 다시 읽는다. [pages](0부터)를 주면 그 쪽만 다시 읽고 나머지는 지금 목록을 그대로 쓴다.
+  Future<void> refresh(PdfDocument document, {Set<int>? pages}) async {
+    if (pages == null) {
+      _items = await _backend.read(document);
+    } else {
+      final fresh = await _backend.read(document, pages: pages);
+      _items = [..._items.where((a) => !pages.contains(a.pageIndex)), ...fresh]
+        ..sort((a, b) => a.pageIndex != b.pageIndex ? a.pageIndex - b.pageIndex : a.index - b.index);
+    }
     notifyListeners();
   }
 
@@ -114,7 +121,7 @@ class AnnotationState extends ChangeNotifier {
     _undo.add(placed);
     _dirty = true;
     _revision++;
-    await refresh(document);
+    await refresh(document, pages: {for (final s in specs) s.pageIndex});
   });
 
   /// 목록에서 주석 하나를 지운다. 지운 주석은 실행 취소 기록에서 빼고, 같은 쪽의 뒤쪽 번호는 하나씩 당긴다.
@@ -130,7 +137,7 @@ class AnnotationState extends ChangeNotifier {
     _undo.removeWhere((step) => step.isEmpty);
     _dirty = true;
     _revision++;
-    await refresh(document);
+    await refresh(document, pages: {annotation.pageIndex});
   });
 
   /// 메모의 내용을 고친다. 번호가 바뀌지 않으므로 실행 취소 기록은 그대로 두고(고치기 자체는 되돌리지 않는다),
@@ -138,7 +145,7 @@ class AnnotationState extends ChangeNotifier {
   Future<void> editNote(PdfDocument document, ReadAnnotation annotation, String text) => _run(() async {
     await _backend.setContents(document, annotation.pageIndex, annotation.index, text);
     _dirty = true;
-    await refresh(document);
+    await refresh(document, pages: {annotation.pageIndex});
   });
 
   /// 마지막으로 한 일을 되돌린다 (그때 단 주석을 모두 지운다). 되돌릴 일이 없으면 아무것도 하지 않는다.
@@ -160,7 +167,7 @@ class AnnotationState extends ChangeNotifier {
     _undo.removeLast();
     _dirty = true;
     _revision++;
-    await refresh(document);
+    await refresh(document, pages: {for (final p in step) p.page});
   });
 
   /// 한 번에 하나씩만 문서를 건드린다 (PDFium 작업 도중 다음 요청이 끼어들지 않게).

@@ -14,23 +14,28 @@ class _Entry {
 }
 
 class _FakeBackend implements AnnotationBackend {
-  final pages = <int, List<_Entry>>{};
+  final docPages = <int, List<_Entry>>{};
+  final readRequests = <Set<int>?>[];
   final removed = <({int page, int index})>[];
   bool failNextRemove = false;
 
   @override
   Future<void> add(PdfDocument document, List<PdfAnnotationSpec> specs) async {
     for (final s in specs) {
-      pages.putIfAbsent(s.pageIndex, () => []).add(_Entry(s));
+      docPages.putIfAbsent(s.pageIndex, () => []).add(_Entry(s));
     }
   }
 
   @override
-  Future<List<ReadAnnotation>> read(PdfDocument document) async => [
-    for (final page in pages.keys.toList()..sort())
-      for (var i = 0; i < pages[page]!.length; i++)
-        ReadAnnotation(pageIndex: page, index: i, subtype: 5, contents: pages[page]![i].contents),
-  ];
+  Future<List<ReadAnnotation>> read(PdfDocument document, {Set<int>? pages}) async {
+    readRequests.add(pages);
+    return [
+      for (final page in docPages.keys.toList()..sort())
+        if (pages == null || pages.contains(page))
+          for (var i = 0; i < docPages[page]!.length; i++)
+            ReadAnnotation(pageIndex: page, index: i, subtype: 5, contents: docPages[page]![i].contents),
+    ];
+  }
 
   @override
   Future<void> remove(PdfDocument document, int pageIndex, int index) async {
@@ -39,17 +44,17 @@ class _FakeBackend implements AnnotationBackend {
       throw StateError('remove failed');
     }
     removed.add((page: pageIndex, index: index));
-    pages[pageIndex]!.removeAt(index);
+    docPages[pageIndex]!.removeAt(index);
   }
 
   @override
   Future<void> setContents(PdfDocument document, int pageIndex, int index, String text) async {
-    pages[pageIndex]![index].contents = text;
+    docPages[pageIndex]![index].contents = text;
   }
 
   /// 쪽마다 남은 주석(그리는 순서대로 붙인 이름표 대신 색)을 읽기 쉽게.
   Map<int, List<int>> get colors => {
-    for (final e in pages.entries) e.key: [for (final x in e.value) x.spec.color],
+    for (final e in docPages.entries) e.key: [for (final x in e.value) x.spec.color],
   };
 }
 
@@ -71,6 +76,17 @@ void main() {
     await state.undo(doc);
     expect(backend.removed, isEmpty);
     expect(state.dirty, isFalse);
+  });
+
+  test('after a change only the touched pages are read again, and the list stays in order', () async {
+    await state.refresh(doc);
+    await state.add(doc, [_shape(2, 1), _shape(0, 1)]);
+    await state.add(doc, [_shape(0, 2)]);
+    expect(backend.readRequests, [null, {2, 0}, {0}]);
+    expect(state.items.map((a) => (a.pageIndex, a.index)), [(0, 0), (0, 1), (2, 0)]);
+    await state.undo(doc);
+    expect(backend.readRequests.last, {0});
+    expect(state.items.map((a) => (a.pageIndex, a.index)), [(0, 0), (2, 0)]);
   });
 
   test('undo removes the most recent addition first, one step at a time', () async {

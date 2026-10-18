@@ -77,13 +77,14 @@ abstract final class PdfiumAnnotations {
     await document.reloadPages(pageNumbersToReload: [pageIndex + 1]);
   }
 
-  /// 문서의 모든 주석을 쪽 순서대로 읽는다.
-  static Future<List<ReadAnnotation>> read(PdfDocument document) {
+  /// 문서의 주석을 쪽 순서대로 읽는다. [pages](0부터)를 주면 그 쪽만 읽는다 (쪽이 복잡한 큰 문서는 전체 읽기가 몇 초 걸린다).
+  static Future<List<ReadAnnotation>> read(PdfDocument document, {Set<int>? pages}) {
     return document.useNativeDocumentHandle((handle) {
       final pdfium = getPdfium();
       final doc = FPDF_DOCUMENT.fromAddress(handle);
       final out = <ReadAnnotation>[];
       for (var p = 0; p < document.pages.length; p++) {
+        if (pages != null && !pages.contains(p)) continue;
         final page = pdfium.FPDF_LoadPage(doc, p);
         if (page == ffi.nullptr) continue;
         try {

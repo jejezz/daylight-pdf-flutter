@@ -407,11 +407,6 @@ class _ViewerScreenState extends State<ViewerScreen> {
                   ),
                   // 그리는 도구가 켜져 있으면 끌기는 그리기에 쓰이므로 화면 끌기를 끈다 (휠 스크롤·확대는 그대로).
                   panEnabled: !_annotations.drawing,
-                  // 쪽 크기가 같으면 pdfrx가 이미 그린 쪽을 다시 그리지 않는다. 이 값이 바뀌면 이미지 캐시를 비우므로,
-                  // 주석이 바뀔 때마다 (둘 다 주석을 그리는) 두 모드를 번갈아 써서 본문을 새로 그리게 한다.
-                  annotationRenderingMode: _annotations.revision.isOdd
-                      ? PdfAnnotationRenderingMode.annotation
-                      : PdfAnnotationRenderingMode.annotationAndForms,
                   pageOverlaysBuilder: (context, pageRect, page) => _noteHotspots(pageRect, page),
                   onViewerReady: (document, controller) => _annotations.refresh(document),
                   errorBannerBuilder: (context, error, stackTrace, documentRef) => Center(child: Text(l10n.openFailed)),

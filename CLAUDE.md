@@ -72,9 +72,13 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
   `controller.getPdfPageHitTestResult`로 쪽과 PDF 좌표(쪽 회전 반영)로 바꾼다. 그리는 도구가 켜지면 화면 끌기만 꺼진다.
 - 주석은 열린 문서(메모리)에 바로 쓰이고, 저장 단추가 `encodePdf()`를 새 파일로 쓴다. 저장 안 한 주석이 있으면
   나갈 때 묻는다(`PopScope`).
-- **pdfrx 함정**: 쪽 크기·회전이 같으면 본문의 이미 그린 쪽 이미지를 다시 그리지 않는다(`reloadPages`로는 안 바뀐다).
-  그래서 `AnnotationState.revision`의 홀짝으로 `annotationRenderingMode`를 바꿔 이미지 캐시를 비우게 한다
-  (`viewer_screen.dart`). 두 모드 모두 주석을 그리지만 폼 입력란이 있는 PDF는 모드에 따라 강조색이 미세하게 다르다.
+- **pdfrx 함정**: 쪽 크기·회전이 같으면 이미 그린 쪽 이미지를 다시 그리지 않는다(`reloadPages`로는 안 바뀐다). 처음엔
+  `annotationRenderingMode`를 번갈아 바꿔 캐시 전체를 비웠지만 주석을 달 때마다 모든 쪽이 깜박였다. 지금은
+  `third_party/pdfrx`(2.6.5 사본, 고친 곳은 `DAYLIGHT PATCH` 한 군데, `DAYLIGHT_PATCH.md` 참고)가 다시 읽은 쪽만 "바뀜"으로
+  표시해, 새 그림이 준비될 때까지 옛 그림을 보여 주고 바뀐 쪽만 다시 그린다. pdfrx를 올릴 때 이 패치를 다시 적용한다.
+  (이 패치를 끄면 `annotation_ui_test`의 회전한 쪽 시험이 실패한다.)
+- **큰 문서**: 주석 목록은 건드린 쪽만 다시 읽는다(`AnnotationState.refresh(pages:)`). 복잡한 쪽 300장(347MB)에서 전체 읽기는
+  약 12초였다. 저장(`encodePdf`)은 파일 전체를 메모리에 올리므로 파일 크기만큼 메모리를 쓴다 (2GB 문서 ≈ 2GB).
 - 시험한 것: macOS의 실제 화면 구동(그리기·메모·형광펜·삭제·나가기 확인), 평평한 쪽과 90° 회전한 쪽에서 그린 위치.
   **못 시험한 것**: 저장 창(네이티브)을 통한 저장 클릭, Windows·Linux.
 
