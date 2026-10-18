@@ -815,4 +815,37 @@ class AppLocalizationsKo extends AppLocalizations {
   String homeRecentMeta(String date, String size) {
     return '$date · $size';
   }
+
+  @override
+  String get annotHintNoteTouch => '쪽을 눌러 메모를 놓으세요';
+
+  @override
+  String get annotHintInkFinger => '한 손가락으로 그리고, 두 손가락으로 이동·확대해요';
+
+  @override
+  String get annotHintInkPen => '펜으로 그리고, 손가락으로 이동·확대해요';
+
+  @override
+  String get annotHintShapeTouch => '끌어서 모양을 그리세요';
+
+  @override
+  String get annotWidth => '선 굵기';
+
+  @override
+  String get annotWidthThin => '가늘게';
+
+  @override
+  String get annotWidthMedium => '보통';
+
+  @override
+  String get annotWidthThick => '굵게';
+
+  @override
+  String get annotFingerDraws => '손가락으로 그리기';
+
+  @override
+  String get annotPenOnly => '펜으로만 그리기';
+
+  @override
+  String get annotFingerDrawsTip => '켜면 손가락으로도 그려요. 끄면 펜으로만 그리고 손가락은 쪽을 옮겨요';
 }

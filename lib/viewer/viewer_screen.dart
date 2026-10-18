@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show LogicalKeyboardKey, rootBundle;
@@ -65,10 +66,22 @@ class _ViewerScreenState extends State<ViewerScreen> {
 
   PdfDocument? get _document => _controller.isReady ? _controller.document : null;
 
+  bool _sidebarDecided = false;
+
   @override
   void initState() {
     super.initState();
     _loadNoteIcon();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_sidebarDecided) {
+      _sidebarDecided = true;
+      // 좁은 화면(세로로 든 태블릿, 폰)에서는 썸네일 사이드바가 쪽을 가리므로 처음엔 닫아 둔다.
+      if (isMobilePlatform && MediaQuery.sizeOf(context).width < 900) _showThumbnails = false;
+    }
   }
 
   Future<void> _loadNoteIcon() async {
@@ -211,7 +224,12 @@ class _ViewerScreenState extends State<ViewerScreen> {
     if (_annotations.tool == DrawTool.note) _annotations.toggleTool(DrawTool.note);
   }
 
+  /// 메모 창이 열려 있는 동안 같은 누르기가 한 번 더 들어와도 창을 또 열지 않는다.
+  /// (입력이 뷰어와 그리기 층 양쪽에 전달되므로, 타이밍에 따라 두 처리기가 모두 불릴 수 있다.)
+  bool _noteDialogOpen = false;
+
   Future<void> _addNote(int pageIndex, PdfPoint at) async {
+    if (_noteDialogOpen) return;
     // 기존 메모 아이콘을 누른 것이면 새 메모를 놓는 대신 그 메모를 연다.
     final existing = noteAt(_annotations.items, pageIndex, at);
     if (existing != null) {
@@ -220,6 +238,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
       return;
     }
     final l10n = AppLocalizations.of(context);
+    _noteDialogOpen = true;
     final text = await showDialog<String>(
       context: context,
       builder: (context) {
@@ -240,6 +259,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
         );
       },
     );
+    _noteDialogOpen = false;
     if (text == null || text.isEmpty) return;
     _endNotePlacement();
     await _add([
@@ -270,8 +290,14 @@ class _ViewerScreenState extends State<ViewerScreen> {
   /// 메모를 열어 내용을 읽고, 고치고, 지운다 (쪽의 메모 아이콘이나 주석 목록의 메모 행에서).
   Future<void> _openNote(ReadAnnotation note) async {
     final document = _document;
-    if (document == null) return;
-    final result = await showNoteDialog(context, initialText: note.contents, pageNumber: note.pageIndex + 1);
+    if (document == null || _noteDialogOpen) return;
+    _noteDialogOpen = true;
+    final NoteDialogResult? result;
+    try {
+      result = await showNoteDialog(context, initialText: note.contents, pageNumber: note.pageIndex + 1);
+    } finally {
+      _noteDialogOpen = false;
+    }
     if (result == null || !mounted) return;
     try {
       switch (result.action) {
@@ -288,6 +314,9 @@ class _ViewerScreenState extends State<ViewerScreen> {
   /// 쪽 위의 메모 아이콘 자리에 얹는 투명한 영역: 마우스를 올리면 내용이 툴팁으로 보이고, 누르면 메모 창이 열린다.
   /// 누르기는 pdfrx가 권하는 [PdfOverlayInteractionRegion]으로 받아 뷰어의 끌기·글자 선택을 방해하지 않는다.
   List<Widget> _noteHotspots(Rect pageRect, PdfPage page) {
+    // 그리는 도구가 켜져 있는 동안은 그리기 층이 메모 아이콘 누르기(기존 메모 열기)를 처리한다. 입력이 아래 뷰어에도 전달되므로
+    // 여기서도 처리하면 메모 창이 두 번 뜬다.
+    if (_annotations.drawing) return const [];
     final notes = _annotations.items.where((a) => a.subtype == 1 && a.pageIndex == page.pageNumber - 1);
     return [
       for (final note in notes)
@@ -598,7 +627,13 @@ class _ViewerScreenState extends State<ViewerScreen> {
                     offset: const Offset(0, 3),
                   ),
                   // 그리는 도구가 켜져 있으면 끌기는 그리기에 쓰이므로 화면 끌기를 끈다 (휠 스크롤·확대는 그대로).
-                  panEnabled: !_annotations.drawing,
+                  // 그리는 도구가 켜져 있으면 손가락 하나는 그리기에 쓰이므로 화면 끌기를 끈다(두 손가락 이동·확대는 그대로).
+                  // 펜 전용이면(펜이 그리고 손가락이 쪽을 옮긴다) 끌기를 켜되 펜·마우스는 쪽을 옮기지 못하게 한다.
+                  panEnabled: !(_annotations.drawing && _annotations.fingerDraws),
+                  interactionDevices: _annotations.drawing && !_annotations.fingerDraws
+                      ? {PointerDeviceKind.touch}
+                      : null,
+                  textSelectionParams: PdfTextSelectionParams(enabled: !_annotations.drawing),
                   pageOverlaysBuilder: (context, pageRect, page) => _noteHotspots(pageRect, page),
                   buildContextMenu: _selectionMenu,
                   pagePaintCallbacks: [
@@ -667,6 +702,13 @@ class _NoteHotspot extends StatefulWidget {
 class _NoteHotspotState extends State<_NoteHotspot> {
   final _tooltip = GlobalKey<TooltipState>();
 
+  // 이 아이콘 위에서 시작해 거의 움직이지 않고 짧게 끝난 누르기만 "열기"로 본다.
+  // 뷰어의 누르기 처리(더블탭과 구분하려고 0.3초 늦게 온다)를 쓰지 않는 이유: 메모를 막 놓은 자리에 새로 생긴 이 아이콘이
+  // 놓기 위해 누른 그 누르기를 늦게 받아 메모를 곧바로 다시 여는 일이 생겼다.
+  int? _pointer;
+  Offset? _downAt;
+  Duration? _downTime;
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -686,11 +728,23 @@ class _NoteHotspotState extends State<_NoteHotspot> {
               child: const SizedBox.expand(),
             ),
           ),
-          PdfOverlayInteractionRegion(
-            onTap: (_) {
-              widget.onOpen();
-              return true; // 처리했다는 뜻 (뷰어가 같은 누르기를 다시 쓰지 않는다)
+          Listener(
+            behavior: HitTestBehavior.translucent, // 뷰어의 끌기·확대는 그대로 아래에서 받는다
+            onPointerDown: (e) {
+              _pointer = e.pointer;
+              _downAt = e.position;
+              _downTime = e.timeStamp;
             },
+            onPointerUp: (e) {
+              final isTap =
+                  e.pointer == _pointer &&
+                  _downAt != null &&
+                  (e.position - _downAt!).distance <= 10 &&
+                  e.timeStamp - _downTime! <= const Duration(milliseconds: 600);
+              _pointer = null;
+              if (isTap) widget.onOpen();
+            },
+            onPointerCancel: (_) => _pointer = null,
             child: const SizedBox.expand(),
           ),
         ],

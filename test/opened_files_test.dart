@@ -39,6 +39,30 @@ void main() {
     expect(File(b).readAsStringSync(), 'two');
   });
 
+  test('the same file opened again reuses its copy (no duplicate in the recent list)', () async {
+    final first = await opened.adopt(source('again.pdf', 'same content').path);
+    final second = await opened.adopt(source('again.pdf', 'same content').path);
+    expect(second, first);
+    expect(base.listSync().length, 1);
+    // 이름이 같아도 내용이 다르면 다른 파일이다 (같은 길이여도)
+    final third = await opened.adopt(source('again.pdf', 'other  content').path);
+    expect(third, isNot(first));
+    expect(base.listSync().length, 2);
+  });
+
+  test('a big file is compared in chunks and a difference near the end is found', () async {
+    final a = File(p.join(temp.path, 'cache', 'big.pdf'))
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(List<int>.generate(300000, (i) => i % 251));
+    final first = await opened.adopt(a.path);
+    final changed = List<int>.generate(300000, (i) => i % 251)..[299999] = 7;
+    final b = File(p.join(temp.path, 'cache2', 'big.pdf'))
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(changed);
+    expect(await opened.adopt(b.path), isNot(first), reason: 'one different byte at the very end');
+    expect(await opened.adopt(a.path), first, reason: 'the identical file still maps to the first copy');
+  });
+
   test('a file already in the app folder is returned as is', () async {
     final copy = await opened.adopt(source('x.pdf').path);
     expect(await opened.adopt(copy), copy);

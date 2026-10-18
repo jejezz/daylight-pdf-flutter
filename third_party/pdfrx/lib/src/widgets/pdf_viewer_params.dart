@@ -53,6 +53,7 @@ class PdfViewerParams {
     this.activeMatchTextColor,
     this.pageDropShadow = const BoxShadow(color: Colors.black54, blurRadius: 4, spreadRadius: 2, offset: Offset(2, 2)),
     this.panEnabled = true,
+    this.interactionDevices, // DAYLIGHT PATCH
     this.scaleEnabled = true,
     this.onInteractionEnd,
     this.onInteractionStart,
@@ -294,6 +295,9 @@ class PdfViewerParams {
 
   /// See [InteractiveViewer.panEnabled] for details.
   final bool panEnabled;
+
+  /// DAYLIGHT PATCH: pointer devices that may pan/zoom the view (null = all devices).
+  final Set<ui.PointerDeviceKind>? interactionDevices;
 
   /// See [InteractiveViewer.scaleEnabled] for details.
   final bool scaleEnabled;
@@ -741,6 +745,7 @@ class PdfViewerParams {
         other.activeMatchTextColor != activeMatchTextColor ||
         other.pageDropShadow != pageDropShadow ||
         other.panEnabled != panEnabled ||
+        !_sameDevices(other.interactionDevices, interactionDevices) ||
         other.scaleEnabled != scaleEnabled ||
         other.interactionEndFrictionCoefficient != interactionEndFrictionCoefficient ||
         other.scrollByMouseWheel != scrollByMouseWheel ||
@@ -785,6 +790,7 @@ class PdfViewerParams {
         other.activeMatchTextColor == activeMatchTextColor &&
         other.pageDropShadow == pageDropShadow &&
         other.panEnabled == panEnabled &&
+        _sameDevices(other.interactionDevices, interactionDevices) &&
         other.scaleEnabled == scaleEnabled &&
         other.onInteractionEnd == onInteractionEnd &&
         other.onInteractionStart == onInteractionStart &&
@@ -856,6 +862,7 @@ class PdfViewerParams {
         activeMatchTextColor.hashCode ^
         pageDropShadow.hashCode ^
         panEnabled.hashCode ^
+        (interactionDevices?.length ?? -1).hashCode ^
         scaleEnabled.hashCode ^
         onInteractionEnd.hashCode ^
         onInteractionStart.hashCode ^
@@ -1900,3 +1907,6 @@ class PdfViewerBehaviorControlParams {
       partialImageLoadingDelay.hashCode ^
       loadPageDimensionsOnDemand.hashCode;
 }
+
+bool _sameDevices(Set<ui.PointerDeviceKind>? a, Set<ui.PointerDeviceKind>? b) =>
+    identical(a, b) || (a != null && b != null && a.length == b.length && a.containsAll(b));

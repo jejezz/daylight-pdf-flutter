@@ -507,5 +507,16 @@
         "type": "String"
       }
     }
-  }
+  },
+  "annotHintNoteTouch": "Tap the page to place a note",
+  "annotHintInkFinger": "Draw with one finger, move and zoom with two",
+  "annotHintInkPen": "Draw with the pen, move and zoom with your fingers",
+  "annotHintShapeTouch": "Drag to draw the shape",
+  "annotWidth": "Line width",
+  "annotWidthThin": "Thin",
+  "annotWidthMedium": "Medium",
+  "annotWidthThick": "Thick",
+  "annotFingerDraws": "Draw with finger",
+  "annotPenOnly": "Pen only",
+  "annotFingerDrawsTip": "On: fingers draw too. Off: only the pen draws and fingers move the page"
 }

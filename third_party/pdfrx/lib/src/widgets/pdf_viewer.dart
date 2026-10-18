@@ -774,6 +774,7 @@ class _PdfViewerState extends State<PdfViewer>
                             minScale: _layoutMetrics.minScale,
                             panAxis: widget.params.panAxis,
                             panEnabled: widget.params.panEnabled,
+                            interactionDevices: widget.params.interactionDevices, // DAYLIGHT PATCH
                             scaleEnabled: widget.params.scaleEnabled,
                             onInteractionEnd: _onInteractionEnd,
                             onInteractionStart: _onInteractionStart,

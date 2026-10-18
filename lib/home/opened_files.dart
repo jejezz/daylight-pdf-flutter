@@ -21,6 +21,9 @@ class OpenedFiles {
     try {
       final base = await _baseDirectory();
       if (p.isWithin(base.path, path)) return path;
+      // 같은 파일(이름과 내용이 같다)을 또 열면 새 복사본을 만들지 않고 있던 것을 쓴다. 그래야 최근 목록에 같은 파일이 여러 번 나오지 않는다.
+      final existing = await _sameCopy(base, path);
+      if (existing != null) return existing;
       final folder = Directory(p.join(base.path, DateTime.now().microsecondsSinceEpoch.toString()));
       await folder.create(recursive: true);
       final copy = File(p.join(folder.path, p.basename(path)));
@@ -28,6 +31,39 @@ class OpenedFiles {
       return copy.path;
     } on FileSystemException {
       return path;
+    }
+  }
+
+  /// 보관함에 [path]와 이름과 내용이 같은 복사본이 있으면 그 경로 (없으면 null).
+  Future<String?> _sameCopy(Directory base, String path) async {
+    if (!base.existsSync()) return null;
+    final source = File(path);
+    final length = await source.length();
+    final name = p.basename(path);
+    for (final entry in base.listSync()) {
+      if (entry is! Directory) continue;
+      final candidate = File(p.join(entry.path, name));
+      if (!candidate.existsSync() || await candidate.length() != length) continue;
+      if (await _sameBytes(source, candidate)) return candidate.path;
+    }
+    return null;
+  }
+
+  /// 두 파일의 내용이 같은지. 덩어리로 읽어 다른 곳이 나오면 바로 멈춘다 (큰 PDF를 통째로 올리지 않는다).
+  Future<bool> _sameBytes(File a, File b) async {
+    final fa = await a.open(), fb = await b.open();
+    try {
+      while (true) {
+        final x = await fa.read(65536), y = await fb.read(65536);
+        if (x.length != y.length) return false;
+        if (x.isEmpty) return true;
+        for (var i = 0; i < x.length; i++) {
+          if (x[i] != y[i]) return false;
+        }
+      }
+    } finally {
+      await fa.close();
+      await fb.close();
     }
   }
 

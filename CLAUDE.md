@@ -151,12 +151,26 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
   통합 시험(macOS)은 데스크톱이다.
 - **모바일 홈**(`HomeScreen._mobile`): 큰 "PDF 열기" 카드 하나 + 최근 파일 카드(이름, "날짜 · 크기", 너비에 따라 1~3열, 높이 84). 끌어놓기·변환·페이지 도구는 없다. 보기 화면에서도 인쇄·페이지 도구 단추는 숨긴다.
 - **열린 파일은 앱 보관함에 복사**한다(`OpenedFiles`, `getApplicationSupportDirectory()/opened/<시각>/이름.pdf`): 파일 선택 창과 다른 앱이 주는 파일은 캐시 복사본이라 시스템이 지울 수 있어
-  최근 파일이 열리지 않게 되기 때문이다. 최근 목록에서 빠진 복사본은 `prune`이 지운다. 열기의 공통 경로는 `openPdf`(보관함 복사 → 최근 목록 → 보기 화면).
+  최근 파일이 열리지 않게 되기 때문이다. 같은 파일을 다시 열면 내용이 같은 기존 복사본을 재사용한다(`adopt`가 64KB씩 비교; 없으면 최근 목록에 중복이 쌓인다). 최근 목록에서 빠진 복사본은 `prune`이 지운다. 열기의 공통 경로는 `openPdf`(보관함 복사 → 최근 목록 → 보기 화면).
 - **다른 앱에서 열기**: `AndroidManifest.xml`의 `VIEW`/`SEND` + `application/pdf` 필터, `MainActivity.kt`가 `content://` 주소를 앱 캐시로 복사해(표시 이름을 지킨다)
   MethodChannel `art.zoomon.daylightpdf/incoming`으로 Dart에 넘긴다(시작할 때는 `initialFile`, 켜져 있을 때는 `fileOpened`; `IncomingFiles`가 받고 `main.dart`가 `openPdf`로 연다).
   같은 intent를 두 번 처리하지 않게 표시를 달아 둔다. 홈은 `homeRouteObserver`(`RouteAware`)로 보기 화면이 닫히면 최근 목록을 다시 읽는다.
 - **실기기 시험 요령**: `adb -s <기기>`를 항상 붙이고, 절전 중이면 스크린샷이 까맣다(`input keyevent KEYCODE_WAKEUP`). 다른 앱에서 열기는 `adb shell content query --uri content://media/external/file
   --where "_display_name='x.pdf'"`로 `_id`를 찾아 `am start -a android.intent.action.VIEW -t application/pdf -d content://media/external/file/<id> --grant-read-uri-permission -n art.zoomon.daylightpdf/.MainActivity`로 흉내 낸다.
+
+## 터치·펜 그리기 (`lib/viewer/draw_layer.dart`)
+
+- **입력 규칙**: 손가락 하나는 그린다. 두 번째 손가락이 닿으면 그리던 획을 버리고 **두 손가락 이동·확대**를 뷰어에 맡긴다. 펜(스타일러스)이 처음 보이면(`AnnotationState.noteStylus`)
+  `fingerDraws`가 꺼져 펜만 그리고 손가락은 쪽을 옮긴다(도구 줄의 "펜으로만 그리기" 단추로 다시 켤 수 있다). 펜이 그리는 동안·직후 1.2초에 닿는 손가락은 손바닥이라 무시한다.
+- **그리기 층은 입력을 가로채지 않는다**: `Listener(translucent)` 아래 `IgnorePointer(CustomPaint)`라서 같은 입력이 아래 뷰어에도 간다(두 손가락 이동·확대, 휠이 그대로 된다).
+  `CustomPaint`가 가로채던 때는 뷰어가 터치를 못 받아 두 손가락 확대가 안 됐다(시험 `touch_draw_test`가 잡았다). 그래서 그리는 도구가 켜져 있는 동안 뷰어 쪽은 이렇게 맞춘다:
+  `panEnabled: !(drawing && fingerDraws)`(손가락이 그리면 끌기 끔), `interactionDevices: drawing && !fingerDraws ? {touch} : null`(펜 전용이면 손가락만 쪽을 옮김, pdfrx 패치),
+  `textSelectionParams.enabled: !drawing`, 메모 아이콘 자리(`_noteHotspots`)는 비운다.
+- **메모 아이콘 누르기**는 뷰어의 늦은 누르기 처리(`PdfOverlayInteractionRegion`, 0.3초 늦게 온다) 대신 아이콘 위의 `Listener`가 직접 감지한다(그 자리에서 시작해 10px 안, 0.6초 안에 끝난 누르기만).
+  막 놓은 메모의 새 아이콘이 놓으려고 누른 그 누르기를 늦게 받아 메모 창이 다시 열리던 문제 때문이다. `_noteDialogOpen`으로 메모 창이 이미 열려 있으면 또 열지 않는다.
+- **펜 굵기**: `AnnotationState.strokeWidths = [1.5, 3, 6]`pt(기본 보통). 미리 보이는 선은 `굵기 × 확대 비율` 픽셀이다. 도구 줄의 점 세 개로 고르고(손글씨·사각형·원에서만 보임), 저장 굵기는 `InkSpec.width`·`ShapeSpec.width`다.
+- **손가락용 도구 줄**: `ToolChip(touch: true)`는 높이 48 이상, 색 점·굵기 점도 크다(`isMobilePlatform`일 때). 안내 문구는 터치 문구("눌러", "두 손가락으로 이동·확대"). 좁은 화면에서는 썸네일 사이드바를 처음엔 닫는다(900 미만).
+  도구가 많아 한 줄에 안 들어가므로 터치 도구 줄은 가로로 스크롤되고 안내 알약은 그 아래 줄에 둔다(실기기에서 87px 넘침이 나서 고침, `annotation_toolbar_test`가 1280/800/412 너비를 점검한다).
 
 ## README 스크린샷과 데모
 

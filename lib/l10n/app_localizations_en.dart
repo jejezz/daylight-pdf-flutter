@@ -822,4 +822,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String homeRecentMeta(String date, String size) {
     return '$date · $size';
   }
+
+  @override
+  String get annotHintNoteTouch => 'Tap the page to place a note';
+
+  @override
+  String get annotHintInkFinger =>
+      'Draw with one finger, move and zoom with two';
+
+  @override
+  String get annotHintInkPen =>
+      'Draw with the pen, move and zoom with your fingers';
+
+  @override
+  String get annotHintShapeTouch => 'Drag to draw the shape';
+
+  @override
+  String get annotWidth => 'Line width';
+
+  @override
+  String get annotWidthThin => 'Thin';
+
+  @override
+  String get annotWidthMedium => 'Medium';
+
+  @override
+  String get annotWidthThick => 'Thick';
+
+  @override
+  String get annotFingerDraws => 'Draw with finger';
+
+  @override
+  String get annotPenOnly => 'Pen only';
+
+  @override
+  String get annotFingerDrawsTip =>
+      'On: fingers draw too. Off: only the pen draws and fingers move the page';
 }

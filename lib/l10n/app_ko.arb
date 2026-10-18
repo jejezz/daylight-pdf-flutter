@@ -524,5 +524,16 @@
         "type": "String"
       }
     }
-  }
+  },
+  "annotHintNoteTouch": "쪽을 눌러 메모를 놓으세요",
+  "annotHintInkFinger": "한 손가락으로 그리고, 두 손가락으로 이동·확대해요",
+  "annotHintInkPen": "펜으로 그리고, 손가락으로 이동·확대해요",
+  "annotHintShapeTouch": "끌어서 모양을 그리세요",
+  "annotWidth": "선 굵기",
+  "annotWidthThin": "가늘게",
+  "annotWidthMedium": "보통",
+  "annotWidthThick": "굵게",
+  "annotFingerDraws": "손가락으로 그리기",
+  "annotPenOnly": "펜으로만 그리기",
+  "annotFingerDrawsTip": "켜면 손가락으로도 그려요. 끄면 펜으로만 그리고 손가락은 쪽을 옮겨요"
 }
