@@ -49,6 +49,7 @@ abstract final class PrintProcessor {
       assembled.pages = [for (final i in indices) input.pages[i]];
       placed = await PdfDocument.openData(await assembled.encodePdf(), sourceName: 'print-pages');
       if (options.includeAnnotations) await _generateAppearances(placed);
+      await _warmUp(placed);
 
       // 모으기·소책자면 칸 크기를 먼저 정한다 (첫 쪽의 보이는 크기에 칸 모양을 맞춘다)
       final perSheet = options.booklet ? 2 : options.perSheet;
@@ -107,6 +108,14 @@ abstract final class PrintProcessor {
       assembled?.dispose();
       input.dispose();
     }
+  }
+
+  /// 문서를 한 번 통째로 저장해 본다 (결과는 버린다). 저장하려면 모든 객체를 읽어야 하므로, 이 뒤로는 메인 스레드의 PDFium 호출이
+  /// 아직 읽지 않은 객체를 만나지 않는다. pdfrx는 문서를 필요할 때 읽는 콜백(작업 스레드에만 묶여 있다)으로 열기 때문에,
+  /// 읽지 않은 객체를 메인 스레드에서 건드리면 "Cannot invoke native callback from a different isolate"로 앱이 죽는다
+  /// (작은 파일은 열 때 다 읽혀서 괜찮고, 큰 매뉴얼에서 `FPDF_ImportNPagesToOne`이 죽었다).
+  static Future<void> _warmUp(PdfDocument document) async {
+    await document.encodePdf();
   }
 
   static Future<Uint8List> _fontIfNeeded(PrintOptions options, Future<Uint8List> Function() load) async {

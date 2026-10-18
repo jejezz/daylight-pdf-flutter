@@ -103,8 +103,11 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
     **pdfrx가 열지 않은 새 문서(예: `FPDF_ImportNPagesToOne` 결과)의 쪽을 `FPDF_LoadPage`** (쪽 안 폼에 글꼴 미포함 글자가 있으면 죽는다).
   - 안전: pdfrx가 연 문서의 `FPDF_LoadPage`(작업 스레드가 글꼴을 이미 읽어 캐시됨), `FPDFAnnot_*`(주석 하나씩), `FPDFPage_Flatten`(그리기 뒤),
     `FPDF_ImportNPagesToOne`·`FPDF_ImportPagesByIndex`·`FPDF_SaveAsCopy` 자체.
+  - 위험: **pdfrx가 연 문서의 아직 읽지 않은 객체**를 메인 스레드 PDFium이 건드리는 것. pdfrx는 문서를 필요할 때 읽는 콜백(작업 스레드에만 묶임)으로 열어서,
+    큰 PDF에서 `FPDF_ImportNPagesToOne`이 "Cannot invoke native callback"으로 앱을 죽였다(작은 파일은 열 때 다 읽혀서 안 죽는다). 그래서
+    `PrintProcessor`는 메인 스레드 작업 전에 `_warmUp`(문서를 한 번 통째로 저장해 모든 객체를 읽어 둠)을 한다. `print_large_test`(80쪽 16MB)가 지킨다.
   - 그래서: 주석 모양(AP)은 `PdfPage.render`(작업 스레드)로 만들고, 글자는 `pdf` 패키지 겹침으로 넣고, 모은 결과의 쪽은 열지 않는다.
-  시험은 글꼴 미포함 TrueType 글자가 든 PDF와 글자 있는 메모로 이를 지킨다(`print_extra_test`, `print_test`).
+  시험은 글꼴 미포함 TrueType 글자가 든 PDF와 글자 있는 메모로 이를 지킨다(`print_extra_test`, `print_test`, `print_large_test`).
 - 그 밖의 함정: `FPDFPage_Flatten`의 인쇄 모양(1)은 인쇄 플래그 없는 주석을 건너뛴다 → 화면 모양(0)을 쓰고, 새 주석에도 인쇄 플래그(4)를 단다.
   `TransFormWithClip`의 자르기 상자는 행렬이 닿기 전 좌표(= 새 쪽 상자 좌표)다. `ImportNPagesToOne`은 주석을 버리므로 먼저 구워야 한다.
   한 채널 JPEG는 `pdf` 패키지가 색 공간을 잘못 읽어 빨갛게 나온다(채널 셋에 같은 값).
