@@ -23,6 +23,7 @@ import 'annotation_state.dart';
 import 'annotation_toolbar.dart';
 import 'draw_layer.dart';
 import 'note_dialog.dart';
+import 'note_hit.dart';
 import 'text_boxes.dart';
 
 /// PDF 보기 화면: 본문 + 접을 수 있는 썸네일 사이드바, 쪽 번호와 확대/축소, 주석 도구와 주석 목록.
@@ -109,7 +110,20 @@ class _ViewerScreenState extends State<ViewerScreen> {
     }
   }
 
+  /// 메모 도구가 켜진 채 쓰는 도구는 끈다. 메모는 하나씩 입력하는 것이라, 놓고 나면 곧바로 아이콘에 마우스를 올리거나
+  /// 눌러 내용을 볼 수 있어야 한다 (도구가 켜져 있으면 입력 층이 아이콘을 덮는다).
+  void _endNotePlacement() {
+    if (_annotations.tool == DrawTool.note) _annotations.toggleTool(DrawTool.note);
+  }
+
   Future<void> _addNote(int pageIndex, PdfPoint at) async {
+    // 기존 메모 아이콘을 누른 것이면 새 메모를 놓는 대신 그 메모를 연다.
+    final existing = noteAt(_annotations.items, pageIndex, at);
+    if (existing != null) {
+      _endNotePlacement();
+      await _openNote(existing);
+      return;
+    }
     final l10n = AppLocalizations.of(context);
     final text = await showDialog<String>(
       context: context,
@@ -132,6 +146,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
       },
     );
     if (text == null || text.isEmpty) return;
+    _endNotePlacement();
     await _add([
       NoteSpec(
         pageIndex: pageIndex,

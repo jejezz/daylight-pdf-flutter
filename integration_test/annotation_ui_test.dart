@@ -4,6 +4,8 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:daylight_pdf/convert/image_to_pdf.dart';
+import 'package:daylight_pdf/engine/annotations/annotation_specs.dart';
+import 'package:daylight_pdf/engine/annotations/pdfium_annotations.dart';
 import 'package:daylight_pdf/convert/svg_to_pdf.dart';
 import 'package:daylight_pdf/pages/page_ops.dart';
 import 'package:daylight_pdf/l10n/app_localizations.dart';
@@ -74,6 +76,11 @@ void main() {
     expect(right - left, greaterThan(50), reason: 'the page must be visible');
     return Rect.fromLTRB(left.toDouble(), top.toDouble(), right + 1.0, bottom + 1.0);
   }
+
+  /// 도구 줄의 "메모" 단추가 켜져 있는지.
+  bool noteToolOn(WidgetTester tester) => tester
+      .widget<ToolChip>(find.byWidgetPredicate((w) => w is ToolChip && w.icon == Icons.sticky_note_2_outlined))
+      .selected;
 
   Future<void> drag(WidgetTester tester, Offset from, Offset to) async {
     final g = await tester.startGesture(from, kind: PointerDeviceKind.mouse);
@@ -149,8 +156,8 @@ void main() {
     await tester.enterText(find.byType(TextField), '확인할 메모 note');
     await tester.tap(find.text('추가'));
     await tester.pumpAndSettle(const Duration(seconds: 1));
-    await tester.tap(find.byTooltip('메모 (쪽을 클릭)')); // 도구 끄기
-    await tester.pumpAndSettle();
+    // 메모를 하나 놓으면 메모 도구는 저절로 꺼진다 (다시 누르면 켜지므로 여기서 끄지 않는다).
+    expect(noteToolOn(tester), isFalse, reason: 'the note tool turns itself off after one note');
 
     // 목록에 4개 (손글씨, 사각형, 원, 메모)
     await tester.tap(find.byTooltip('주석 목록'));
@@ -402,8 +409,8 @@ void main() {
     await tester.enterText(find.byType(TextField), '첫 메모 내용\n둘째 줄');
     await tester.tap(inDialog('추가'));
     await tester.pumpAndSettle(const Duration(seconds: 1));
-    await tester.tap(find.byTooltip('메모 (쪽을 클릭)')); // 도구 끄기
-    await tester.pumpAndSettle();
+    // 메모를 하나 놓으면 메모 도구는 저절로 꺼진다 (다시 누르면 켜지므로 여기서 끄지 않는다).
+    expect(noteToolOn(tester), isFalse, reason: 'the note tool turns itself off after one note');
 
     // 쪽의 메모 아이콘 자리에 내용이 툴팁으로 달려 있어 마우스를 올리면 보인다.
     final hotspot = find.byTooltip('첫 메모 내용\n둘째 줄');
@@ -447,5 +454,124 @@ void main() {
     await tester.pumpAndSettle(const Duration(seconds: 1));
     expect(find.byTooltip('고친 내용'), findsNothing);
     expect(find.text('주석이 없어요'), findsOneWidget);
+  });
+
+  testWidgets('notes saved with the icon appearance can be read again after reopening the file', (tester) async {
+    await pdfrxFlutterInitialize();
+    final dir = Directory.systemTemp.createTempSync('daylight_pdf_reopen');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    File('${dir.path}/p.png')
+        .writeAsBytesSync(img.encodePng(img.Image(width: 400, height: 200)..clear(img.ColorRgb8(255, 255, 255))));
+    await ImageToPdf.convert(['${dir.path}/p.png'], '${dir.path}/base.pdf');
+
+    // "저장"까지 한 파일을 만든다: 번들 아이콘이 모양으로 들어간 메모 둘 (하나는 한글·여러 줄).
+    final svg = File('assets/annotations/note_icon.svg').readAsStringSync();
+    final base = await PdfDocument.openFile('${dir.path}/base.pdf');
+    await PdfiumAnnotations.add(base, [
+      NoteSpec(pageIndex: 0, color: 0xFFFFEB3B, x: 60, y: 100, text: '저장된 첫 메모', iconSvg: svg),
+      NoteSpec(pageIndex: 0, color: 0xFFFFEB3B, x: 200, y: 60, text: '둘째 메모\n여러 줄', iconSvg: svg),
+    ]);
+    File('${dir.path}/saved.pdf').writeAsBytesSync(await base.encodePdf());
+    base.dispose();
+
+    // 저장한 파일을 보기 화면에서 새로 연다.
+    await pumpViewer(tester, '${dir.path}/saved.pdf');
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('저장된 첫 메모'), findsOneWidget, reason: 'the note icon has a hotspot after reopening');
+    expect(find.byTooltip('둘째 메모\n여러 줄'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('저장된 첫 메모'), warnIfMissed: false);
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, '저장된 첫 메모'), findsOneWidget, reason: 'tapping opens the note with its text');
+  });
+
+  testWidgets('a real mouse click on a note icon opens the note, and hovering shows its text', (tester) async {
+    await pdfrxFlutterInitialize();
+    final dir = Directory.systemTemp.createTempSync('daylight_pdf_mouse');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    File('${dir.path}/p.png')
+        .writeAsBytesSync(img.encodePng(img.Image(width: 400, height: 200)..clear(img.ColorRgb8(255, 255, 255))));
+    await ImageToPdf.convert(['${dir.path}/p.png'], '${dir.path}/base.pdf');
+    final svg = File('assets/annotations/note_icon.svg').readAsStringSync();
+    final base = await PdfDocument.openFile('${dir.path}/base.pdf');
+    await PdfiumAnnotations.add(base, [
+      NoteSpec(pageIndex: 0, color: 0xFFFFEB3B, x: 60, y: 100, text: '마우스로 여는 메모', iconSvg: svg),
+    ]);
+    File('${dir.path}/saved.pdf').writeAsBytesSync(await base.encodePdf());
+    base.dispose();
+
+    await pumpViewer(tester, '${dir.path}/saved.pdf');
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+    final hotspot = find.byTooltip('마우스로 여는 메모');
+    expect(hotspot, findsOneWidget);
+    final center = tester.getCenter(hotspot);
+
+    // 마우스를 올리면 내용이 보인다 (사용자가 실제로 하는 동작)
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(center);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('마우스로 여는 메모'), findsOneWidget, reason: 'hover shows the note text');
+    await mouse.moveTo(Offset.zero);
+    await tester.pump(const Duration(seconds: 1));
+
+    // 마우스로 클릭한다 (터치가 아니라)
+    await mouse.moveTo(center);
+    await mouse.down(center);
+    await tester.pump(const Duration(milliseconds: 50));
+    await mouse.up();
+    await tester.pump(const Duration(milliseconds: 600)); // 더블탭 구분 대기
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, '마우스로 여는 메모'), findsOneWidget, reason: 'a mouse click opens the note');
+  });
+
+  testWidgets('with the note tool on, clicking an existing note opens it instead of starting a new one', (
+    tester,
+  ) async {
+    await pdfrxFlutterInitialize();
+    final dir = Directory.systemTemp.createTempSync('daylight_pdf_notetool');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    File('${dir.path}/p.png')
+        .writeAsBytesSync(img.encodePng(img.Image(width: 400, height: 200)..clear(img.ColorRgb8(255, 255, 255))));
+    await ImageToPdf.convert(['${dir.path}/p.png'], '${dir.path}/base.pdf');
+    final svg = File('assets/annotations/note_icon.svg').readAsStringSync();
+    final base = await PdfDocument.openFile('${dir.path}/base.pdf');
+    await PdfiumAnnotations.add(base, [
+      NoteSpec(pageIndex: 0, color: 0xFFFFEB3B, x: 60, y: 100, text: '이미 있는 메모', iconSvg: svg),
+    ]);
+    File('${dir.path}/saved.pdf').writeAsBytesSync(await base.encodePdf());
+    base.dispose();
+
+    await pumpViewer(tester, '${dir.path}/saved.pdf');
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+    final page = await measurePage(tester);
+    final icon = tester.getCenter(find.byTooltip('이미 있는 메모'));
+
+    // 메모 도구를 켜고 기존 아이콘을 누른다 → 새 메모 입력창(빈 칸)이 아니라 그 메모가 열린다.
+    await tester.tap(find.byTooltip('메모 (쪽을 클릭)'));
+    await tester.pumpAndSettle();
+    expect(noteToolOn(tester), isTrue);
+    await tester.tapAt(icon);
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, '이미 있는 메모'), findsOneWidget, reason: 'the existing note opens');
+    expect(noteToolOn(tester), isFalse, reason: 'reading a note ends note placement');
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('닫기')));
+    await tester.pumpAndSettle();
+
+    // 빈 곳을 누르면 새 메모 입력창이 열리고, 취소하면 도구는 켜진 채로 남는다 (계속 놓을 수 있다).
+    await tester.tap(find.byTooltip('메모 (쪽을 클릭)'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(Offset(page.left + page.width * 0.8, page.top + page.height * 0.2));
+    await tester.pumpAndSettle();
+    expect(find.text('메모 내용'), findsOneWidget, reason: 'an empty spot starts a new note (hint text shown)');
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('취소')));
+    await tester.pumpAndSettle();
+    expect(noteToolOn(tester), isTrue, reason: 'cancelling keeps the tool on');
   });
 }
