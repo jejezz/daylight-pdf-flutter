@@ -130,6 +130,14 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
   macOS 인쇄 창이 가공 결과를 미리 보여 주는 것. **못 시험한 것**: 실제 프린터 출력(이 맥에 프린터 없음), Windows·Linux 인쇄 창, 소책자를
   실제 양면으로 접어 보는 것, 다른 뷰어에서 주석이 찍히는지.
 
+## README 스크린샷과 데모
+
+- 영어 UI, 라이트·다크 1200x720(2배 해상도)로 `integration_test/readme_shots_test.dart`가 보여 주기용 문서(Quarterly Report, 주석 달린 사본, 12쪽 문서)로 화면을 찍는다
+  (`flutter test integration_test/readme_shots_test.dart -d macos`, 결과는 시스템 임시 폴더의 `daylight_pdf_readme/`). 화면 녹화·권한이 필요 없다.
+- 그 PNG를 `docs/screenshots/raw/`에 복사(파일명의 `_`는 `-`로)하고 `python3 tool/readme/frame.py --split raw/<이름>-light.png raw/<이름>-dark.png -o <이름>.png`로
+  다듬는다 (viewer, convert, pages는 split, print는 라이트 한 장). `python3 tool/readme/make_demo_gif.py`가 raw 라이트 캡처들로 `demo.gif`(760px, 약 12초)를 만든다.
+- README는 `python3 tool/readme/check_readme.py`로 검사한다 (릴리스 전 `--stage` 없이 전체).
+
 ## 화면 구성과 공통 위젯 (`lib/widgets/`)
 
 규약의 Saturn 디자인 언어(카드 24/20, 상태 알약, 간격 4의 배수)를 화면에 드러내는 앱 전용 위젯이다.
