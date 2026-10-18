@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show LogicalKeyboardKey, rootBundle;
 import 'package:path/path.dart' as p;
 import 'package:pdfrx/pdfrx.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../convert/conversion_error.dart';
 import '../convert/error_text.dart';
@@ -59,6 +60,12 @@ class _ViewerScreenState extends State<ViewerScreen> {
   List<PdfOutlineNode> _outline = const [];
   final _bookmarkStore = BookmarkStore();
   List<int> _bookmarks = const [];
+
+  /// 사용자가 끌어서 정한 왼쪽 사이드바 너비. 없으면 탭마다 기본 너비.
+  double? _sidebarWidth;
+  static const _sidebarWidthKey = 'viewer_sidebar_width';
+  static const _sidebarMin = 148.0;
+  static const _sidebarMax = 480.0;
   int _passwordAttempts = 0;
   bool _showList = false;
   bool _allowPop = false;
@@ -76,6 +83,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
   void initState() {
     super.initState();
     _loadNoteIcon();
+    _loadSidebarWidth();
     _bookmarkStore.load(widget.path).then((pages) {
       if (mounted) setState(() => _bookmarks = pages);
     });
@@ -90,6 +98,27 @@ class _ViewerScreenState extends State<ViewerScreen> {
       if (isMobilePlatform && MediaQuery.sizeOf(context).width < 900) _showThumbnails = false;
     }
   }
+
+  Future<void> _loadSidebarWidth() async {
+    try {
+      final saved = (await SharedPreferences.getInstance()).getDouble(_sidebarWidthKey);
+      if (saved != null && mounted) setState(() => _sidebarWidth = saved.clamp(_sidebarMin, _sidebarMax));
+    } on Object {
+      // 못 읽으면 기본 너비
+    }
+  }
+
+  Future<void> _saveSidebarWidth() async {
+    final width = _sidebarWidth;
+    if (width == null) return;
+    try {
+      await (await SharedPreferences.getInstance()).setDouble(_sidebarWidthKey, width);
+    } on Object {
+      // 저장 못 해도 이번에는 바뀐 채로 쓴다
+    }
+  }
+
+  double get _effectiveSidebarWidth => _sidebarWidth ?? (_sidebar == _Sidebar.pages ? 148.0 : 248.0);
 
   Future<void> _loadNoteIcon() async {
     try {
@@ -600,6 +629,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
         itemCount: document.pages.length,
         separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
         itemBuilder: (context, index) => _Thumbnail(
+          height: ((_effectiveSidebarWidth - 40) * 1.04).clamp(80.0, 420.0),
           document: document,
           pageNumber: index + 1,
           selected: current == index + 1,
@@ -615,45 +645,67 @@ class _ViewerScreenState extends State<ViewerScreen> {
     return Row(
       children: [
         if (_showThumbnails)
-          Container(
-            width: _sidebar == _Sidebar.pages ? 148 : 248,
-            decoration: BoxDecoration(
-              color: scheme.surface,
-              border: Border(right: BorderSide(color: scheme.outlineVariant)),
-            ),
-            child: Column(
+          SizedBox(
+            width: _effectiveSidebarWidth,
+            child: Stack(
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.sm, AppSpacing.sm, 0),
-                  child: SegmentedButton<_Sidebar>(
-                    showSelectedIcon: false,
-                    style: const ButtonStyle(visualDensity: VisualDensity.compact),
-                    segments: [
-                      ButtonSegment(value: _Sidebar.pages, label: Text(l10n.sidebarPages)),
-                      if (_outline.isNotEmpty) ButtonSegment(value: _Sidebar.outline, label: Text(l10n.sidebarOutline)),
-                      ButtonSegment(value: _Sidebar.bookmarks, label: Text(l10n.sidebarBookmarks)),
-                    ],
-                    selected: {_sidebar},
-                    onSelectionChanged: (v) => setState(() => _sidebar = v.first),
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: scheme.surface,
+                      border: Border(right: BorderSide(color: scheme.outlineVariant)),
+                    ),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.sm, AppSpacing.sm, 0),
+                          child: SegmentedButton<_Sidebar>(
+                            showSelectedIcon: false,
+                            style: const ButtonStyle(visualDensity: VisualDensity.compact),
+                            segments: [
+                              ButtonSegment(value: _Sidebar.pages, label: Text(l10n.sidebarPages)),
+                              if (_outline.isNotEmpty)
+                                ButtonSegment(value: _Sidebar.outline, label: Text(l10n.sidebarOutline)),
+                              ButtonSegment(value: _Sidebar.bookmarks, label: Text(l10n.sidebarBookmarks)),
+                            ],
+                            selected: {_sidebar},
+                            onSelectionChanged: (v) => setState(() => _sidebar = v.first),
+                          ),
+                        ),
+                        Expanded(
+                          child: switch (_sidebar) {
+                            _Sidebar.outline when _outline.isNotEmpty => OutlinePanel(
+                              nodes: _outline,
+                              onTap: (node) => _controller.goToDest(node.dest),
+                            ),
+                            _Sidebar.bookmarks => ListenableBuilder(
+                              listenable: _controller,
+                              builder: (context, _) => BookmarksPanel(
+                                pages: _bookmarks,
+                                current: _controller.isReady ? _controller.pageNumber ?? 1 : 1,
+                                onTap: _goToPage,
+                                onDelete: _removeBookmark,
+                              ),
+                            ),
+                            _ => _thumbnails(),
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                Expanded(
-                  child: switch (_sidebar) {
-                    _Sidebar.outline when _outline.isNotEmpty => OutlinePanel(
-                      nodes: _outline,
-                      onTap: (node) => _controller.goToDest(node.dest),
-                    ),
-                    _Sidebar.bookmarks => ListenableBuilder(
-                      listenable: _controller,
-                      builder: (context, _) => BookmarksPanel(
-                        pages: _bookmarks,
-                        current: _controller.isReady ? _controller.pageNumber ?? 1 : 1,
-                        onTap: _goToPage,
-                        onDelete: _removeBookmark,
-                      ),
-                    ),
-                    _ => _thumbnails(),
-                  },
+                Positioned(
+                  top: 0,
+                  bottom: 0,
+                  right: 0,
+                  child: _SidebarResizeHandle(
+                    width: isMobilePlatform ? 24 : 10,
+                    onDrag: (dx) => setState(() {
+                      final max = math.min(_sidebarMax, MediaQuery.sizeOf(context).width * 0.5);
+                      _sidebarWidth = (_effectiveSidebarWidth + dx).clamp(_sidebarMin, math.max(_sidebarMin, max));
+                    }),
+                    onEnd: _saveSidebarWidth,
+                  ),
                 ),
               ],
             ),
@@ -802,8 +854,15 @@ class _NoteHotspotState extends State<_NoteHotspot> {
 
 /// 사이드바 썸네일: 지금 보는 쪽은 강조 테두리, 아래에 쪽 번호.
 class _Thumbnail extends StatelessWidget {
-  const _Thumbnail({required this.document, required this.pageNumber, required this.selected, required this.onTap});
+  const _Thumbnail({
+    required this.height,
+    required this.document,
+    required this.pageNumber,
+    required this.selected,
+    required this.onTap,
+  });
 
+  final double height;
   final PdfDocument document;
   final int pageNumber;
   final bool selected;
@@ -820,7 +879,7 @@ class _Thumbnail extends StatelessWidget {
       child: Column(
         children: [
           SizedBox(
-            height: 112,
+            height: height,
             child: PageThumbnail(document: document, pageNumber: pageNumber),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -832,6 +891,52 @@ class _Thumbnail extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 사이드바 오른쪽 가장자리의 끌개: 좌우로 끌어 너비를 바꾼다 (마우스를 올리면 커서가 바뀌고 선이 진해진다).
+class _SidebarResizeHandle extends StatefulWidget {
+  const _SidebarResizeHandle({required this.width, required this.onDrag, required this.onEnd});
+
+  final double width;
+  final void Function(double dx) onDrag;
+  final VoidCallback onEnd;
+
+  @override
+  State<_SidebarResizeHandle> createState() => _SidebarResizeHandleState();
+}
+
+class _SidebarResizeHandleState extends State<_SidebarResizeHandle> {
+  bool _active = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeColumn,
+      onEnter: (_) => setState(() => _active = true),
+      onExit: (_) => setState(() => _active = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onHorizontalDragStart: (_) => setState(() => _active = true),
+        onHorizontalDragUpdate: (d) => widget.onDrag(d.delta.dx),
+        onHorizontalDragEnd: (_) {
+          setState(() => _active = false);
+          widget.onEnd();
+        },
+        child: SizedBox(
+          width: widget.width,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              width: _active ? 3 : 1,
+              color: _active ? scheme.primary : Colors.transparent,
+            ),
+          ),
+        ),
       ),
     );
   }

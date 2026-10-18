@@ -87,6 +87,10 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
 - **주석 목록 검색**: 주석이 있으면 목록 위에 검색칸이 뜨고 `filterAnnotations`가 **메모 내용**(대소문자·앞뒤 공백 무시)으로 거른다. 형광펜·도형처럼 내용이 없는 주석은
   검색어가 있으면 빠진다. 본문 검색(⌘F, `PdfTextSearcher`)과는 별개다. 시험: `test/annotation_panel_test.dart`.
 
+- **왼쪽 사이드바(쪽·목차·북마크) 너비 조절**: 오른쪽 가장자리의 끌개(`_SidebarResizeHandle`, 마우스 10px·터치 24px)를 좌우로 끈다. 148~480px(보기 창 너비의 절반 이하)로 제한하고,
+  끌기를 마치면 설정(`viewer_sidebar_width` 키)에 저장해 다음에 연 문서에도 쓴다. 정한 적이 없으면 쪽 148, 목차·북마크 248. 쪽 썸네일 높이는 너비에 비례해 커진다.
+  시험: `integration_test/sidebar_resize_test.dart`.
+
 ## 주석 UI (`lib/viewer/`) — 6단계
 
 - 형광펜·밑줄은 "글자를 마우스로 고르고 도구 모음 버튼"(`lineBoxes`가 선택한 글자를 줄별 상자로 바꾼다).
