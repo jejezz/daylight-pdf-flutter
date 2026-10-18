@@ -192,4 +192,613 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get updateBusyBody =>
       'A task is in progress. Please try again when it has finished.';
+
+  @override
+  String get fileTypePdf => 'PDF document';
+
+  @override
+  String get openFailed => 'Couldn\'t open the file.';
+
+  @override
+  String get viewerZoomIn => 'Zoom in';
+
+  @override
+  String get viewerZoomOut => 'Zoom out';
+
+  @override
+  String get viewerThumbnails => 'Thumbnails';
+
+  @override
+  String viewerPageOf(int page, int total) {
+    return '$page / $total';
+  }
+
+  @override
+  String get convertTitle => 'Convert';
+
+  @override
+  String get convertAddFiles => 'Add files';
+
+  @override
+  String get convertClearFinished => 'Clear finished';
+
+  @override
+  String get convertFileTypes => 'Images, SVG, AI, PDF';
+
+  @override
+  String get convertMergeImages => 'Merge images into one PDF';
+
+  @override
+  String get convertOutputSame => 'Same folder as source';
+
+  @override
+  String get convertEmpty => 'Drop images or PDFs to convert';
+
+  @override
+  String convertDpi(int dpi) {
+    return '$dpi DPI';
+  }
+
+  @override
+  String convertFilesCreated(int count) {
+    return 'Created $count files';
+  }
+
+  @override
+  String convertSkipped(int count, String names) {
+    return 'Skipped $count unsupported files: $names';
+  }
+
+  @override
+  String errUnsupportedFormat(String name) {
+    return 'Unsupported format: $name';
+  }
+
+  @override
+  String errCannotRead(String name) {
+    return 'Couldn\'t read the file: $name';
+  }
+
+  @override
+  String errPasswordProtected(String name) {
+    return 'Password-protected PDFs can\'t be converted: $name';
+  }
+
+  @override
+  String errWriteFailed(String name) {
+    return 'Couldn\'t save the result: $name';
+  }
+
+  @override
+  String get homeConvertAction => 'Convert';
+
+  @override
+  String errNotPdfCompatible(String name) {
+    return 'This .ai was saved without PDF compatibility. In Illustrator, turn on \"Create PDF Compatible File\" and save again: $name';
+  }
+
+  @override
+  String get pagesTitle => 'Page tools';
+
+  @override
+  String get pagesTabEdit => 'Edit';
+
+  @override
+  String get pagesTabMerge => 'Merge';
+
+  @override
+  String get pagesTabSplit => 'Split';
+
+  @override
+  String get pagesOpenPdf => 'Open PDF';
+
+  @override
+  String get pagesEmpty => 'Open or drop a PDF to edit';
+
+  @override
+  String get pagesRotateLeft => 'Rotate left';
+
+  @override
+  String get pagesRotateRight => 'Rotate right';
+
+  @override
+  String get pagesDelete => 'Delete selected pages';
+
+  @override
+  String get pagesExtract => 'Save selected pages only';
+
+  @override
+  String get pagesSave => 'Save';
+
+  @override
+  String get pagesSelectAll => 'Select all';
+
+  @override
+  String pagesPageLabel(int n) {
+    return 'Page $n';
+  }
+
+  @override
+  String pagesSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get pagesNothingSelected => 'Select pages first';
+
+  @override
+  String get pagesNoneLeft => 'No pages left to save';
+
+  @override
+  String pagesSaved(String name) {
+    return 'Saved: $name';
+  }
+
+  @override
+  String pagesSavedMany(int count) {
+    return 'Created $count files';
+  }
+
+  @override
+  String get pagesReset => 'Reset';
+
+  @override
+  String get mergeAdd => 'Add PDFs';
+
+  @override
+  String get mergeAction => 'Merge and save';
+
+  @override
+  String get mergeNeedTwo => 'Add at least 2 PDFs';
+
+  @override
+  String get mergeRemove => 'Remove from list';
+
+  @override
+  String get mergeEmpty => 'Add PDFs to merge';
+
+  @override
+  String get splitChoose => 'Choose a PDF to split';
+
+  @override
+  String get splitModeEach => 'One page each';
+
+  @override
+  String get splitModeEveryN => 'Every N pages';
+
+  @override
+  String get splitModeRanges => 'By ranges';
+
+  @override
+  String get splitEveryNLabel => 'Pages';
+
+  @override
+  String get splitRangesLabel => 'Ranges (e.g. 1-3, 5, 8-)';
+
+  @override
+  String get splitAction => 'Split';
+
+  @override
+  String splitPageCount(int count) {
+    return '$count pages in total';
+  }
+
+  @override
+  String get splitChooseFolder => 'Choose output folder';
+
+  @override
+  String errInvalidRange(String name) {
+    return 'Couldn\'t understand the page range: $name';
+  }
+
+  @override
+  String get viewerEditPages => 'Edit pages';
+
+  @override
+  String get homePagesAction => 'Page tools';
+
+  @override
+  String get annotHighlight => 'Highlight (selected text)';
+
+  @override
+  String get annotUnderline => 'Underline (selected text)';
+
+  @override
+  String get annotNote => 'Note (click on the page)';
+
+  @override
+  String get annotInk => 'Freehand';
+
+  @override
+  String get annotRectangle => 'Rectangle';
+
+  @override
+  String get annotCircle => 'Circle';
+
+  @override
+  String get annotColor => 'Color';
+
+  @override
+  String get annotList => 'Annotation list';
+
+  @override
+  String get annotSave => 'Save';
+
+  @override
+  String get annotSelectTextFirst => 'Select some text first';
+
+  @override
+  String get annotNoteTitle => 'Note';
+
+  @override
+  String get annotNoteHint => 'Note text';
+
+  @override
+  String get annotNoteAdd => 'Add';
+
+  @override
+  String get commonCancel => 'Cancel';
+
+  @override
+  String get annotEmpty => 'No annotations';
+
+  @override
+  String get annotTypeHighlight => 'Highlight';
+
+  @override
+  String get annotTypeUnderline => 'Underline';
+
+  @override
+  String get annotTypeNote => 'Note';
+
+  @override
+  String get annotTypeInk => 'Freehand';
+
+  @override
+  String get annotTypeRectangle => 'Rectangle';
+
+  @override
+  String get annotTypeCircle => 'Circle';
+
+  @override
+  String get annotTypeOther => 'Annotation';
+
+  @override
+  String get annotDelete => 'Delete';
+
+  @override
+  String get annotUnsavedTitle => 'You have unsaved annotations';
+
+  @override
+  String get annotUnsavedBody =>
+      'If you leave without saving, the annotations you added are lost.';
+
+  @override
+  String get annotDiscard => 'Discard';
+
+  @override
+  String get annotFailed => 'Couldn\'t process the annotation.';
+
+  @override
+  String get homeConvertHint => 'Images, SVG and AI to PDF, or PDF to images';
+
+  @override
+  String get homePagesHint => 'Merge, split, rotate, delete and reorder pages';
+
+  @override
+  String get homeDropSubtitle =>
+      'PDFs open right away; images, SVG and AI go to Convert';
+
+  @override
+  String annotListLabel(int count) {
+    return 'Annotations $count';
+  }
+
+  @override
+  String get annotUnsavedShort => 'Not saved';
+
+  @override
+  String get annotHintNote => 'Click the page to place a note';
+
+  @override
+  String get annotHintInk => 'Drag on the page to draw';
+
+  @override
+  String get annotHintShape => 'Drag to set the area';
+
+  @override
+  String get annotListTitle => 'Annotations';
+
+  @override
+  String get viewerGoToPage => 'Go to page';
+
+  @override
+  String get mergeDropHint => 'Drop PDFs here';
+
+  @override
+  String get splitDropHint => 'Drop a PDF to split, or choose one';
+
+  @override
+  String get splitChange => 'Another PDF';
+
+  @override
+  String splitPreview(int count) {
+    return 'Makes $count files';
+  }
+
+  @override
+  String get pagesDropHere => 'Drop here to move to the end';
+
+  @override
+  String get pagesMoveToEnd => 'End';
+
+  @override
+  String get convertStatusPending => 'Waiting';
+
+  @override
+  String get convertStatusRunning => 'Converting';
+
+  @override
+  String get convertStatusDone => 'Done';
+
+  @override
+  String get convertStatusFailed => 'Failed';
+
+  @override
+  String get convertReveal => 'Show in folder';
+
+  @override
+  String get convertOpenResult => 'Open';
+
+  @override
+  String get convertSectionImages => 'Images → PDF';
+
+  @override
+  String get convertSectionPdf => 'PDF → images';
+
+  @override
+  String get convertSectionOutput => 'Save to';
+
+  @override
+  String get convertQueueTitle => 'Queue';
+
+  @override
+  String get convertFormatLabel => 'Format';
+
+  @override
+  String get convertResolutionLabel => 'Resolution';
+
+  @override
+  String get convertImagesNote =>
+      'PNG, JPG, BMP, GIF, WebP, TIFF · SVG · AI (PDF-compatible)';
+
+  @override
+  String get annotUndo => 'Undo';
+
+  @override
+  String annotUndoTip(String shortcut) {
+    return 'Undo ($shortcut)';
+  }
+
+  @override
+  String get homeRecentTitle => 'Recent files';
+
+  @override
+  String get homeRecentClear => 'Clear list';
+
+  @override
+  String get homeRecentRemove => 'Remove from list';
+
+  @override
+  String get printTitle => 'Print';
+
+  @override
+  String printTip(String shortcut) {
+    return 'Print ($shortcut)';
+  }
+
+  @override
+  String get printAction => 'Print';
+
+  @override
+  String get printRange => 'Pages to print';
+
+  @override
+  String get printRangeAll => 'All';
+
+  @override
+  String get printRangeCurrent => 'Current page';
+
+  @override
+  String get printRangeCustom => 'Pages';
+
+  @override
+  String get printRangeHint => 'e.g. 1-3, 5, 8-';
+
+  @override
+  String get printParity => 'Odd / even';
+
+  @override
+  String get printParityAll => 'All';
+
+  @override
+  String get printParityOdd => 'Odd pages';
+
+  @override
+  String get printParityEven => 'Even pages';
+
+  @override
+  String get printReverse => 'Reverse order (last page first)';
+
+  @override
+  String get printAnnotations =>
+      'Include annotations (notes, highlights, drawings)';
+
+  @override
+  String get printScale => 'Size';
+
+  @override
+  String get printScaleFit => 'Fit to paper';
+
+  @override
+  String get printScaleShrink => 'Shrink large pages only';
+
+  @override
+  String get printScaleActual => 'Actual size';
+
+  @override
+  String get printMargin => 'Margin';
+
+  @override
+  String get printMarginNone => 'None';
+
+  @override
+  String get printPaper => 'Paper';
+
+  @override
+  String get printAutoOrientation => 'Turn the paper to match each page';
+
+  @override
+  String printPageCount(int count) {
+    return '$count to print';
+  }
+
+  @override
+  String printPreviewNote(int count) {
+    return 'The preview shows the first $count pages';
+  }
+
+  @override
+  String get printPreviewing => 'Preparing preview…';
+
+  @override
+  String get printFailed => 'Could not prepare printing';
+
+  @override
+  String get printNextStep =>
+      'Printer, copies, duplex and colour are set in the system print window that opens next.';
+
+  @override
+  String get printContinue => 'Open print window';
+
+  @override
+  String get printPerSheet => 'Pages per sheet';
+
+  @override
+  String printPerSheetValue(int n) {
+    return '$n';
+  }
+
+  @override
+  String get printBooklet => 'Booklet (fold and staple)';
+
+  @override
+  String get printBookletHint =>
+      'Print double-sided (flip on short edge) and fold in half. The page count is padded to a multiple of 4 with blank pages.';
+
+  @override
+  String get printSheetBorder => 'Draw a border around each page';
+
+  @override
+  String get printNumbers => 'Page numbers';
+
+  @override
+  String get printNumbersNone => 'None';
+
+  @override
+  String get printNumbersBottomCenter => 'Bottom centre';
+
+  @override
+  String get printNumbersBottomRight => 'Bottom right';
+
+  @override
+  String get printNumbersBottomLeft => 'Bottom left';
+
+  @override
+  String get printNumbersTopRight => 'Top right';
+
+  @override
+  String get printNumberTotal => 'Include the total (3 / 12)';
+
+  @override
+  String get printWatermark => 'Watermark text';
+
+  @override
+  String get printWatermarkHint => 'e.g. Copy, Confidential, DRAFT';
+
+  @override
+  String get printGrayscale => 'Force black and white';
+
+  @override
+  String get printGrayscaleHint =>
+      'Pages are turned into grey images, so text becomes an image too. This is slower and the job can be larger.';
+
+  @override
+  String viewerSearchTip(String shortcut) {
+    return 'Search ($shortcut)';
+  }
+
+  @override
+  String get searchHint => 'Find in this PDF';
+
+  @override
+  String get searchNoResults => 'No results';
+
+  @override
+  String searchCount(int current, int total) {
+    return '$current / $total';
+  }
+
+  @override
+  String get searchPrev => 'Previous result';
+
+  @override
+  String get searchNext => 'Next result';
+
+  @override
+  String get searchClose => 'Close search';
+
+  @override
+  String get searchSearching => 'Searching…';
+
+  @override
+  String get sidebarPages => 'Pages';
+
+  @override
+  String get sidebarOutline => 'Outline';
+
+  @override
+  String get viewerFit => 'Fit';
+
+  @override
+  String get viewerFitWidth => 'Fit width';
+
+  @override
+  String get viewerFitPage => 'Fit page';
+
+  @override
+  String get viewerActualSize => 'Actual size (100%)';
+
+  @override
+  String get passwordTitle => 'Password required';
+
+  @override
+  String passwordBody(String name) {
+    return '$name is protected by a password.';
+  }
+
+  @override
+  String get passwordWrong => 'That password is not correct. Try again.';
+
+  @override
+  String get passwordHint => 'Password';
+
+  @override
+  String get passwordShow => 'Show password';
+
+  @override
+  String get passwordHide => 'Hide password';
+
+  @override
+  String get passwordOpen => 'Open';
 }

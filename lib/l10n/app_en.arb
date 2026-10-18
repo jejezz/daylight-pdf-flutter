@@ -123,5 +123,373 @@
   },
   "updateQuitAndInstall": "Quit and install",
   "updateBusyTitle": "Can't update right now",
-  "updateBusyBody": "A task is in progress. Please try again when it has finished."
+  "updateBusyBody": "A task is in progress. Please try again when it has finished.",
+  "fileTypePdf": "PDF document",
+  "openFailed": "Couldn't open the file.",
+  "viewerZoomIn": "Zoom in",
+  "viewerZoomOut": "Zoom out",
+  "viewerThumbnails": "Thumbnails",
+  "viewerPageOf": "{page} / {total}",
+  "@viewerPageOf": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "convertTitle": "Convert",
+  "convertAddFiles": "Add files",
+  "convertClearFinished": "Clear finished",
+  "convertFileTypes": "Images, SVG, AI, PDF",
+  "convertMergeImages": "Merge images into one PDF",
+  "convertOutputSame": "Same folder as source",
+  "convertEmpty": "Drop images or PDFs to convert",
+  "convertDpi": "{dpi} DPI",
+  "convertFilesCreated": "Created {count} files",
+  "convertSkipped": "Skipped {count} unsupported files: {names}",
+  "errUnsupportedFormat": "Unsupported format: {name}",
+  "errCannotRead": "Couldn't read the file: {name}",
+  "errPasswordProtected": "Password-protected PDFs can't be converted: {name}",
+  "errWriteFailed": "Couldn't save the result: {name}",
+  "homeConvertAction": "Convert",
+  "@convertDpi": {
+    "placeholders": {
+      "dpi": {
+        "type": "int"
+      }
+    }
+  },
+  "@convertFilesCreated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@convertSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "@errUnsupportedFormat": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@errCannotRead": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@errPasswordProtected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@errWriteFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "errNotPdfCompatible": "This .ai was saved without PDF compatibility. In Illustrator, turn on \"Create PDF Compatible File\" and save again: {name}",
+  "@errNotPdfCompatible": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pagesTitle": "Page tools",
+  "pagesTabEdit": "Edit",
+  "pagesTabMerge": "Merge",
+  "pagesTabSplit": "Split",
+  "pagesOpenPdf": "Open PDF",
+  "pagesEmpty": "Open or drop a PDF to edit",
+  "pagesRotateLeft": "Rotate left",
+  "pagesRotateRight": "Rotate right",
+  "pagesDelete": "Delete selected pages",
+  "pagesExtract": "Save selected pages only",
+  "pagesSave": "Save",
+  "pagesSelectAll": "Select all",
+  "pagesPageLabel": "Page {n}",
+  "pagesSelectedCount": "{count} selected",
+  "pagesNothingSelected": "Select pages first",
+  "pagesNoneLeft": "No pages left to save",
+  "pagesSaved": "Saved: {name}",
+  "pagesSavedMany": "Created {count} files",
+  "pagesReset": "Reset",
+  "mergeAdd": "Add PDFs",
+  "mergeAction": "Merge and save",
+  "mergeNeedTwo": "Add at least 2 PDFs",
+  "mergeRemove": "Remove from list",
+  "mergeEmpty": "Add PDFs to merge",
+  "splitChoose": "Choose a PDF to split",
+  "splitModeEach": "One page each",
+  "splitModeEveryN": "Every N pages",
+  "splitModeRanges": "By ranges",
+  "splitEveryNLabel": "Pages",
+  "splitRangesLabel": "Ranges (e.g. 1-3, 5, 8-)",
+  "splitAction": "Split",
+  "splitPageCount": "{count} pages in total",
+  "splitChooseFolder": "Choose output folder",
+  "errInvalidRange": "Couldn't understand the page range: {name}",
+  "viewerEditPages": "Edit pages",
+  "homePagesAction": "Page tools",
+  "@pagesPageLabel": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@pagesSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@pagesSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@pagesSavedMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@splitPageCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@errInvalidRange": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "annotHighlight": "Highlight (selected text)",
+  "annotUnderline": "Underline (selected text)",
+  "annotNote": "Note (click on the page)",
+  "annotInk": "Freehand",
+  "annotRectangle": "Rectangle",
+  "annotCircle": "Circle",
+  "annotColor": "Color",
+  "annotList": "Annotation list",
+  "annotSave": "Save",
+  "annotSelectTextFirst": "Select some text first",
+  "annotNoteTitle": "Note",
+  "annotNoteHint": "Note text",
+  "annotNoteAdd": "Add",
+  "commonCancel": "Cancel",
+  "annotEmpty": "No annotations",
+  "annotTypeHighlight": "Highlight",
+  "annotTypeUnderline": "Underline",
+  "annotTypeNote": "Note",
+  "annotTypeInk": "Freehand",
+  "annotTypeRectangle": "Rectangle",
+  "annotTypeCircle": "Circle",
+  "annotTypeOther": "Annotation",
+  "annotDelete": "Delete",
+  "annotUnsavedTitle": "You have unsaved annotations",
+  "annotUnsavedBody": "If you leave without saving, the annotations you added are lost.",
+  "annotDiscard": "Discard",
+  "annotFailed": "Couldn't process the annotation.",
+  "homeConvertHint": "Images, SVG and AI to PDF, or PDF to images",
+  "homePagesHint": "Merge, split, rotate, delete and reorder pages",
+  "homeDropSubtitle": "PDFs open right away; images, SVG and AI go to Convert",
+  "annotListLabel": "Annotations {count}",
+  "annotUnsavedShort": "Not saved",
+  "annotHintNote": "Click the page to place a note",
+  "annotHintInk": "Drag on the page to draw",
+  "annotHintShape": "Drag to set the area",
+  "annotListTitle": "Annotations",
+  "viewerGoToPage": "Go to page",
+  "@annotListLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mergeDropHint": "Drop PDFs here",
+  "splitDropHint": "Drop a PDF to split, or choose one",
+  "splitChange": "Another PDF",
+  "splitPreview": "Makes {count} files",
+  "pagesDropHere": "Drop here to move to the end",
+  "pagesMoveToEnd": "End",
+  "@splitPreview": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "convertStatusPending": "Waiting",
+  "convertStatusRunning": "Converting",
+  "convertStatusDone": "Done",
+  "convertStatusFailed": "Failed",
+  "convertReveal": "Show in folder",
+  "convertOpenResult": "Open",
+  "convertSectionImages": "Images → PDF",
+  "convertSectionPdf": "PDF → images",
+  "convertSectionOutput": "Save to",
+  "convertQueueTitle": "Queue",
+  "convertFormatLabel": "Format",
+  "convertResolutionLabel": "Resolution",
+  "convertImagesNote": "PNG, JPG, BMP, GIF, WebP, TIFF · SVG · AI (PDF-compatible)",
+  "annotUndo": "Undo",
+  "annotUndoTip": "Undo ({shortcut})",
+  "@annotUndoTip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "homeRecentTitle": "Recent files",
+  "homeRecentClear": "Clear list",
+  "homeRecentRemove": "Remove from list",
+  "printTitle": "Print",
+  "printTip": "Print ({shortcut})",
+  "printAction": "Print",
+  "printRange": "Pages to print",
+  "printRangeAll": "All",
+  "printRangeCurrent": "Current page",
+  "printRangeCustom": "Pages",
+  "printRangeHint": "e.g. 1-3, 5, 8-",
+  "printParity": "Odd / even",
+  "printParityAll": "All",
+  "printParityOdd": "Odd pages",
+  "printParityEven": "Even pages",
+  "printReverse": "Reverse order (last page first)",
+  "printAnnotations": "Include annotations (notes, highlights, drawings)",
+  "printScale": "Size",
+  "printScaleFit": "Fit to paper",
+  "printScaleShrink": "Shrink large pages only",
+  "printScaleActual": "Actual size",
+  "printMargin": "Margin",
+  "printMarginNone": "None",
+  "printPaper": "Paper",
+  "printAutoOrientation": "Turn the paper to match each page",
+  "printPageCount": "{count} to print",
+  "printPreviewNote": "The preview shows the first {count} pages",
+  "printPreviewing": "Preparing preview…",
+  "printFailed": "Could not prepare printing",
+  "printNextStep": "Printer, copies, duplex and colour are set in the system print window that opens next.",
+  "printContinue": "Open print window",
+  "@printTip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "@printPageCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@printPreviewNote": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "printPerSheet": "Pages per sheet",
+  "printPerSheetValue": "{n}",
+  "printBooklet": "Booklet (fold and staple)",
+  "printBookletHint": "Print double-sided (flip on short edge) and fold in half. The page count is padded to a multiple of 4 with blank pages.",
+  "printSheetBorder": "Draw a border around each page",
+  "printNumbers": "Page numbers",
+  "printNumbersNone": "None",
+  "printNumbersBottomCenter": "Bottom centre",
+  "printNumbersBottomRight": "Bottom right",
+  "printNumbersBottomLeft": "Bottom left",
+  "printNumbersTopRight": "Top right",
+  "printNumberTotal": "Include the total (3 / 12)",
+  "printWatermark": "Watermark text",
+  "printWatermarkHint": "e.g. Copy, Confidential, DRAFT",
+  "printGrayscale": "Force black and white",
+  "printGrayscaleHint": "Pages are turned into grey images, so text becomes an image too. This is slower and the job can be larger.",
+  "@printPerSheetValue": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "viewerSearchTip": "Search ({shortcut})",
+  "searchHint": "Find in this PDF",
+  "searchNoResults": "No results",
+  "searchCount": "{current} / {total}",
+  "searchPrev": "Previous result",
+  "searchNext": "Next result",
+  "searchClose": "Close search",
+  "searchSearching": "Searching…",
+  "sidebarPages": "Pages",
+  "sidebarOutline": "Outline",
+  "viewerFit": "Fit",
+  "viewerFitWidth": "Fit width",
+  "viewerFitPage": "Fit page",
+  "viewerActualSize": "Actual size (100%)",
+  "passwordTitle": "Password required",
+  "passwordBody": "{name} is protected by a password.",
+  "passwordWrong": "That password is not correct. Try again.",
+  "passwordHint": "Password",
+  "passwordShow": "Show password",
+  "passwordHide": "Hide password",
+  "passwordOpen": "Open",
+  "@viewerSearchTip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "@searchCount": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@passwordBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }
