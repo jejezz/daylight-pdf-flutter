@@ -156,6 +156,49 @@ void main() {
     });
   });
 
+  testWidgets('memos, highlights and drawings print without crashing and stay on the page', (tester) async {
+    await tester.runAsync(() async {
+      // 글꼴이 필요한 주석(메모의 내용, 형광펜)은 PDFium이 모양을 만들 때 글꼴 대체 콜백을 부른다.
+      // 그 콜백은 pdfrx 작업 스레드에만 있어서, 메인 스레드에서 그리면 앱이 죽었다 (실제 앱에서 발생).
+      final doc = await PdfDocument.openData(Uint8List.fromList(source) as dynamic, sourceName: 'annotate');
+      late Uint8List annotated;
+      try {
+        await PdfiumAnnotations.add(doc, [
+          const NoteSpec(pageIndex: 1, color: 0xFFFFEB3B, x: 40, y: 300, text: '메모 내용 abc'),
+          const HighlightSpec(pageIndex: 1, color: 0xFFFFEB3B, boxes: [(left: 30, bottom: 100, right: 170, top: 120)]),
+          const UnderlineSpec(pageIndex: 1, color: 0xFFE53935, boxes: [(left: 30, bottom: 60, right: 170, top: 75)]),
+          const InkSpec(
+            pageIndex: 1,
+            color: 0xFF0000FF,
+            strokes: [
+              [(x: 20, y: 20), (x: 100, y: 50), (x: 180, y: 20)],
+            ],
+          ),
+        ]);
+        annotated = await doc.encodePdf();
+      } finally {
+        doc.dispose();
+      }
+      final out = await run(a4, from: annotated);
+      expect(await sizes(out), ['595x842', '595x842', '842x595', '595x842']);
+      final check = await PdfDocument.openData(out as dynamic, sourceName: 'check');
+      try {
+        final read = await PdfiumAnnotations.read(check);
+        expect(read.where((a) => a.pageIndex == 1).length, 4);
+      } finally {
+        check.dispose();
+      }
+      // 주석을 뺀 출력에는 주석이 없다
+      final bare = await run(a4.copyWith(includeAnnotations: false), from: annotated);
+      final bareDoc = await PdfDocument.openData(bare as dynamic, sourceName: 'bare');
+      try {
+        expect(await PdfiumAnnotations.read(bareDoc), isEmpty);
+      } finally {
+        bareDoc.dispose();
+      }
+    });
+  });
+
   testWidgets('margins stay white and the page keeps its proportion; actual size does not scale', (tester) async {
     await tester.runAsync(() async {
       // 여백 20mm = 56.7pt. 쪽 2(빨강 200x400)는 세로가 한계: 높이 841.89-113.4=728.5 → 배율 1.82, 너비 364
@@ -193,6 +236,48 @@ void main() {
       expect(near(await pixel(out, 0, 595.28 / 2, 841.89 / 2), colors[2]), isTrue);
       expect(near(await pixel(out, 0, 5, 5), white), isTrue, reason: 'outside the scaled page is paper');
       expect(near(await pixel(out, 0, 100, 5), colors[2]), isTrue, reason: 'top edge of the scaled page');
+    });
+  });
+
+  testWidgets('an annotation on a page rotated by 90 degrees is printed where the viewer shows it', (tester) async {
+    await tester.runAsync(() async {
+      // 쪽 1(초록 200x400)을 시계 방향 90° 돌린 문서: 눈에 보이는 쪽은 400x200.
+      await PageOps.build([PageRef('${dir.path}/source.pdf', 0, quarterTurns: 1)], '${dir.path}/turned.pdf');
+      final doc = await PdfDocument.openFile('${dir.path}/turned.pdf');
+      late Uint8List turned;
+      try {
+        // 쪽 좌표(회전 전)에서 왼쪽 가장자리를 따라 세로로 긴 파란 띠: x=20..30 근처. 90° 돌리면 보이는 쪽 위쪽에 가로 띠가 된다.
+        await PdfiumAnnotations.add(doc, [
+          const ShapeSpec(
+            pageIndex: 0,
+            color: 0xFF0000FF,
+            kind: ShapeKind.square,
+            box: (left: 20, bottom: 20, right: 180, top: 380),
+            width: 10,
+          ),
+        ]);
+        turned = await doc.encodePdf();
+      } finally {
+        doc.dispose();
+      }
+      // 먼저 원본이 보여 주는 자리를 잰다 (1pt = 1px): 위쪽 띠는 아래에서 175pt, 곧 위에서 25px 근처
+      expect(
+        near(await pixel(turned, 0, 200, 25), (0, 0, 255)),
+        isTrue,
+        reason: 'the viewer shows the band near the top',
+      );
+      final out = await run(a4, from: turned);
+      expect(await sizes(out), ['842x595']);
+      // 가로 용지에 높이 맞춤이 아니라 가로 맞춤: 400x200 → 배율 min(841.89/400, 595.28/200) = 2.1047, 세로 가운데
+      const scale = 841.89 / 400;
+      final top = (595.28 - 200 * scale) / 2; // 위쪽 빈 곳(pt)
+      final bandY = top + 25 * scale; // 띠(위에서 25pt 근처)가 용지 위에서 내려온 거리
+      expect(near(await pixel(out, 0, 421, bandY), (0, 0, 255)), isTrue, reason: 'band printed near the top');
+      expect(
+        near(await pixel(out, 0, 421, top + 100 * scale), colors[0]),
+        isTrue,
+        reason: 'inside the frame it is page colour',
+      );
     });
   });
 }

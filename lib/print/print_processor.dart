@@ -10,11 +10,11 @@ import 'print_options.dart';
 
 /// 열린 PDF를 [PrintOptions]대로 가공한 인쇄용 PDF로 만든다. 원본은 바꾸지 않는다.
 ///
-/// 고른 쪽만 새 문서에 담고(범위·홀짝·역순), 쪽마다 주석을 지우거나 모양을 확정해 두고, 회전을 풀어
-/// 용지 크기의 쪽 안에 배율·여백대로 놓는다 (`FPDFPage_TransFormWithClip`, 주석은 `FPDFPage_TransformAnnots`). 글자와 그림은 벡터 그대로 남는다.
+/// 고른 쪽만 새 문서에 담고(범위·홀짝·역순), 쪽마다 주석을 지우거나 모양을 확정해 두고,
+/// 용지 크기의 쪽 안에 배율·여백대로 놓는다 (`FPDFPage_TransFormWithClip`, 주석은 영역만 옮김). 쪽 회전은 그대로 둔다.
+/// 글자와 그림은 벡터 그대로 남는다.
 abstract final class PrintProcessor {
   static const _link = 2, _widget = 20;
-  static const _renderAnnots = 1;
 
   /// [source]는 `PdfDocument.encodePdf()`로 얻은 바이트(저장 안 한 주석 포함). [currentPage]는 1부터.
   /// [limit]를 주면 고른 쪽 중 앞의 그만큼만 만든다 (미리보기용).
@@ -29,6 +29,7 @@ abstract final class PrintProcessor {
       assembled = await PdfDocument.createNew(sourceName: 'print');
       assembled.pages = [for (final i in indices) input.pages[i]];
       placed = await PdfDocument.openData(await assembled.encodePdf(), sourceName: 'print-pages');
+      if (options.includeAnnotations) await _generateAppearances(placed);
       await placed.useNativeDocumentHandle((handle) {
         final pdfium = getPdfium();
         final doc = FPDF_DOCUMENT.fromAddress(handle);
@@ -51,16 +52,11 @@ abstract final class PrintProcessor {
   }
 
   static void _place(PDFium pdfium, FPDF_PAGE page, PrintOptions options) {
-    if (options.includeAnnotations) {
-      // PDFium은 사각형·형광펜 같은 주석의 모양(AP)을 그릴 때 만들어 두므로, 한 번 그려서 모양을 파일에 남긴다.
-      _generateAppearances(pdfium, page);
-    } else {
-      _removeAnnotations(pdfium, page);
-    }
+    if (!options.includeAnnotations) _removeAnnotations(pdfium, page);
 
     final box = _pageBox(pdfium, page);
     final placed = placePage(box, pdfium.FPDFPage_GetRotation(page) * 90, options);
-    // 자르기 상자는 용지 좌표: 여백 안쪽 ∩ 쪽이 용지 위에 놓인 모양
+    // 자르기 상자는 새 쪽 상자 좌표: 여백 안쪽 ∩ 원래 쪽이 새 쪽 위에 놓인 모양
     final clip = intersectBoxes(placed.clip, transformBox(placed.matrix, box));
 
     final matrix = calloc<FS_MATRIX>();
@@ -79,34 +75,93 @@ abstract final class PrintProcessor {
         ..right = clip.right
         ..top = clip.top;
       pdfium.FPDFPage_TransFormWithClip(page, matrix, clipRect);
-      // 남은 주석(과 양식 칸)도 같은 행렬로 옮긴다. 주석은 자기 영역(Rect)에 모양을 맞춰 그리므로 크기도 따라간다.
-      pdfium.FPDFPage_TransformAnnots(
-        page,
-        placed.matrix.a,
-        placed.matrix.b,
-        placed.matrix.c,
-        placed.matrix.d,
-        placed.matrix.e,
-        placed.matrix.f,
-      );
     } finally {
       calloc
         ..free(matrix)
         ..free(clipRect);
     }
-    // 회전은 행렬에 녹았으므로 0으로, 쪽 상자는 용지 크기로.
-    pdfium.FPDFPage_SetRotation(page, 0);
-    pdfium.FPDFPage_SetMediaBox(page, 0, 0, placed.paperWidth, placed.paperHeight);
-    pdfium.FPDFPage_SetCropBox(page, 0, 0, placed.paperWidth, placed.paperHeight);
+    // 주석은 자기 영역(Rect)에 모양을 맞춰 그리므로 영역만 옮기면 크기도 따라간다.
+    // (`FPDFPage_TransformAnnots`는 쓰지 않는다: 주석 목록을 메인 스레드에서 만들다가 글꼴이 필요하면 앱이 죽는다.)
+    _moveAnnotations(pdfium, page, placed.matrix);
+    // 쪽 회전은 그대로 두고(주석 모양이 같이 돌도록), 쪽 상자만 용지 크기로.
+    pdfium.FPDFPage_SetMediaBox(page, 0, 0, placed.boxWidth, placed.boxHeight);
+    pdfium.FPDFPage_SetCropBox(page, 0, 0, placed.boxWidth, placed.boxHeight);
   }
 
-  static void _generateAppearances(PDFium pdfium, FPDF_PAGE page) {
-    final bitmap = pdfium.FPDFBitmap_Create(1, 1, 0);
-    if (bitmap == ffi.nullptr) return;
+  /// 모든 주석의 영역과 (형광펜·밑줄의) 글자 사각형을 [m]으로 옮긴다. 배율과 이동만 있는 행렬 전용.
+  static void _moveAnnotations(PDFium pdfium, FPDF_PAGE page, Matrix6 m) {
+    (double, double) map(double x, double y) => (m.a * x + m.c * y + m.e, m.b * x + m.d * y + m.f);
+    final rect = calloc<FS_RECTF>();
+    final quad = calloc<FS_QUADPOINTSF>();
     try {
-      pdfium.FPDF_RenderPageBitmap(bitmap, page, 0, 0, 1, 1, 0, _renderAnnots);
+      for (var i = 0; i < pdfium.FPDFPage_GetAnnotCount(page); i++) {
+        final annot = pdfium.FPDFPage_GetAnnot(page, i);
+        if (annot == ffi.nullptr) continue;
+        try {
+          final Object ok = pdfium.FPDFAnnot_GetRect(annot, rect);
+          if (ok != false && ok != 0) {
+            final (l, b) = map(rect.ref.left, rect.ref.bottom);
+            final (r, t) = map(rect.ref.right, rect.ref.top);
+            rect.ref
+              ..left = l
+              ..bottom = b
+              ..right = r
+              ..top = t;
+            pdfium.FPDFAnnot_SetRect(annot, rect);
+          }
+          final count = pdfium.FPDFAnnot_CountAttachmentPoints(annot);
+          for (var q = 0; q < count; q++) {
+            final Object got = pdfium.FPDFAnnot_GetAttachmentPoints(annot, q, quad);
+            if (got == false || got == 0) continue;
+            final p1 = map(quad.ref.x1, quad.ref.y1), p2 = map(quad.ref.x2, quad.ref.y2);
+            final p3 = map(quad.ref.x3, quad.ref.y3), p4 = map(quad.ref.x4, quad.ref.y4);
+            quad.ref
+              ..x1 = p1.$1
+              ..y1 = p1.$2
+              ..x2 = p2.$1
+              ..y2 = p2.$2
+              ..x3 = p3.$1
+              ..y3 = p3.$2
+              ..x4 = p4.$1
+              ..y4 = p4.$2;
+            pdfium.FPDFAnnot_SetAttachmentPoints(annot, q, quad);
+          }
+        } finally {
+          pdfium.FPDFPage_CloseAnnot(annot);
+        }
+      }
     } finally {
-      pdfium.FPDFBitmap_Destroy(bitmap);
+      calloc
+        ..free(rect)
+        ..free(quad);
+    }
+  }
+
+  /// PDFium은 사각형·형광펜·메모 같은 주석의 모양(AP)을 그릴 때 만들어 두므로, 주석이 있는 쪽을 한 번 그려서 모양을 파일에 남긴다.
+  /// 그리기는 반드시 pdfrx의 작업 스레드(`PdfPage.render`)로 한다: 모양을 만들다 글꼴이 필요하면 PDFium이 글꼴 대체 콜백을
+  /// 부르는데, 그 콜백은 작업 스레드에만 등록돼 있어 메인 스레드에서 `FPDF_RenderPageBitmap`을 부르면 앱이 죽는다.
+  static Future<void> _generateAppearances(PdfDocument document) async {
+    final withAnnotations = <int>[];
+    await document.useNativeDocumentHandle((handle) {
+      final pdfium = getPdfium();
+      final doc = FPDF_DOCUMENT.fromAddress(handle);
+      for (var i = 0; i < document.pages.length; i++) {
+        final page = pdfium.FPDF_LoadPage(doc, i);
+        if (page == ffi.nullptr) continue;
+        try {
+          if (pdfium.FPDFPage_GetAnnotCount(page) > 0) withAnnotations.add(i);
+        } finally {
+          pdfium.FPDF_ClosePage(page);
+        }
+      }
+    });
+    for (final i in withAnnotations) {
+      final image = await document.pages[i].render(
+        fullWidth: 1,
+        fullHeight: 1,
+        annotationRenderingMode: PdfAnnotationRenderingMode.annotationAndForms,
+      );
+      image?.dispose();
     }
   }
 

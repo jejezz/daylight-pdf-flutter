@@ -89,10 +89,14 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
   가공하는 설정만 둔다: 범위(전체/현재 쪽/`1-3, 5, 8-`), 홀수·짝수, 거꾸로, 주석 포함 여부, 크기(맞춤/큰 쪽만 줄임/원래 크기),
   여백, 용지, 쪽 방향에 맞춰 용지 돌리기. 열린 문서를 `encodePdf()`로 넘기므로 저장 안 한 주석도 찍힌다.
 - 가공은 `PrintProcessor.build`(PDFium FFI, 벡터 유지): 고른 쪽을 새 문서로 모으고(`pages =`는 저장할 때 모으므로 `encodePdf` 뒤 다시 열어서
-  손본다), 주석을 지우거나(`FPDFPage_RemoveAnnot`) 모양(AP)을 한 번 그려 만들어 두고, `FPDFPage_TransFormWithClip`(회전을 행렬에 녹임)과
-  `FPDFPage_TransformAnnots`로 용지 크기의 쪽에 놓는다. 배치 계산은 순수 함수 `placePage`(`test/print_layout_test.dart`).
-- **PDFium 함정**: `FPDFPage_Flatten`은 이 문서에서 빈 내용을 내서 쓰지 않는다. `TransFormWithClip`의 자르기 상자는 행렬이 닿기 전 좌표
-  (= 용지 좌표)로 준다. 사각형·형광펜 같은 주석의 AP는 그릴 때 PDFium이 만들므로 가공 전에 1×1로 한 번 그린다.
+  손본다), 주석을 지우거나(`FPDFPage_RemoveAnnot`) 모양(AP)을 만들어 두고, `FPDFPage_TransFormWithClip`으로 내용을 배율+이동하고,
+  주석은 영역(Rect)·글자 사각형(QuadPoints)만 같은 행렬로 옮긴다. 쪽 회전(`/Rotate`)은 **그대로 둔다**(풀어서 내용에 녹이면 주석 모양이
+  따라 돌지 않는다). 쪽 상자는 용지 크기(90°/270°면 가로세로 바뀜). 배치 계산은 순수 함수 `placePage`(`test/print_layout_test.dart`).
+- **PDFium 함정 (실제 앱이 죽었다)**: PDFium의 주석 목록(`CPDF_AnnotList`)을 만드는 호출은 내용이 있는 주석마다 팝업을 만들며 글꼴을 찾는데,
+  글꼴 대체 콜백이 pdfrx 작업 스레드에만 등록돼 있어 **메인 스레드에서 부르면 "Cannot invoke native callback from a different
+  isolate"로 앱이 죽는다.** 해당: `FPDF_RenderPageBitmap`(주석 포함), `FPDFPage_TransformAnnots`. 그래서 모양을 만드는 그리기는
+  `PdfPage.render`(작업 스레드)로 하고, 주석은 `FPDFAnnot_*`(주석 하나씩)로만 만진다. 글자 있는 메모·형광펜 시험이 이를 지킨다.
+  또 `FPDFPage_Flatten`은 이 문서에서 빈 내용을 내서 쓰지 않고, `TransFormWithClip`의 자르기 상자는 행렬이 닿기 전 좌표(= 새 쪽 상자 좌표)로 준다.
 - 운영체제 창에서 용지를 바꾸면 `onLayout`이 새 크기로 다시 가공한다(`optionsForFormat`).
 - 미리보기 `PdfViewer`는 바뀔 때마다 새 키로 만든다(쓰던 뷰어의 문서를 바꾸면 pdfrx가 배치 도중 null 오류).
 - 시험한 것: 실제 PDFium으로 쪽 선택·용지·주석 포함 여부·여백·원래 크기·회전(픽셀 확인), 설정 창 구동, macOS 인쇄 창이 가공 결과를

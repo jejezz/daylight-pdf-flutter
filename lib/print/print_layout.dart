@@ -8,8 +8,19 @@ typedef PageBox = ({double left, double bottom, double right, double top});
 /// PDF 변환 행렬: x' = a·x + c·y + e, y' = b·x + d·y + f.
 typedef Matrix6 = ({double a, double b, double c, double d, double e, double f});
 
-/// 한 쪽을 용지에 놓는 결과: 용지 크기와, 쪽 내용(회전 전 좌표)을 용지 좌표로 옮기는 행렬.
-typedef PlacedPage = ({double paperWidth, double paperHeight, Matrix6 matrix, PageBox clip});
+/// 한 쪽을 용지에 놓는 결과.
+/// - [paperWidth]/[paperHeight]: 눈에 보이는 용지 크기 (회전 반영).
+/// - [boxWidth]/[boxHeight]: 쪽 상자(회전 전 좌표)로 쓸 크기. 쪽 회전은 그대로 두므로 90°/270°면 가로세로가 바뀐다.
+/// - [matrix]: 쪽 내용·주석(회전 전 좌표)을 새 쪽 상자(0,0 기준) 위로 옮기는 배율+이동 행렬. 회전은 들어 있지 않다.
+/// - [clip]: 내용을 자를 상자 (새 쪽 상자 좌표).
+typedef PlacedPage = ({
+  double paperWidth,
+  double paperHeight,
+  double boxWidth,
+  double boxHeight,
+  Matrix6 matrix,
+  PageBox clip,
+});
 
 /// 눈에 보이는 쪽 크기(회전 반영).
 ({double width, double height}) visibleSize(PageBox box, int rotation) {
@@ -17,8 +28,20 @@ typedef PlacedPage = ({double paperWidth, double paperHeight, Matrix6 matrix, Pa
   return rotation % 180 == 0 ? (width: w, height: h) : (width: h, height: w);
 }
 
+/// 쪽 상자 [box]에 시계 방향 [rotation]이 걸렸을 때 쪽 좌표 (x, y)가 화면(눈에 보이는 쪽, 왼쪽 아래 원점)에서 놓이는 자리.
+({double x, double y}) visiblePoint(PageBox box, int rotation, double x, double y) {
+  final u = x - box.left, v = y - box.bottom;
+  final w = box.right - box.left, h = box.top - box.bottom;
+  return switch (((rotation % 360) + 360) % 360) {
+    90 => (x: v, y: w - u),
+    180 => (x: w - u, y: h - v),
+    270 => (x: h - v, y: u),
+    _ => (x: u, y: v),
+  };
+}
+
 /// [box]에 [rotation](0/90/180/270, 시계 방향) 회전이 걸린 쪽을 [options]의 용지·여백·배율로 놓는다.
-/// 회전은 행렬에 녹여, 결과 쪽은 회전 0으로 쓸 수 있다.
+/// 쪽 회전은 건드리지 않는다: 회전을 풀어 내용에 녹이면 주석 모양이 따라 돌지 않기 때문이다.
 PlacedPage placePage(PageBox box, int rotation, PrintOptions options) {
   final rot = ((rotation % 360) + 360) % 360;
   final v = visibleSize(box, rot);
@@ -36,22 +59,59 @@ PlacedPage placePage(PageBox box, int rotation, PrintOptions options) {
     PrintScale.shrink => math.min(1.0, fit),
     PrintScale.actual => 1.0,
   };
+  // 눈에 보이는 쪽(왼쪽 아래 원점)에서 용지 위로: 배율 s, 이동 (tx, ty)
   final tx = m + (innerW - v.width * s) / 2, ty = m + (innerH - v.height * s) / 2;
 
-  // 눈에 보이는 좌표 (vx, vy) = α·x + β·y + γ (쪽 왼쪽 아래가 원점)
-  final x0 = box.left, y0 = box.bottom, x1 = box.right, y1 = box.top;
-  final (ax, bx, gx, ay, by, gy) = switch (rot) {
-    90 => (0.0, 1.0, -y0, -1.0, 0.0, x1),
-    180 => (-1.0, 0.0, x1, 0.0, -1.0, y1),
-    270 => (0.0, -1.0, y1, 1.0, 0.0, -x0),
-    _ => (1.0, 0.0, -x0, 0.0, 1.0, -y0),
-  };
+  // 새 쪽 상자는 (0,0)부터. 회전은 그대로이므로, 새 상자의 화면 좌표가 s·(옛 화면 좌표) + (tx, ty)가 되도록 쪽 좌표의 이동량 (e, f)를 푼다.
+  final boxW = rot % 180 == 0 ? pw : ph, boxH = rot % 180 == 0 ? ph : pw;
+  const newOrigin = 0.0;
+  final newBox = (left: newOrigin, bottom: newOrigin, right: boxW, top: boxH);
+  final oldAtOrigin = visiblePoint(box, rot, 0, 0); // 쪽 좌표의 선형 부분을 풀기 위한 기준
+  final oldAtX = visiblePoint(box, rot, 1, 0), oldAtY = visiblePoint(box, rot, 0, 1);
+  // 선형 부분 L (열: x축, y축이 화면에서 가는 방향). 회전만 있으므로 L의 역행렬 = 전치.
+  final l11 = oldAtX.x - oldAtOrigin.x, l21 = oldAtX.y - oldAtOrigin.y;
+  final l12 = oldAtY.x - oldAtOrigin.x, l22 = oldAtY.y - oldAtOrigin.y;
+  // L·e = s·c_old + t − c_new (c: 쪽 좌표 (0,0)의 화면 자리)
+  final newAtOrigin = visiblePoint(newBox, rot, 0, 0);
+  final rx = s * oldAtOrigin.x + tx - newAtOrigin.x, ry = s * oldAtOrigin.y + ty - newAtOrigin.y;
+  final e = l11 * rx + l21 * ry, f = l12 * rx + l22 * ry;
+  final userClip = _clipInUserSpace(newBox, rot, m, pw, ph);
   return (
     paperWidth: pw,
     paperHeight: ph,
-    matrix: (a: s * ax, b: s * ay, c: s * bx, d: s * by, e: s * gx + tx, f: s * gy + ty),
-    clip: (left: m, bottom: m, right: pw - m, top: ph - m),
+    boxWidth: boxW,
+    boxHeight: boxH,
+    matrix: (a: s, b: 0.0, c: 0.0, d: s, e: e, f: f),
+    clip: userClip,
   );
+}
+
+/// 화면 좌표의 여백 안쪽 상자를 새 쪽 상자의 쪽 좌표 상자로 바꾼다.
+PageBox _clipInUserSpace(PageBox newBox, int rot, double m, double pw, double ph) {
+  // 화면 상자 [m, pw-m]x[m, ph-m]의 네 꼭짓점에 해당하는 쪽 좌표 상자.
+  final lo = (x: m, y: m), hi = (x: pw - m, y: ph - m);
+  final pts = <({double x, double y})>[];
+  for (final c in [lo, hi, (x: lo.x, y: hi.y), (x: hi.x, y: lo.y)]) {
+    pts.add(_userFromVisible(newBox, rot, c.x, c.y));
+  }
+  return (
+    left: pts.map((p) => p.x).reduce(math.min),
+    bottom: pts.map((p) => p.y).reduce(math.min),
+    right: pts.map((p) => p.x).reduce(math.max),
+    top: pts.map((p) => p.y).reduce(math.max),
+  );
+}
+
+/// [visiblePoint]의 역: 화면 좌표 (vx, vy)가 놓이는 쪽 좌표.
+({double x, double y}) _userFromVisible(PageBox box, int rot, double vx, double vy) {
+  final w = box.right - box.left, h = box.top - box.bottom;
+  final (u, v) = switch (rot) {
+    90 => (w - vy, vx),
+    180 => (w - vx, h - vy),
+    270 => (vy, h - vx),
+    _ => (vx, vy),
+  };
+  return (x: u + box.left, y: v + box.bottom);
 }
 
 /// [box]의 네 꼭짓점을 [m]으로 옮긴 곳을 감싸는 축에 나란한 상자.
