@@ -74,7 +74,7 @@ void main() {
     expect(find.text('인쇄'), findsWidgets);
     expect(find.text('5쪽 인쇄'), findsOneWidget);
 
-    await tester.tap(find.text('취소'));
+    await tester.tap(find.text('닫기'));
     await tester.pumpAndSettle();
     expect(find.text('5쪽 인쇄'), findsNothing);
 
@@ -83,7 +83,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await settle(tester);
     expect(find.text('5쪽 인쇄'), findsOneWidget);
-    await tester.tap(find.text('취소'));
+    await tester.tap(find.text('닫기'));
     await settle(tester); // 닫을 때 미리보기 뷰어가 아직 쪽을 배치하는 중이면 pdfrx가 늦게 오류를 낸다
   });
 

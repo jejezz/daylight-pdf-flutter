@@ -235,7 +235,7 @@ class _PrintDialogState extends State<PrintDialog> {
             children: [
               Expanded(child: Text(l10n.printNextStep, style: theme.textTheme.bodySmall)),
               const SizedBox(width: AppSpacing.md),
-              TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.commonCancel)),
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.commonClose)),
               const SizedBox(width: AppSpacing.sm),
               FilledButton.icon(
                 onPressed: canPrint ? _print : null,
