@@ -28,7 +28,16 @@ import 'update/update_service.dart';
 
 final bool _isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
 
-Future<void> main() async {
+/// 명령줄 인자(Windows·Linux에서 PDF를 더블클릭하거나 "연결 프로그램"으로 열면 경로가 온다)에서 열 PDF를 고른다.
+@visibleForTesting
+String? pdfFromArguments(List<String> args) {
+  for (final arg in args) {
+    if (arg.toLowerCase().endsWith('.pdf') && File(arg).existsSync()) return arg;
+  }
+  return null;
+}
+
+Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   registerExtraLicenses();
   await pdfrxFlutterInitialize();
@@ -55,16 +64,19 @@ Future<void> main() async {
   runApp(
     UpdateScope(
       service: updates,
-      child: App(settings: settings, updates: updates),
+      child: App(settings: settings, updates: updates, initialFile: _isDesktop ? pdfFromArguments(args) : null),
     ),
   );
 }
 
 class App extends StatefulWidget {
-  const App({super.key, required this.settings, this.updates});
+  const App({super.key, required this.settings, this.updates, this.initialFile});
 
   final AppSettings settings;
   final UpdateService? updates;
+
+  /// 명령줄로 받은 PDF 경로 (데스크톱). 있으면 시작하자마자 연다.
+  final String? initialFile;
 
   @override
   State<App> createState() => _AppState();
@@ -86,7 +98,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     super.initState();
     _incomingSubscription = _incoming.opened.listen(_openIncoming);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final first = await _incoming.start();
+      final first = await _incoming.start() ?? widget.initialFile;
       if (first != null) _openIncoming(first);
     });
     WidgetsBinding.instance.addObserver(this);

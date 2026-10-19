@@ -284,26 +284,30 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   DropZone(
                     onDrop: _handleDrop,
                     radius: AppRadius.tile,
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-                    child: Row(
-                      children: [
-                        Icon(Icons.upload_file_rounded, size: 32, color: theme.colorScheme.primary),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(l10n.homeEmptyTitle, style: theme.textTheme.titleSmall),
-                              Text(l10n.homeDropSubtitle, style: theme.textTheme.bodySmall),
-                            ],
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
+                    // 너무 낮으면 어디에 놓아야 하는지 헷갈리므로 최소 높이를 둔다.
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 96),
+                      child: Row(
+                        children: [
+                          Icon(Icons.upload_file_rounded, size: 32, color: theme.colorScheme.primary),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(l10n.homeEmptyTitle, style: theme.textTheme.titleSmall),
+                                Text(l10n.homeDropSubtitle, style: theme.textTheme.bodySmall),
+                              ],
+                            ),
                           ),
-                        ),
-                        FilledButton.icon(
-                          onPressed: _pick,
-                          icon: const Icon(Icons.folder_open_rounded, size: 18),
-                          label: Text(l10n.homeEmptyAction),
-                        ),
-                      ],
+                          FilledButton.icon(
+                            onPressed: _pick,
+                            icon: const Icon(Icons.folder_open_rounded, size: 18),
+                            label: Text(l10n.homeEmptyAction),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
