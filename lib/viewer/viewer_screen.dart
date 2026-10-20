@@ -672,8 +672,21 @@ class _ViewerScreenState extends State<ViewerScreen> {
                             onSelectionChanged: (v) => setState(() => _sidebar = v.first),
                           ),
                         ),
+                        // 오른쪽 가장자리의 크기 조절 끌개(10px)가 스크롤바를 덮지 않도록 그 폭만큼 비우고,
+                        // 마우스로 잡기 쉽게 스크롤바를 굵게 한다.
                         Expanded(
-                          child: switch (_sidebar) {
+                          child: Padding(
+                            padding: EdgeInsets.only(right: isMobilePlatform ? 0 : 10),
+                            child: Theme(
+                              data: Theme.of(context).copyWith(
+                                scrollbarTheme: const ScrollbarThemeData(
+                                  thickness: WidgetStatePropertyAll(14),
+                                  radius: Radius.circular(7),
+                                  thumbVisibility: WidgetStatePropertyAll(true),
+                                  minThumbLength: 48,
+                                ),
+                              ),
+                              child: switch (_sidebar) {
                             _Sidebar.outline when _outline.isNotEmpty => OutlinePanel(
                               nodes: _outline,
                               onTap: (node) => _controller.goToDest(node.dest),
@@ -688,7 +701,9 @@ class _ViewerScreenState extends State<ViewerScreen> {
                               ),
                             ),
                             _ => _thumbnails(),
-                          },
+                              },
+                            ),
+                          ),
                         ),
                       ],
                     ),
