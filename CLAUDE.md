@@ -254,3 +254,12 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
   (`noteAt`으로 PDF 좌표가 어느 메모 아이콘 안인지 찾는다). 입력창을 취소하면 도구는 켜진 채 남는다.
 - "내용이 안 보인다"는 보고는 실행 파일이 오래된 게 아니라 이 상태(도구가 켜진 채)였다. 오래된 실행 파일인지 의심되면
   `ps -axo pid,lstart,command`로 시작 시각을, 번들 파일의 수정 시각과 마지막 커밋 시각을 비교한다.
+
+## PDF 링크 (`lib/viewer/link_handler.dart`)
+
+- pdfrx `linkHandlerParams`로 켠다: 링크 위에서 손가락 커서와 옅은 파란 강조, 누르면 `handlePdfLink`. 내부 링크(쪽/목적지)는 `controller.goToDest`,
+  주소 링크는 확인 창(`confirmOpenLink`) 뒤 `launchUrl`(기본 브라우저). `http`/`https`/`mailto`만 열고 나머지(`file:` 등)는 안내만 한다.
+  글자로만 적힌 웹 주소도 pdfrx가 링크로 찾는다(`enableAutoLinkDetection`).
+- **그리는 도구가 켜져 있으면 `linkHandlerParams`를 null로 한다.** 그리기 층이 입력을 아래 뷰어로도 흘려보내므로, 끄지 않으면 그리다가 링크가 눌린다.
+  링크 입력은 pdfrx의 `PdfOverlayInteractionRegion`/`MouseRegion(opaque: false)`이라 글자 선택·끌기·메모 아이콘 누르기를 막지 않는다.
+- 시험: `test/link_handler_test.dart`(동작·확인 창), `integration_test/link_test.dart`(실제 PDF의 링크 읽기·커서·이동; 이 Windows 환경에서는 `printing` 플러그인 C++ 빌드가 코드 페이지 경고로 실패해 못 돌렸다).

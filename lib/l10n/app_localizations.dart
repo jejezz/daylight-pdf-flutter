@@ -1669,6 +1669,36 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'일치하는 주석이 없어요'**
   String get annotFilterNone;
+
+  /// No description provided for @linkOpenTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'링크를 열까요?'**
+  String get linkOpenTitle;
+
+  /// No description provided for @linkOpenBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 브라우저에서 이 주소를 엽니다.\n{url}'**
+  String linkOpenBody(String url);
+
+  /// No description provided for @linkOpenAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'열기'**
+  String get linkOpenAction;
+
+  /// No description provided for @linkOpenFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'링크를 열 수 없어요.'**
+  String get linkOpenFailed;
+
+  /// No description provided for @linkUnsupported.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 링크는 열지 않아요.'**
+  String get linkUnsupported;
 }
 
 class _AppLocalizationsDelegate

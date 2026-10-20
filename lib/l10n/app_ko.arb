@@ -565,5 +565,17 @@
   },
   "annotFilterHint": "메모 내용 검색",
   "annotFilterClear": "검색어 지우기",
-  "annotFilterNone": "일치하는 주석이 없어요"
+  "annotFilterNone": "일치하는 주석이 없어요",
+  "linkOpenTitle": "링크를 열까요?",
+  "linkOpenBody": "기본 브라우저에서 이 주소를 엽니다.\n{url}",
+  "@linkOpenBody": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "linkOpenAction": "열기",
+  "linkOpenFailed": "링크를 열 수 없어요.",
+  "linkUnsupported": "이 링크는 열지 않아요."
 }
