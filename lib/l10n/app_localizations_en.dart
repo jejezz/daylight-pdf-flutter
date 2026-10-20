@@ -892,4 +892,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get annotFilterNone => 'No matching annotations';
+
+  @override
+  String get linkOpenTitle => 'Open this link?';
+
+  @override
+  String linkOpenBody(String url) {
+    return 'This address will open in your default browser.\n$url';
+  }
+
+  @override
+  String get linkOpenAction => 'Open';
+
+  @override
+  String get linkOpenFailed => 'Couldn\'t open the link.';
+
+  @override
+  String get linkUnsupported => 'This kind of link isn\'t opened.';
 }

@@ -30,6 +30,7 @@ import 'annotation_toolbar.dart';
 import 'bookmarks.dart';
 import 'bookmarks_panel.dart';
 import 'draw_layer.dart';
+import 'link_handler.dart';
 import 'note_dialog.dart';
 import 'outline_panel.dart';
 import 'password_dialog.dart';
@@ -734,6 +735,13 @@ class _ViewerScreenState extends State<ViewerScreen> {
                       : null,
                   textSelectionParams: PdfTextSelectionParams(enabled: !_annotations.drawing),
                   pageOverlaysBuilder: (context, pageRect, page) => _noteHotspots(pageRect, page),
+                  // 링크: 위에 올리면 손가락 커서, 누르면 이동·열기. 그리는 도구가 켜져 있으면 끈다
+                  // (그리기 층이 입력을 아래로도 흘려보내므로, 그리다가 링크가 눌리지 않게).
+                  linkHandlerParams: _annotations.drawing
+                      ? null
+                      : PdfLinkHandlerParams(
+                          onLinkTap: (link) => handlePdfLink(context, link, goToDest: _controller.goToDest),
+                        ),
                   buildContextMenu: _selectionMenu,
                   pagePaintCallbacks: [
                     (canvas, pageRect, page) => _searcher?.pageTextMatchPaintCallback(canvas, pageRect, page),

@@ -548,5 +548,17 @@
   },
   "annotFilterHint": "Search notes",
   "annotFilterClear": "Clear search",
-  "annotFilterNone": "No matching annotations"
+  "annotFilterNone": "No matching annotations",
+  "linkOpenTitle": "Open this link?",
+  "linkOpenBody": "This address will open in your default browser.\n{url}",
+  "@linkOpenBody": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "linkOpenAction": "Open",
+  "linkOpenFailed": "Couldn't open the link.",
+  "linkUnsupported": "This kind of link isn't opened."
 }
