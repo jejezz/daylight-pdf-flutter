@@ -356,6 +356,25 @@
   "convertStatusFailed": "Failed",
   "convertReveal": "Show in folder",
   "convertOpenResult": "Open",
+  "convertDoneTitle": "Conversion finished",
+  "convertDoneAskOne": "{name} is ready. Open it now?",
+  "@convertDoneAskOne": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "convertDoneAskMany": "Created {count} PDFs. Open the first one now?",
+  "@convertDoneAskMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "convertDoneOpen": "Open now",
+  "convertDoneLater": "Later",
   "convertSectionImages": "Images → PDF",
   "convertSectionPdf": "PDF → images",
   "convertSectionOutput": "Save to",

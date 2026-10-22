@@ -547,6 +547,25 @@ class AppLocalizationsKo extends AppLocalizations {
   String get convertOpenResult => '열기';
 
   @override
+  String get convertDoneTitle => '변환이 끝났어요';
+
+  @override
+  String convertDoneAskOne(String name) {
+    return '$name을(를) 만들었어요. 지금 확인하시겠어요?';
+  }
+
+  @override
+  String convertDoneAskMany(int count) {
+    return 'PDF $count개를 만들었어요. 첫 번째 파일을 지금 확인하시겠어요?';
+  }
+
+  @override
+  String get convertDoneOpen => '지금 열기';
+
+  @override
+  String get convertDoneLater => '나중에';
+
+  @override
   String get convertSectionImages => '이미지 → PDF';
 
   @override

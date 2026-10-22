@@ -64,6 +64,8 @@ class ConversionQueue extends ChangeNotifier {
       }
     } finally {
       _running = false;
+      // 대기열이 비었음을 듣는 쪽에 알린다 (변환이 모두 끝난 뒤 안내를 띄우는 데 쓴다).
+      notifyListeners();
     }
   }
 }

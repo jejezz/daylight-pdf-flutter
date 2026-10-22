@@ -1052,6 +1052,36 @@ abstract class AppLocalizations {
   /// **'열기'**
   String get convertOpenResult;
 
+  /// No description provided for @convertDoneTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'변환이 끝났어요'**
+  String get convertDoneTitle;
+
+  /// No description provided for @convertDoneAskOne.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name}을(를) 만들었어요. 지금 확인하시겠어요?'**
+  String convertDoneAskOne(String name);
+
+  /// No description provided for @convertDoneAskMany.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF {count}개를 만들었어요. 첫 번째 파일을 지금 확인하시겠어요?'**
+  String convertDoneAskMany(int count);
+
+  /// No description provided for @convertDoneOpen.
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 열기'**
+  String get convertDoneOpen;
+
+  /// No description provided for @convertDoneLater.
+  ///
+  /// In ko, this message translates to:
+  /// **'나중에'**
+  String get convertDoneLater;
+
   /// No description provided for @convertSectionImages.
   ///
   /// In ko, this message translates to:
