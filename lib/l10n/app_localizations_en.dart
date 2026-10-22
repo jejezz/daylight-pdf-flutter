@@ -551,6 +551,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get convertOpenResult => 'Open';
 
   @override
+  String get convertDoneTitle => 'Conversion finished';
+
+  @override
+  String convertDoneAskOne(String name) {
+    return '$name is ready. Open it now?';
+  }
+
+  @override
+  String convertDoneAskMany(int count) {
+    return 'Created $count PDFs. Open the first one now?';
+  }
+
+  @override
+  String get convertDoneOpen => 'Open now';
+
+  @override
+  String get convertDoneLater => 'Later';
+
+  @override
   String get convertSectionImages => 'Images → PDF';
 
   @override

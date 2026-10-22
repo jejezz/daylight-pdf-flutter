@@ -373,6 +373,25 @@
   "convertStatusFailed": "실패",
   "convertReveal": "폴더에서 보기",
   "convertOpenResult": "열기",
+  "convertDoneTitle": "변환이 끝났어요",
+  "convertDoneAskOne": "{name}을(를) 만들었어요. 지금 확인하시겠어요?",
+  "@convertDoneAskOne": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "convertDoneAskMany": "PDF {count}개를 만들었어요. 첫 번째 파일을 지금 확인하시겠어요?",
+  "@convertDoneAskMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "convertDoneOpen": "지금 열기",
+  "convertDoneLater": "나중에",
   "convertSectionImages": "이미지 → PDF",
   "convertSectionPdf": "PDF → 이미지",
   "convertSectionOutput": "저장 위치",

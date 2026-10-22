@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path/path.dart' as p;
 
+import '../home/open_pdf.dart';
+import '../home/recent_files.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/drop_zone.dart';
@@ -39,9 +41,45 @@ class _ConvertScreenState extends State<ConvertScreen> {
   int _dpi = 150;
   String? _outputDir;
 
+  /// 끝났다고 이미 안내한 작업. 같은 작업을 두 번 안내하지 않는다.
+  final _announced = <ConversionJob>{};
+
+  /// 대기열이 모두 비면, 이번에 새로 만들어진 PDF가 있을 때 바로 열어 볼지 묻는다.
+  void _onQueueChanged() {
+    if (_queue.isRunning || !mounted) return;
+    final finished = _queue.jobs
+        .where((j) => (j.status == JobStatus.done || j.status == JobStatus.failed) && _announced.add(j))
+        .toList();
+    final pdfs = [
+      for (final job in finished)
+        if (job.status == JobStatus.done) ...job.outputs.where(_isPdf),
+    ];
+    if (pdfs.isNotEmpty) _askOpen(pdfs);
+  }
+
+  Future<void> _askOpen(List<String> pdfs) async {
+    final l10n = AppLocalizations.of(context);
+    final navigator = Navigator.of(context);
+    final open = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.convertDoneTitle),
+        content: Text(
+          pdfs.length == 1 ? l10n.convertDoneAskOne(p.basename(pdfs.first)) : l10n.convertDoneAskMany(pdfs.length),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.convertDoneLater)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(l10n.convertDoneOpen)),
+        ],
+      ),
+    );
+    if (open == true) await openPdf(navigator, pdfs.first, recents: RecentFiles());
+  }
+
   @override
   void initState() {
     super.initState();
+    _queue.addListener(_onQueueChanged);
     if (widget.initialPaths.isNotEmpty) {
       // 첫 프레임 뒤에 추가해야 SnackBar 에 쓸 context 가 준비된다.
       WidgetsBinding.instance.addPostFrameCallback((_) => _addPaths(widget.initialPaths));
