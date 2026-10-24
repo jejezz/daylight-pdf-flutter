@@ -766,9 +766,12 @@ class _ViewerScreenState extends State<ViewerScreen> {
                     _annotations.refresh(document);
                     _loadOutline(document);
                   },
-                  errorBannerBuilder: (context, error, stackTrace, documentRef) => Center(
-                    child: Text(error is PdfPasswordException ? l10n.errPasswordProtected(_name) : l10n.openFailed),
-                  ),
+                  errorBannerBuilder: (context, error, stackTrace, documentRef) {
+                    debugPrint('PDF open failed for $_name: $error\n$stackTrace');
+                    return Center(
+                      child: Text(error is PdfPasswordException ? l10n.errPasswordProtected(_name) : l10n.openFailed),
+                    );
+                  },
                 ),
               ),
               if (_annotations.drawing)

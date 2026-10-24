@@ -30,9 +30,7 @@ class _PasswordDialogState extends State<_PasswordDialog> {
     super.dispose();
   }
 
-  void _submit() {
-    if (_text.text.isNotEmpty) Navigator.of(context).pop(_text.text);
-  }
+  void _submit() => Navigator.of(context).pop(_text.text);
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +51,6 @@ class _PasswordDialogState extends State<_PasswordDialog> {
               autofocus: true,
               obscureText: !_visible,
               onSubmitted: (_) => _submit(),
-              onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 hintText: l10n.passwordHint,
                 errorText: widget.wrong ? l10n.passwordWrong : null,
@@ -69,7 +66,7 @@ class _PasswordDialogState extends State<_PasswordDialog> {
       ),
       actions: [
         TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.commonCancel)),
-        FilledButton(onPressed: _text.text.isEmpty ? null : _submit, child: Text(l10n.passwordOpen)),
+        FilledButton(onPressed: _submit, child: Text(l10n.passwordOpen)),
       ],
     );
   }

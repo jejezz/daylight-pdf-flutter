@@ -79,7 +79,22 @@ abstract final class PdfiumAnnotations {
   }
 
   /// 문서의 주석을 쪽 순서대로 읽는다. [pages](0부터)를 주면 그 쪽만 읽는다 (쪽이 복잡한 큰 문서는 전체 읽기가 몇 초 걸린다).
-  static Future<List<ReadAnnotation>> read(PdfDocument document, {Set<int>? pages}) {
+  ///
+  /// 읽기 전에 각 쪽을 pdfrx의 보통 방법(`render`, 작업 스레드)으로 한 번 그려 둔다. 아직 아무도 보지 않은 쪽을
+  /// 이 아래에서 메인 스레드 `FPDF_LoadPage`로 처음 읽으면, 그 쪽에 글꼴이 빠져 대체 글꼴이 필요할 때
+  /// "Cannot invoke native callback from a different isolate"로 앱이 죽는다(대체 글꼴 콜백은 작업 스레드에만
+  /// 등록돼 있다). 작업 스레드가 먼저 그려 두면 PDFium이 그 쪽을 안에서 캐시해, 메인 스레드는 새로 읽지 않고 쓴다.
+  /// `annotationRenderingMode: none`이 꼭 필요하다 — 기본값으로 그리면 PDFium이 스티커 메모의 외형(AP)을
+  /// 자기 기본 아이콘 크기(20×20pt)로 다시 만들어, 저장한 24×24pt SVG 외형을 덮어써 버린다.
+  static Future<List<ReadAnnotation>> read(PdfDocument document, {Set<int>? pages}) async {
+    for (var p = 0; p < document.pages.length; p++) {
+      if (pages != null && !pages.contains(p)) continue;
+      (await document.pages[p].render(
+        width: 1,
+        height: 1,
+        annotationRenderingMode: PdfAnnotationRenderingMode.none,
+      ))?.dispose();
+    }
     return document.useNativeDocumentHandle((handle) {
       final pdfium = getPdfium();
       final doc = FPDF_DOCUMENT.fromAddress(handle);
