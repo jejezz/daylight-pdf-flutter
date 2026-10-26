@@ -25,6 +25,7 @@ import 'settings/app_settings.dart';
 import 'theme/app_theme.dart';
 import 'update/update_scope.dart';
 import 'update/update_service.dart';
+import 'window/window_placement.dart';
 
 final bool _isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
 
@@ -45,15 +46,20 @@ Future<void> main(List<String> args) async {
   if (_isDesktop) {
     await windowManager.ensureInitialized();
     // ui-ux.md §5: 최소 크기는 960×600 이하 (1366×768 노트북).
+    const windowSize = Size(1200, 720);
+    // 시작 위치는 center: true 대신 placeWindowAtStartup — 모니터마다 배율이 다른
+    // Windows 듀얼 모니터에서 center: true가 창을 화면 밖에 놓는다.
     const options = WindowOptions(
-      size: Size(1200, 720),
+      size: windowSize,
       minimumSize: Size(960, 600),
-      center: true,
+      center: false,
       title: AppIdentity.displayName,
     );
     await windowManager.waitUntilReadyToShow(options, () async {
+      await placeWindowAtStartup(windowSize);
       await windowManager.show();
       await windowManager.focus();
+      LastDisplaySaver().start();
     });
   }
 
