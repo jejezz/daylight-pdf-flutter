@@ -10,7 +10,7 @@ import '../convert/convert_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../pages/page_tools_screen.dart';
 import '../platform/platform_kind.dart';
-import '../settings/settings_menus.dart';
+import '../settings/settings_screen.dart';
 import '../theme/app_theme.dart';
 import '../widgets/drop_zone.dart';
 import '../widgets/glass_card.dart';
@@ -125,8 +125,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       appBar: AppBar(
         title: const Text(AppIdentity.displayName),
         actions: [
-          const ThemeMenuButton(),
-          const LanguageMenuButton(),
+          IconButton(
+            tooltip: l10n.settingsTooltip,
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => showSettingsDialog(context),
+          ),
           IconButton(
             tooltip: l10n.aboutTooltip,
             icon: const Icon(Icons.info_outline_rounded),
@@ -206,8 +209,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         flexibleSpace: const FocusTint(),
         title: const Text(AppIdentity.displayName),
         actions: [
-          const ThemeMenuButton(),
-          const LanguageMenuButton(),
+          IconButton(
+            tooltip: l10n.settingsTooltip,
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => showSettingsDialog(context),
+          ),
           IconButton(
             tooltip: l10n.aboutTooltip,
             icon: const Icon(Icons.info_outline_rounded),

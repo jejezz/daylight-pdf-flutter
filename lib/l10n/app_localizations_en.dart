@@ -53,6 +53,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageSystemShort => 'System';
 
   @override
+  String get settingsTooltip => 'Settings';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsSectionAppearance => 'Appearance';
+
+  @override
+  String get settingsMode => 'Mode';
+
+  @override
+  String get settingsModeSystem => 'System';
+
+  @override
+  String get settingsPalette => 'Color scheme';
+
+  @override
+  String get settingsPaletteSaturn => 'Saturn';
+
+  @override
+  String get settingsPaletteTeal => 'Teal';
+
+  @override
+  String get settingsPaletteAmber => 'Amber';
+
+  @override
+  String get settingsPaletteRose => 'Rose';
+
+  @override
+  String get settingsPaletteSlate => 'Slate';
+
+  @override
+  String get settingsPaletteHighContrast => 'High contrast';
+
+  @override
   String get aboutTagline =>
       'Convert, view, annotate and organize PDFs in one place';
 
