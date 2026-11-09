@@ -1801,6 +1801,84 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'이 링크는 열지 않아요.'**
   String get linkUnsupported;
+
+  /// No description provided for @pagesTabSpread.
+  ///
+  /// In ko, this message translates to:
+  /// **'펼침면 나누기'**
+  String get pagesTabSpread;
+
+  /// No description provided for @spreadDropHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'나눌 스캔 PDF를 끌어다 놓거나 선택하세요'**
+  String get spreadDropHint;
+
+  /// No description provided for @spreadDescription.
+  ///
+  /// In ko, this message translates to:
+  /// **'한 쪽에 두 면이 나란히 찍힌 스캔본을 가운데에서 잘라 낱쪽으로 만들어요. 양쪽 너비가 같다고 보고 정확히 절반에서 자릅니다.'**
+  String get spreadDescription;
+
+  /// No description provided for @spreadRangesLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'나눌 쪽 (비우면 모든 쪽)'**
+  String get spreadRangesLabel;
+
+  /// No description provided for @spreadRangesHelp.
+  ///
+  /// In ko, this message translates to:
+  /// **'예: 2-20, 22 · 표지처럼 한 면인 쪽은 빼고 적어요'**
+  String get spreadRangesHelp;
+
+  /// No description provided for @spreadLeftFirst.
+  ///
+  /// In ko, this message translates to:
+  /// **'왼쪽 면 먼저'**
+  String get spreadLeftFirst;
+
+  /// No description provided for @spreadRightFirst.
+  ///
+  /// In ko, this message translates to:
+  /// **'오른쪽 면 먼저'**
+  String get spreadRightFirst;
+
+  /// No description provided for @spreadPreview.
+  ///
+  /// In ko, this message translates to:
+  /// **'모두 {count}쪽이 돼요'**
+  String spreadPreview(int count);
+
+  /// No description provided for @spreadAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'나누어 저장'**
+  String get spreadAction;
+
+  /// No description provided for @pagesOverwriteBlocked.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 파일이 다른 화면에서 열려 있어 같은 이름으로는 저장할 수 없어요. 다른 이름으로 저장하세요.'**
+  String get pagesOverwriteBlocked;
+
+  /// No description provided for @savedOpen.
+  ///
+  /// In ko, this message translates to:
+  /// **'열기'**
+  String get savedOpen;
+
+  /// No description provided for @savedOpenFirst.
+  ///
+  /// In ko, this message translates to:
+  /// **'첫 파일 열기'**
+  String get savedOpenFirst;
+
+  /// No description provided for @pagesOverwriteUnsaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하지 않은 주석이 있어 같은 이름으로 덮어쓸 수 없어요. 보기 화면에서 먼저 저장하세요.'**
+  String get pagesOverwriteUnsaved;
 }
 
 class _AppLocalizationsDelegate

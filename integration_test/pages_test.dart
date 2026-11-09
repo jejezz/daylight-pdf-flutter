@@ -6,9 +6,11 @@ import 'package:daylight_pdf/convert/conversion_error.dart';
 import 'package:daylight_pdf/convert/image_to_pdf.dart';
 import 'package:daylight_pdf/pages/page_ops.dart';
 import 'package:daylight_pdf/pages/page_ranges.dart';
+import 'package:daylight_pdf/pages/spread_split.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:integration_test/integration_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:pdfrx/pdfrx.dart';
 
 void main() {
@@ -66,12 +68,12 @@ void main() {
   testWidgets('split writes one numbered PDF per group and never overwrites', (tester) async {
     final out = '${dir.path}/out';
     final files = await PageOps.split(abc, out, parsePageGroups('1-2, 3', 3));
-    expect(files.map((f) => f.split('/').last), ['abc-1.pdf', 'abc-2.pdf']);
+    expect(files.map(p.basename), ['abc-1.pdf', 'abc-2.pdf']);
     expect(await sizesOf(files[0]), ['100x50', '60x120']);
     expect(await sizesOf(files[1]), ['80x80']);
 
     final again = await PageOps.split(abc, out, splitEveryN(3, 3));
-    expect(again.single.split('/').last, 'abc-1 (1).pdf');
+    expect(p.basename(again.single), 'abc-1 (1).pdf');
     expect(await sizesOf(files[0]), ['100x50', '60x120'], reason: 'first run untouched');
   });
 
@@ -99,5 +101,28 @@ void main() {
     );
     await expectLater(PageOps.build(const [], '${dir.path}/bad.pdf'), fails(ConversionErrorKind.invalidPageRange));
     expect(File('${dir.path}/bad.pdf').existsSync(), isFalse);
+  });
+
+  testWidgets('splitSpreads cuts chosen pages down the middle, left then right, and keeps the rest', (tester) async {
+    // 200x100 펼침면 둘 사이에 단면 쪽(60x120)을 끼운다.
+    await makePdf('spread', [(200, 100), (60, 120), (300, 150)]);
+    final input = '${dir.path}/spread.pdf';
+    final count = await PageOps.splitSpreads(input, '${dir.path}/s.pdf', {1, 3});
+    expect(count, 5);
+    expect(await sizesOf('${dir.path}/s.pdf'), ['100x100', '100x100', '60x120', '150x150', '150x150']);
+
+    await PageOps.splitSpreads(input, '${dir.path}/s2.pdf', {1}, rightFirst: true);
+    expect(await sizesOf('${dir.path}/s2.pdf'), ['100x100', '100x100', '60x120', '300x150']);
+  });
+
+  testWidgets('splitSpreads on a rotated page cuts the visible middle', (tester) async {
+    await makePdf('rot', [(200, 100)]);
+    final out = '${dir.path}/rot-out.pdf';
+    await PageOps.build([
+      PageRef('${dir.path}/rot.pdf', 0, quarterTurns: 1, half: SpreadHalf.left),
+      PageRef('${dir.path}/rot.pdf', 0, quarterTurns: 1, half: SpreadHalf.right),
+    ], out);
+    // 90°로 돌린 쪽은 보이는 크기가 100x200이고, 보이는 가운데에서 자르면 50x200 두 장이다.
+    expect(await sizesOf(out), ['50x200', '50x200']);
   });
 }

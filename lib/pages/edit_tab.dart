@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:pdfrx/pdfrx.dart';
 
+import '../convert/conversion_error.dart';
+import '../convert/error_text.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/drop_zone.dart';
@@ -12,6 +14,7 @@ import '../widgets/tool_chip.dart';
 import 'page_ops.dart';
 import 'pdf_dialogs.dart';
 import 'reorder.dart';
+import 'source_holder.dart';
 
 class _Item {
   _Item(this.index);
@@ -25,9 +28,24 @@ class _Item {
 /// 쪽 편집: 썸네일 격자에서 눌러 고르고, 끌어서 순서를 바꾸고, 회전·삭제·선택한 쪽만 저장.
 /// 원본 파일은 저장 전까지 바뀌지 않는다.
 class EditTab extends StatefulWidget {
-  const EditTab({super.key, this.initialPath});
+  const EditTab({super.key, this.initialPath, this.onPathChanged, this.holder, this.savePicker = pickPdfSavePath});
 
   final String? initialPath;
+
+  /// 새 PDF가 열릴 때마다 그 경로를 알린다 (다른 탭이 "현재 PDF"로 쓴다).
+  final ValueChanged<String>? onPathChanged;
+
+  /// 이 화면을 연 보기 화면: 그 파일을 같은 이름으로 덮어쓸 때 저장하는 동안 놓아 달라고 한다.
+  final SourceHolder? holder;
+
+  /// 시험에서 저장 위치 창을 대신한다 (보기 화면을 거쳐 들어온 화면에는 [savePicker]를 넘길 수 없어서).
+  @visibleForTesting
+  static Future<String?> Function(AppLocalizations l10n, {required String suggestedName, String? initialDirectory})?
+  savePickerOverride;
+
+  /// 저장 위치를 고르는 창 (시험에서 대신할 수 있게 바꿀 수 있다).
+  final Future<String?> Function(AppLocalizations l10n, {required String suggestedName, String? initialDirectory})
+  savePicker;
 
   @override
   State<EditTab> createState() => _EditTabState();
@@ -79,6 +97,7 @@ class _EditTabState extends State<EditTab> with AutomaticKeepAliveClientMixin {
       _document = opened;
       _items = [for (var i = 0; i < opened.pages.length; i++) _Item(i)];
     });
+    widget.onPathChanged?.call(path);
   }
 
   List<_Item> get _selected => _items.where((i) => i.selected).toList();
@@ -119,7 +138,7 @@ class _EditTabState extends State<EditTab> with AutomaticKeepAliveClientMixin {
       return;
     }
     final base = p.basenameWithoutExtension(source);
-    final target = await pickPdfSavePath(
+    final target = await (EditTab.savePickerOverride ?? widget.savePicker)(
       l10n,
       suggestedName: '$base-${selectedOnly ? 'pages' : 'edited'}.pdf',
       initialDirectory: p.dirname(source),
@@ -128,20 +147,34 @@ class _EditTabState extends State<EditTab> with AutomaticKeepAliveClientMixin {
 
     final refs = [for (final i in chosen) PageRef(source, i.index, quarterTurns: i.turns)];
     final overwritesSource = p.equals(target, source);
+    final held = await releaseHeldTarget(context, widget.holder, target);
+    if (held == null || !mounted) return;
     setState(() => _busy = true);
     if (overwritesSource) {
       // 열려 있는 문서를 먼저 닫아 둔다 (Windows에서 열린 파일은 덮어쓸 수 없다).
       _document?.dispose();
       _document = null;
     }
-    final ok = await runReporting(context, () => PageOps.build(refs, target));
+    var ok = true;
+    try {
+      await PageOps.build(refs, target);
+    } on ConversionException catch (e) {
+      ok = false;
+      if (mounted) {
+        // 같은 이름으로 덮어쓰다 실패하는 흔한 이유는 다른 화면(보기)이 그 파일을 열어 둔 것이다 (Windows는 열린 파일 위로 바꿀 수 없다).
+        final blocked = overwritesSource && e.kind == ConversionErrorKind.writeFailed;
+        showMessage(context, blocked ? l10n.pagesOverwriteBlocked : conversionErrorText(l10n, e));
+      }
+    } finally {
+      if (held) widget.holder?.reacquire();
+    }
     if (!mounted) return;
     if (overwritesSource) {
       await _load(source);
     }
     if (!mounted) return;
     setState(() => _busy = false);
-    if (ok) showMessage(context, l10n.pagesSaved(p.basename(target)));
+    if (ok) showSaved(context, l10n.pagesSaved(p.basename(target)), path: target, held: held);
   }
 
   Future<void> _pick() async {

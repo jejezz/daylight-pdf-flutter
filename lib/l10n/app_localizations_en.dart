@@ -964,4 +964,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get linkUnsupported => 'This kind of link isn\'t opened.';
+
+  @override
+  String get pagesTabSpread => 'Split spreads';
+
+  @override
+  String get spreadDropHint => 'Drop a scanned PDF to split, or choose one';
+
+  @override
+  String get spreadDescription =>
+      'Cuts scans that show two facing pages on one page down the middle into single pages. The two sides are assumed to be equal width, so the cut is exactly in the center.';
+
+  @override
+  String get spreadRangesLabel => 'Pages to split (empty = all)';
+
+  @override
+  String get spreadRangesHelp =>
+      'e.g. 2-20, 22 · leave out single-page items such as the cover';
+
+  @override
+  String get spreadLeftFirst => 'Left side first';
+
+  @override
+  String get spreadRightFirst => 'Right side first';
+
+  @override
+  String spreadPreview(int count) {
+    return 'Makes $count pages';
+  }
+
+  @override
+  String get spreadAction => 'Split and save';
+
+  @override
+  String get pagesOverwriteBlocked =>
+      'This file is open elsewhere, so it can\'t be saved under the same name. Save it under a different name.';
+
+  @override
+  String get savedOpen => 'Open';
+
+  @override
+  String get savedOpenFirst => 'Open first file';
+
+  @override
+  String get pagesOverwriteUnsaved =>
+      'There are unsaved annotations, so the file can\'t be overwritten. Save them in the viewer first.';
 }

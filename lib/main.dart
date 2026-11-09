@@ -47,7 +47,7 @@ Future<void> main(List<String> args) async {
   Future<void> Function()? showWindow;
   if (_isDesktop) {
     await windowManager.ensureInitialized();
-    showWindow = await _prepareWindow();
+    showWindow = await _prepareWindow(newWindow: args.contains('--new-window'));
   }
 
   final settings = await AppSettings.load();
@@ -79,7 +79,7 @@ Future<void> _nextFrame() {
 /// 시작 위치는 WindowPlacement — 모니터마다 배율이 다른 Windows 듀얼
 /// 모니터에서 center: true/저장 좌표 복원이 창을 화면 밖에 놓는다.
 /// 배치가 끝나고 첫 프레임이 그려진 뒤에 show() 를 불러야 깜빡이지 않는다 (§5).
-Future<Future<void> Function()> _prepareWindow() async {
+Future<Future<void> Function()> _prepareWindow({bool newWindow = false}) async {
   const windowSize = Size(1200, 720);
   WindowPlacement? placement;
   if (WindowPlacement.enabled) {
@@ -94,6 +94,15 @@ Future<Future<void> Function()> _prepareWindow() async {
   final placed = Completer<void>();
   await windowManager.waitUntilReadyToShow(options, () async {
     await placement?.placeInitially();
+    if (newWindow) {
+      // 다른 창이 이미 떠 있다: 같은 자리에 겹치지 않게 조금 어긋나게 놓는다.
+      try {
+        final at = await windowManager.getPosition();
+        await windowManager.setPosition(at + const Offset(32, 32));
+      } on Object {
+        // 못 옮기면 같은 자리에 뜬다
+      }
+    }
     placed.complete();
   });
   return () async {

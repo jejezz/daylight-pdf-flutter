@@ -31,7 +31,7 @@
 - **Convert** — PNG, JPG, BMP, GIF, WebP, TIFF, SVG and PDF-compatible `.ai` to PDF (one PDF per file, or merge images into one); PDF pages to PNG or JPG at 72, 150 or 300 dpi. Drop files in, and a queue shows progress and failures per file.
 - **View** — fast PDFium rendering with thumbnails, an outline sidebar, text search (`⌘F`), fit width / fit page / actual size, and a password prompt for protected PDFs. Your last ten files are one click away on the home screen.
 - **Annotate** — highlight, underline, notes, freehand, rectangle and circle in six colors. Undo with `⌘Z`; click a note to read or edit it. Annotations are standard PDF annotations, so they show up in other viewers too, notes with their own icon.
-- **Page tools** — merge PDFs, split every N pages or by ranges, rotate, delete, drag to reorder, and save just the pages you select.
+- **Page tools** — merge PDFs, split every N pages or by ranges, rotate, delete, drag to reorder, save just the pages you select, and cut scanned two-page spreads down the middle into single pages.
 - **Print** — a preview with page range, odd/even, reverse, annotations on/off, fit or actual size, margins, paper, **2/4/6/9 pages per sheet**, **booklet**, page numbers, watermark and forced black-and-white, then the system print dialog for printer, copies and duplex.
 - **Light & dark, English & 한국어** — follows the system, or pick one in the toolbar
 

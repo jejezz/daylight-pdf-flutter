@@ -953,4 +953,48 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get linkUnsupported => '이 링크는 열지 않아요.';
+
+  @override
+  String get pagesTabSpread => '펼침면 나누기';
+
+  @override
+  String get spreadDropHint => '나눌 스캔 PDF를 끌어다 놓거나 선택하세요';
+
+  @override
+  String get spreadDescription =>
+      '한 쪽에 두 면이 나란히 찍힌 스캔본을 가운데에서 잘라 낱쪽으로 만들어요. 양쪽 너비가 같다고 보고 정확히 절반에서 자릅니다.';
+
+  @override
+  String get spreadRangesLabel => '나눌 쪽 (비우면 모든 쪽)';
+
+  @override
+  String get spreadRangesHelp => '예: 2-20, 22 · 표지처럼 한 면인 쪽은 빼고 적어요';
+
+  @override
+  String get spreadLeftFirst => '왼쪽 면 먼저';
+
+  @override
+  String get spreadRightFirst => '오른쪽 면 먼저';
+
+  @override
+  String spreadPreview(int count) {
+    return '모두 $count쪽이 돼요';
+  }
+
+  @override
+  String get spreadAction => '나누어 저장';
+
+  @override
+  String get pagesOverwriteBlocked =>
+      '이 파일이 다른 화면에서 열려 있어 같은 이름으로는 저장할 수 없어요. 다른 이름으로 저장하세요.';
+
+  @override
+  String get savedOpen => '열기';
+
+  @override
+  String get savedOpenFirst => '첫 파일 열기';
+
+  @override
+  String get pagesOverwriteUnsaved =>
+      '저장하지 않은 주석이 있어 같은 이름으로 덮어쓸 수 없어요. 보기 화면에서 먼저 저장하세요.';
 }

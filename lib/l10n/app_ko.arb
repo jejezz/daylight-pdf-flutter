@@ -608,5 +608,25 @@
   },
   "linkOpenAction": "열기",
   "linkOpenFailed": "링크를 열 수 없어요.",
-  "linkUnsupported": "이 링크는 열지 않아요."
+  "linkUnsupported": "이 링크는 열지 않아요.",
+  "pagesTabSpread": "펼침면 나누기",
+  "spreadDropHint": "나눌 스캔 PDF를 끌어다 놓거나 선택하세요",
+  "spreadDescription": "한 쪽에 두 면이 나란히 찍힌 스캔본을 가운데에서 잘라 낱쪽으로 만들어요. 양쪽 너비가 같다고 보고 정확히 절반에서 자릅니다.",
+  "spreadRangesLabel": "나눌 쪽 (비우면 모든 쪽)",
+  "spreadRangesHelp": "예: 2-20, 22 · 표지처럼 한 면인 쪽은 빼고 적어요",
+  "spreadLeftFirst": "왼쪽 면 먼저",
+  "spreadRightFirst": "오른쪽 면 먼저",
+  "spreadPreview": "모두 {count}쪽이 돼요",
+  "spreadAction": "나누어 저장",
+  "@spreadPreview": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pagesOverwriteBlocked": "이 파일이 다른 화면에서 열려 있어 같은 이름으로는 저장할 수 없어요. 다른 이름으로 저장하세요.",
+  "savedOpen": "열기",
+  "savedOpenFirst": "첫 파일 열기",
+  "pagesOverwriteUnsaved": "저장하지 않은 주석이 있어 같은 이름으로 덮어쓸 수 없어요. 보기 화면에서 먼저 저장하세요."
 }

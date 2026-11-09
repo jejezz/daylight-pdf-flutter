@@ -120,6 +120,13 @@ class AnnotationState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 파일을 다시 읽었다: 실행 취소 기록은 옛 문서의 쪽·번호라 더는 맞지 않는다.
+  void resetHistory() {
+    _undo.clear();
+    _dirty = false;
+    notifyListeners();
+  }
+
   void markSaved() {
     _dirty = false;
     notifyListeners();
