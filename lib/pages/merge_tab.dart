@@ -9,10 +9,14 @@ import '../widgets/status_pill.dart';
 import '../widgets/tool_chip.dart';
 import 'page_ops.dart';
 import 'pdf_dialogs.dart';
+import 'source_holder.dart';
 
 /// 여러 PDF를 목록 순서대로 하나로 합친다. 목록은 끌어서 순서를 바꾼다.
 class MergeTab extends StatefulWidget {
-  const MergeTab({super.key, this.initialFiles = const [], this.countPages = PageOps.pageCount});
+  const MergeTab({super.key, this.initialFiles = const [], this.countPages = PageOps.pageCount, this.holder});
+
+  /// 이 화면을 연 보기 화면: 그 파일 위로 합쳐 저장할 때 저장하는 동안 놓아 달라고 한다.
+  final SourceHolder? holder;
 
   /// 처음부터 목록에 넣어 둘 PDF (테스트·화면 확인용).
   final List<String> initialFiles;
@@ -46,11 +50,18 @@ class _MergeTabState extends State<MergeTab> with AutomaticKeepAliveClientMixin 
     }
     final target = await pickPdfSavePath(l10n, suggestedName: 'merged.pdf', initialDirectory: p.dirname(_files.first));
     if (target == null || !mounted) return;
+    final held = await releaseHeldTarget(context, widget.holder, target);
+    if (held == null || !mounted) return;
     setState(() => _busy = true);
-    final ok = await runReporting(context, () => PageOps.merge(List.of(_files), target));
+    var ok = false;
+    try {
+      ok = await runReporting(context, () => PageOps.merge(List.of(_files), target));
+    } finally {
+      if (held) widget.holder?.reacquire();
+    }
     if (!mounted) return;
     setState(() => _busy = false);
-    if (ok) showMessage(context, l10n.pagesSaved(p.basename(target)));
+    if (ok) showSaved(context, l10n.pagesSaved(p.basename(target)), path: target, held: held);
   }
 
   @override

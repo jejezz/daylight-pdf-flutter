@@ -18,6 +18,7 @@ import '../l10n/app_localizations.dart';
 import '../pages/page_tools_screen.dart';
 import '../platform/platform_kind.dart';
 import '../pages/pdf_dialogs.dart';
+import '../pages/source_holder.dart';
 import '../print/print_dialog.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_card.dart';
@@ -49,7 +50,7 @@ class ViewerScreen extends StatefulWidget {
   State<ViewerScreen> createState() => _ViewerScreenState();
 }
 
-class _ViewerScreenState extends State<ViewerScreen> {
+class _ViewerScreenState extends State<ViewerScreen> implements SourceHolder {
   final _controller = PdfViewerController();
 
   /// 글자 찾기. 문서가 열린 뒤에야 만들 수 있다 (`onViewerReady`).
@@ -75,6 +76,31 @@ class _ViewerScreenState extends State<ViewerScreen> {
   String? _noteIconSvg;
 
   String get _name => p.basename(widget.path);
+
+  /// 페이지 도구가 이 파일을 덮어쓰는 동안 문서를 놓아 둔 상태 (Windows는 열린 파일 위로 덮어쓸 수 없다).
+  bool _released = false;
+
+  @override
+  String get path => widget.path;
+
+  @override
+  Future<bool> release() async {
+    if (_annotations.dirty) return false; // 저장하지 않은 주석을 잃지 않는다
+    _searcher?.dispose();
+    _searcher = null;
+    setState(() => _released = true);
+    // 뷰어가 사라져 문서가 닫히고, 작업 스레드가 파일을 놓을 때까지 잠깐 기다린다.
+    await WidgetsBinding.instance.endOfFrame;
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    return true;
+  }
+
+  @override
+  void reacquire() {
+    if (!mounted) return;
+    _annotations.resetHistory();
+    setState(() => _released = false);
+  }
 
   PdfDocument? get _document => _controller.isReady ? _controller.document : null;
 
@@ -462,7 +488,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
       return false;
     }
     _annotations.markSaved();
-    if (mounted) showMessage(context, l10n.pagesSaved(p.basename(target)));
+    if (mounted) showSavedMessage(context, l10n.pagesSaved(p.basename(target)), path: target);
     return true;
   }
 
@@ -574,7 +600,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
                       icon: const Icon(Icons.dashboard_customize_outlined),
                       onPressed: () =>
                           Navigator.of(context)
-                              .push(MaterialPageRoute<void>(builder: (_) => PageToolsScreen(initialPath: widget.path))),
+                              .push(MaterialPageRoute<void>(builder: (_) => PageToolsScreen(initialPath: widget.path, holder: this))),
                     ),
                   ],
                   IconButton(
@@ -608,7 +634,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
                       ],
                     ),
                   ),
-                  Expanded(child: _content(l10n)),
+                  Expanded(child: _released ? const SizedBox.expand() : _content(l10n)),
                 ],
               ),
             ),

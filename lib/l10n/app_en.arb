@@ -591,5 +591,25 @@
   },
   "linkOpenAction": "Open",
   "linkOpenFailed": "Couldn't open the link.",
-  "linkUnsupported": "This kind of link isn't opened."
+  "linkUnsupported": "This kind of link isn't opened.",
+  "pagesTabSpread": "Split spreads",
+  "spreadDropHint": "Drop a scanned PDF to split, or choose one",
+  "spreadDescription": "Cuts scans that show two facing pages on one page down the middle into single pages. The two sides are assumed to be equal width, so the cut is exactly in the center.",
+  "spreadRangesLabel": "Pages to split (empty = all)",
+  "spreadRangesHelp": "e.g. 2-20, 22 · leave out single-page items such as the cover",
+  "spreadLeftFirst": "Left side first",
+  "spreadRightFirst": "Right side first",
+  "spreadPreview": "Makes {count} pages",
+  "spreadAction": "Split and save",
+  "@spreadPreview": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pagesOverwriteBlocked": "This file is open elsewhere, so it can't be saved under the same name. Save it under a different name.",
+  "savedOpen": "Open",
+  "savedOpenFirst": "Open first file",
+  "pagesOverwriteUnsaved": "There are unsaved annotations, so the file can't be overwritten. Save them in the viewer first."
 }

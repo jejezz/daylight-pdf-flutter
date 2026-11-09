@@ -49,8 +49,38 @@ https://github.com/jejezz/application-release-templates/tree/main/conventions
 - 합치기·나누기·추출·재배열·회전·삭제는 모두 `PageOps.build(List<PageRef>, 출력)` 하나로 귀결된다.
   원본은 바꾸지 않고, 출력은 문서를 모두 닫은 뒤 `.tmp`에 쓰고 이름을 바꿔 넣는다(원본 덮어쓰기도 안전).
 - 쪽 범위 문법은 `page_ranges.dart` (`1-3, 5, 8-`), 오류는 `ConversionErrorKind.invalidPageRange`.
+- **펼침면 나누기**(`spread_tab.dart`, `spread_split.dart`): 한 쪽에 두 면이 나란히 찍힌 스캔본을 정확히 가운데에서 잘라 왼쪽·오른쪽 낱쪽으로 만든다(양쪽 너비가 같다고 가정).
+  `PageRef(half:)`로 같은 원본 쪽을 두 번 넣는다. 조립 뒤 `_adjustPages`가 모은 결과를 다시 열어 회전을 더하고 쪽 상자·자르기 상자를 절반으로 줄인다
+  (원본 내용은 그대로, 보이는 영역만 줄인다 — 상자를 무시하는 뷰어에서는 전체가 보일 수 있다는 한계).
+  쪽 회전(`/Rotate`)이 있으면 보이는 왼쪽이 PDF 좌표의 아래/오른쪽/위가 되므로 `spreadHalfBox`가 회전별로 바꾼다. 쪽 범위를 비우면 모든 쪽, 적으면 그 쪽만 나누고
+  나머지는 그대로 둔다. 오른쪽 면 먼저 옵션 있음. 시험: `test/spread_split_test.dart`, `integration_test/pages_test.dart`(Windows에서 실행 확인).
+- **쪽 조립(`PageOps._assemble`)**: pdfrx의 `output.pages = [...]`는 쪽을 하나씩 가져와 공유 글꼴·이미지를 쪽마다 통째로 복사한다. 실제 PDF에서
+  나누지 않고 다시 조립만 해도 원본의 3~13배(34MB 스토리보드 → 450MB)로 불었고, 펼침면 나누기는 거기에 2배가 더 붙었다. 그래서 같은 원본이 이어지는 구간마다
+  `FPDF_ImportPagesByIndex`를 **한 번** 불러 공유 객체를 한 번만 복사한다(결과가 원본과 거의 같은 크기). 새 문서는 `saveDocumentBytes`로 저장하고, 회전·자르기가 있으면
+  결과를 `openData(maxSizeToCacheOnMemory: 전체 크기)`로 다시 연다(메모리 문서라 Dart 콜백이 없다). **조립할 원본은 파일 전체를 메모리로 읽어
+  `openData(maxSizeToCacheOnMemory: 크기+1)`로 연다**: ① 기본 `openData`는 1MB를 넘으면 Dart 읽기 콜백으로 열려서, 메인 스레드의 `ImportPagesByIndex`가 아직 읽지 않은
+  객체를 만나면 "Cannot invoke native callback"으로 앱이 죽는다(실제로 죽었다). ② `openFile`은 파일을 붙들어, Windows에서 같은 이름으로 덮어쓸 때 이름 바꾸기가 막혔다.
+  쪽 수만 볼 때(`pageCount`)는 `openFile`. 출력은 `.tmp`에 쓴 뒤 이름을 바꾸는데, Windows는 방금 닫은 문서의 핸들이 잠깐 남으므로 0.1초 간격으로 최대 15번 다시 한다.
+  **보기 화면이 연 파일 덮어쓰기(`SourceHolder`)**: Windows는 열린 파일 위로 이름을 바꿀 수 없어서, 보기 화면이 `PageToolsScreen(holder: this)`로 자신을 넘기고
+  저장 탭(편집·합치기·펼침면 나누기)은 저장 위치가 그 파일이면 `releaseHeldTarget`으로 놓아 달라고 한다. 보기 화면은 `release()`에서 뷰어를 치워 문서를 닫고(0.3초 대기),
+  저장이 끝나면 `reacquire()`로 다시 열어 새 내용을 읽는다(실행 취소 기록은 비운다). **저장하지 않은 주석이 있으면 놓지 않고** "보기 화면에서 먼저 저장하세요"로 막는다.
+  덮어쓴 경우는 보기 화면이 스스로 다시 읽으므로 알림에 [열기]를 붙이지 않는다(`showSaved`).
+  편집 탭의 저장 위치 창은 `EditTab(savePicker:)`·`EditTab.savePickerOverride`로 시험에서 바꾼다.
+- **저장 알림의 [열기](`showSavedMessage`)**: 데스크톱은 **새 창(새 프로세스)** 에서 연다(`openInNewWindow`, `lib/platform/new_window.dart`): Windows·Linux는
+  `Platform.resolvedExecutable --new-window <경로>`, macOS는 `open -n <번들.app> --args --new-window <경로>`. 새 프로세스는 `main`의 `pdfFromArguments`로 그 PDF를 열고,
+  `--new-window`면 창을 (32,32) 어긋나게 둔다. 띄우지 못하거나 모바일이면 이 창에서 `openPdf`로 보기 화면에 간다. 시험은 `newWindowLauncherForTest`로 프로세스를 띄우지 않는다.
+  못 시험한 것: 실제로 새 프로세스를 띄우는 것(시험 앱이 또 떠 버린다), macOS·Linux.
+  시험: `integration_test/spread_quality_test.dart`(공유 이미지 용량, 왼쪽/오른쪽 면이 실제로 그려지는지), `integration_test/edit_save_test.dart`(쪽 옮겨 저장: 다른 이름·같은 이름·열려 있는 파일, 보기 화면이 연 파일 덮어쓰기, [열기]).
 - 앱 바의 `FocusTint`가 `window_manager`를 부르므로, 통합 테스트에서 앱 바가 있는 화면을 띄울 때는
   `windowManager.ensureInitialized()`를 먼저 해야 한다(안 하면 플러그인이 앱을 죽인다).
+
+## Windows 시작 속도와 Impeller (`windows/runner/main.cpp`, `tool/startup_ab.ps1`)
+
+- **Windows는 기본으로 Impeller를 끈다(Skia).** 환경변수 `DAYLIGHT_IMPELLER=1`(또는 `true`)이면 켠다. 새 창([열기])도 환경변수를 물려받는다. 다른 플랫폼은 Flutter 기본값 그대로다.
+- 이유: 릴리스 빌드(Flutter 3.47.8, Windows 11)에서 "창이 보일 때까지"를 3모드 × 5회 섞어서 쟀다(`powershell -File tool/startup_ab.ps1 [-Pdf 경로]`, 먼저 `flutter build windows --release`).
+  Flutter 기본(= Impeller 켬) 평균 2.3~2.4초(2.05~2.64), 켬 2.6초, **끔 0.87~0.88초**(0.67~1.34). PDF를 넘기든 안 넘기든 같았다.
+- 스크립트의 "Flutter 기본" 행은 이제 앱 기본(끔)과 같고, "Impeller 켬/끔" 행이 환경변수로 강제한 값이다.
+- 측정은 한 PC·한 GPU다. **끈 상태의 화면 품질·스크롤·큰 PDF 확대/축소 성능은 측정하지 않았다** — 문제가 보이면 `DAYLIGHT_IMPELLER=1`로 비교한다.
 
 ## 주석 (`lib/engine/annotations/`) — 5단계 스파이크 결과
 

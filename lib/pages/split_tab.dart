@@ -17,10 +17,13 @@ enum _Mode { each, everyN, ranges }
 /// PDF 하나를 여러 PDF로 나눈다: 한 쪽씩, N쪽마다, 또는 범위(`1-3, 5, 8-`)마다 파일 하나.
 /// 입력하는 동안 "파일 몇 개로 나뉘는지"를 바로 보여 주고, 잘못된 입력은 그 자리에서 알려 준다.
 class SplitTab extends StatefulWidget {
-  const SplitTab({super.key, this.initialPath});
+  const SplitTab({super.key, this.initialPath, this.currentPath});
 
   /// 처음부터 열어 둘 PDF (테스트·화면 확인용).
   final String? initialPath;
+
+  /// 페이지 도구에서 지금 열려 있는 PDF. 이 탭에서 직접 고르기 전에는 이 파일을 기본으로 연다.
+  final String? currentPath;
 
   @override
   State<SplitTab> createState() => _SplitTabState();
@@ -34,14 +37,26 @@ class _SplitTabState extends State<SplitTab> with AutomaticKeepAliveClientMixin 
   final _ranges = TextEditingController();
   bool _busy = false;
 
+  /// 사용자가 이 탭에서 직접 파일을 골랐는지 (그러면 [SplitTab.currentPath]가 바뀌어도 따라가지 않는다).
+  bool _chosenHere = false;
+
   @override
   bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
-    final initial = widget.initialPath;
-    if (initial != null) WidgetsBinding.instance.addPostFrameCallback((_) => _load(initial));
+    final initial = widget.initialPath ?? widget.currentPath;
+    if (initial != null) WidgetsBinding.instance.addPostFrameCallback((_) => _load(initial, quiet: widget.initialPath == null));
+  }
+
+  @override
+  void didUpdateWidget(SplitTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final current = widget.currentPath;
+    if (!_chosenHere && current != null && current != oldWidget.currentPath && current != _path) {
+      _load(current, quiet: true);
+    }
   }
 
   @override
@@ -51,9 +66,18 @@ class _SplitTabState extends State<SplitTab> with AutomaticKeepAliveClientMixin 
     super.dispose();
   }
 
-  Future<void> _load(String path) async {
+  /// [quiet]면 읽지 못해도 알리지 않는다 (다른 탭이 이미 알렸고, 사용자가 이 탭을 고른 것도 아니다).
+  Future<void> _load(String path, {bool quiet = false}) async {
     int? count;
-    await runReporting(context, () async => count = await PageOps.pageCount(path));
+    if (quiet) {
+      try {
+        count = await PageOps.pageCount(path);
+      } on ConversionException {
+        return;
+      }
+    } else {
+      await runReporting(context, () async => count = await PageOps.pageCount(path));
+    }
     if (count == null || !mounted) return;
     setState(() {
       _path = path;
@@ -63,12 +87,17 @@ class _SplitTabState extends State<SplitTab> with AutomaticKeepAliveClientMixin 
 
   Future<void> _pick() async {
     final path = await pickPdf(AppLocalizations.of(context));
-    if (path != null && mounted) _load(path);
+    if (path != null && mounted) _chooseHere(path);
+  }
+
+  void _chooseHere(String path) {
+    _chosenHere = true;
+    _load(path);
   }
 
   void _dropped(List<String> paths) {
     final pdf = paths.where(isPdf).firstOrNull;
-    if (pdf != null) _load(pdf);
+    if (pdf != null) _chooseHere(pdf);
   }
 
   /// 지금 입력으로 나뉘는 묶음. 잘못된 입력이면 [ConversionException]을 던진다.
@@ -90,11 +119,13 @@ class _SplitTabState extends State<SplitTab> with AutomaticKeepAliveClientMixin 
     final dir = await getDirectoryPath(confirmButtonText: l10n.splitChooseFolder, initialDirectory: p.dirname(source));
     if (dir == null || !mounted) return;
     setState(() => _busy = true);
-    var created = 0;
-    final ok = await runReporting(context, () async => created = (await PageOps.split(source, dir, groups)).length);
+    var created = <String>[];
+    final ok = await runReporting(context, () async => created = await PageOps.split(source, dir, groups));
     if (!mounted) return;
     setState(() => _busy = false);
-    if (ok) showMessage(context, l10n.pagesSavedMany(created));
+    if (ok && created.isNotEmpty) {
+      showSavedMessage(context, l10n.pagesSavedMany(created.length), path: created.first, actionLabel: l10n.savedOpenFirst);
+    }
   }
 
   @override

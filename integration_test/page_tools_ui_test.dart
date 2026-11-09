@@ -6,6 +6,8 @@ import 'package:daylight_pdf/convert/image_to_pdf.dart';
 import 'package:daylight_pdf/l10n/app_localizations.dart';
 import 'package:daylight_pdf/pages/edit_tab.dart';
 import 'package:daylight_pdf/pages/page_tools_screen.dart';
+import 'package:daylight_pdf/pages/split_tab.dart';
+import 'package:daylight_pdf/pages/spread_tab.dart';
 import 'package:daylight_pdf/settings/app_settings.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -154,5 +156,104 @@ void main() {
     await tester.tap(find.byTooltip('되돌리기'));
     await tester.pumpAndSettle(const Duration(seconds: 1));
     expect([for (final t in tester.widgetList<PageTile>(find.byType(PageTile))) t.pageNumber], [1, 2, 3]);
+  });
+
+  Future<String> makeDoc() async {
+    final dir = Directory.systemTemp.createTempSync('daylight_pdf_spread_ui');
+    addTearDown(() {
+      try {
+        dir.deleteSync(recursive: true);
+      } on FileSystemException {
+        // Windows는 PDFium이 아직 쥔 파일을 지우지 못한다. 임시 폴더라 둔다.
+      }
+    });
+    File('${dir.path}/scan.png').writeAsBytesSync(img.encodePng(img.Image(width: 200, height: 100)));
+    await ImageToPdf.convert(['${dir.path}/scan.png'], '${dir.path}/scan.pdf');
+    return '${dir.path}/scan.pdf';
+  }
+
+  Widget app(Widget home, AppSettings settings) => AppSettingsScope(
+    settings: settings,
+    child: MaterialApp(
+      locale: const Locale('ko'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: home,
+    ),
+  );
+
+  testWidgets('spread tab opens the PDF that is already open in page tools', (tester) async {
+    await pdfrxFlutterInitialize();
+    final pdf = await makeDoc();
+    SharedPreferences.setMockInitialValues({});
+    final settings = await AppSettings.load();
+    await tester.pumpWidget(app(PageToolsScreen(initialPath: pdf), settings));
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+
+    await tester.tap(find.text('펼침면 나누기'));
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    expect(find.text('scan.pdf'), findsWidgets, reason: 'no need to choose the file again');
+    expect(find.text('나누어 저장'), findsOneWidget);
+
+    await tester.tap(find.text('나누기'));
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    expect(find.text('scan.pdf'), findsWidgets, reason: 'split tab also starts with the open PDF');
+    expect(find.text('나눌 PDF 선택'), findsNothing);
+  });
+
+  testWidgets('spread tab follows a PDF opened later, until the user picks one there', (tester) async {
+    await pdfrxFlutterInitialize();
+    final pdf = await makeDoc();
+    SharedPreferences.setMockInitialValues({});
+    final settings = await AppSettings.load();
+    final current = ValueNotifier<String?>(null);
+    await tester.pumpWidget(
+      app(
+        Scaffold(
+          body: ValueListenableBuilder<String?>(
+            valueListenable: current,
+            builder: (_, path, _) => SpreadTab(currentPath: path),
+          ),
+        ),
+        settings,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('나눌 스캔 PDF를 끌어다 놓거나 선택하세요'), findsOneWidget);
+
+    current.value = pdf;
+    await tester.pump();
+    await tester.runAsync(() => Future.delayed(const Duration(seconds: 1)));
+    await tester.pumpAndSettle();
+    expect(find.text('scan.pdf'), findsOneWidget);
+    expect(find.text('나누어 저장'), findsOneWidget);
+  });
+
+  testWidgets('split tab follows a PDF opened later', (tester) async {
+    await pdfrxFlutterInitialize();
+    final pdf = await makeDoc();
+    SharedPreferences.setMockInitialValues({});
+    final settings = await AppSettings.load();
+    final current = ValueNotifier<String?>(null);
+    await tester.pumpWidget(
+      app(
+        Scaffold(
+          body: ValueListenableBuilder<String?>(
+            valueListenable: current,
+            builder: (_, path, _) => SplitTab(currentPath: path),
+          ),
+        ),
+        settings,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('나눌 PDF 선택'), findsOneWidget);
+
+    current.value = pdf;
+    await tester.pump();
+    await tester.runAsync(() => Future.delayed(const Duration(seconds: 1)));
+    await tester.pumpAndSettle();
+    expect(find.text('scan.pdf'), findsOneWidget);
+    expect(find.text('나눌 PDF 선택'), findsNothing);
   });
 }
