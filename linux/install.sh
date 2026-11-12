@@ -3,8 +3,13 @@
 # Installs this app for the current user, so it shows up in the desktop's
 # app launcher with its icon:
 #
-#   ./install.sh            install (or upgrade)
-#   ./install.sh --remove   uninstall
+#   ./install.sh                 install (or upgrade)
+#   ./install.sh --default-pdf   install, and make it the default PDF app
+#   ./install.sh --remove        uninstall
+#
+# Installing registers the app for PDF, PDF-compatible .ai, SVG and image files
+# (the .desktop MimeType), so it appears under "Open With". Only --default-pdf
+# changes which app opens PDFs by default (xdg-mime, in ~/.config/mimeapps.list).
 #
 # Copied into the release tarball by .github/workflows/release.yml, which
 # fills in @FILE_NAME@ and @APP_ID@. Nothing is written outside ~/.local.
@@ -42,4 +47,14 @@ cp "$SRC_DIR/share/icons/hicolor/512x512/apps/$APP_ID.png" "$ICON_FILE"
 sed "s|@INSTALL_DIR@|$INSTALL_DIR|g" "$SRC_DIR/share/applications/$APP_ID.desktop" > "$DESKTOP_FILE"
 
 refresh
+
+if [ "${1:-}" = "--default-pdf" ]; then
+  if command -v xdg-mime >/dev/null; then
+    xdg-mime default "$APP_ID.desktop" application/pdf
+    echo "Set as the default app for PDF files."
+  else
+    echo "xdg-mime not found; choose the default PDF app in your desktop's settings." >&2
+  fi
+fi
+
 echo "Installed $FILE_NAME to $INSTALL_DIR"

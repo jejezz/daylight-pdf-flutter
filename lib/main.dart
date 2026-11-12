@@ -18,7 +18,7 @@ import 'about/app_menu_bar.dart';
 import 'about/extra_licenses.dart';
 import 'app_identity.dart';
 import 'home/home_screen.dart';
-import 'home/open_pdf.dart';
+import 'home/open_files.dart';
 import 'home/recent_files.dart';
 import 'platform/incoming_files.dart';
 import 'l10n/app_localizations.dart';
@@ -29,15 +29,6 @@ import 'update/update_service.dart';
 import 'window/window_placement.dart';
 
 final bool _isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
-
-/// 명령줄 인자(Windows·Linux에서 PDF를 더블클릭하거나 "연결 프로그램"으로 열면 경로가 온다)에서 열 PDF를 고른다.
-@visibleForTesting
-String? pdfFromArguments(List<String> args) {
-  for (final arg in args) {
-    if (arg.toLowerCase().endsWith('.pdf') && File(arg).existsSync()) return arg;
-  }
-  return null;
-}
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,7 +48,7 @@ Future<void> main(List<String> args) async {
   runApp(
     UpdateScope(
       service: updates,
-      child: App(settings: settings, updates: updates, initialFile: _isDesktop ? pdfFromArguments(args) : null),
+      child: App(settings: settings, updates: updates, initialFiles: _isDesktop ? filesFromArguments(args) : const []),
     ),
   );
 
@@ -115,13 +106,13 @@ Future<Future<void> Function()> _prepareWindow({bool newWindow = false}) async {
 }
 
 class App extends StatefulWidget {
-  const App({super.key, required this.settings, this.updates, this.initialFile});
+  const App({super.key, required this.settings, this.updates, this.initialFiles = const []});
 
   final AppSettings settings;
   final UpdateService? updates;
 
-  /// 명령줄로 받은 PDF 경로 (데스크톱). 있으면 시작하자마자 연다.
-  final String? initialFile;
+  /// 명령줄로 받은 파일 경로 (Windows·Linux, macOS의 `--new-window`). 있으면 시작하자마자 연다.
+  final List<String> initialFiles;
 
   @override
   State<App> createState() => _AppState();
@@ -130,12 +121,12 @@ class App extends StatefulWidget {
 class _AppState extends State<App> with WidgetsBindingObserver {
   final _navigatorKey = GlobalKey<NavigatorState>();
   final _incoming = IncomingFiles();
-  StreamSubscription<String>? _incomingSubscription;
+  StreamSubscription<List<String>>? _incomingSubscription;
 
-  /// 다른 앱이 PDF를 이 앱으로 열었을 때(Android): 앱 보관함에 복사하고 보기 화면으로 간다.
-  void _openIncoming(String path) {
+  /// 운영체제가 파일을 이 앱으로 열었을 때: PDF 한 개면 보기 화면(모바일은 앱 보관함에 복사), 그 밖에는 변환 화면.
+  void _openIncoming(List<String> paths) {
     final navigator = _navigatorKey.currentState;
-    if (navigator != null) openPdf(navigator, path, recents: RecentFiles());
+    if (navigator != null && paths.isNotEmpty) openFiles(navigator, paths, recents: RecentFiles());
   }
 
   @override
@@ -143,8 +134,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     super.initState();
     _incomingSubscription = _incoming.opened.listen(_openIncoming);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final first = await _incoming.start() ?? widget.initialFile;
-      if (first != null) _openIncoming(first);
+      final received = await _incoming.start();
+      _openIncoming(received.isNotEmpty ? received : widget.initialFiles);
     });
     WidgetsBinding.instance.addObserver(this);
     widget.settings.addListener(_syncWindowBrightness);
