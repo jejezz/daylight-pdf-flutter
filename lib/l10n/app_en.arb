@@ -634,5 +634,7 @@
   },
   "defaultAppNotRegisteredWindows": "This copy of Daylight PDF wasn't installed with the installer, so it isn't listed in Settings. Install it with the installer and try again.",
   "defaultAppMacSteps": "In Finder, select a PDF and press ⌘I (Get Info). Under \"Open with\", choose Daylight PDF and click \"Change All…\" so every PDF opens in Daylight PDF.",
-  "defaultAppLinuxSteps": "Run ./install.sh --default-pdf in the downloaded folder to make Daylight PDF the default PDF app. You can also choose it under a PDF's Properties → \"Open With\" in your file manager."
+  "defaultAppLinuxSteps": "Run ./install.sh --default-pdf in the downloaded folder to make Daylight PDF the default PDF app. You can also choose it under a PDF's Properties → \"Open With\" in your file manager.",
+  "startupFailedTitle": "Daylight PDF couldn't start",
+  "startupFailedBody": "Something went wrong while starting. Please send the log file below to the developer.\n{path}"
 }

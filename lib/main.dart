@@ -8,6 +8,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,6 +22,8 @@ import 'home/home_screen.dart';
 import 'home/open_files.dart';
 import 'home/recent_files.dart';
 import 'platform/incoming_files.dart';
+import 'platform/startup_error_app.dart';
+import 'platform/startup_log.dart';
 import 'l10n/app_localizations.dart';
 import 'settings/app_settings.dart';
 import 'theme/app_theme.dart';
@@ -32,29 +35,67 @@ final bool _isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLin
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
-  registerExtraLicenses();
-  await pdfrxFlutterInitialize();
+  // 창은 준비를 마친 뒤에야 보이므로, 그 앞에서 실패하면 창 없이 프로세스만 남는다(Windows 10 보고).
+  // 단계마다 기록하고(StartupLog), 멈춘 단계는 제한 시간 뒤 건너뛰고, 창은 어떻게든 띄운다.
+  final log = StartupLog.start(args: args);
+  final previousOnError = FlutterError.onError;
+  FlutterError.onError = (details) {
+    log.error('flutter', details.exception, details.stack);
+    previousOnError?.call(details);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    log.error('uncaught', error, stack);
+    return false;
+  };
+
+  try {
+    registerExtraLicenses();
+  } on Object catch (e, s) {
+    log.error('licenses', e, s);
+  }
+  // 실패하거나 멈춰도 넘어간다: 문서를 열 때 pdfrx가 다시 초기화를 시도한다.
+  await log.step('pdfrx', pdfrxFlutterInitialize, timeout: const Duration(seconds: 20), fallback: () {});
 
   Future<void> Function()? showWindow;
   if (_isDesktop) {
-    await windowManager.ensureInitialized();
-    showWindow = await _prepareWindow(newWindow: args.contains('--new-window'));
+    await log.step('window manager', windowManager.ensureInitialized, timeout: const Duration(seconds: 10), fallback: () {});
+    showWindow = await log.step(
+      'window placement',
+      () => _prepareWindow(newWindow: args.contains('--new-window'), log: log),
+      timeout: const Duration(seconds: 10),
+      fallback: () => () => _showNow(log),
+    );
   }
 
-  final settings = await AppSettings.load();
-  // 데스크톱이 아니거나 UPDATE_SERVER 가 비어 있으면 null — 업데이트 확인 없음.
-  final updates = await UpdateService.create();
-  // UpdateScope 는 MaterialApp 위에 둔다 — 정보 창이 이것을 읽어 "업데이트 확인" 단추를 붙인다.
-  runApp(
-    UpdateScope(
-      service: updates,
-      child: App(settings: settings, updates: updates, initialFiles: _isDesktop ? filesFromArguments(args) : const []),
-    ),
-  );
+  try {
+    final settings = await log.step('settings', AppSettings.load, timeout: const Duration(seconds: 10));
+    // 데스크톱이 아니거나 UPDATE_SERVER 가 비어 있으면 null — 업데이트 확인 없음.
+    final updates = await log.step('updates', UpdateService.create, timeout: const Duration(seconds: 10), fallback: () => null);
+    // UpdateScope 는 MaterialApp 위에 둔다 — 정보 창이 이것을 읽어 "업데이트 확인" 단추를 붙인다.
+    runApp(
+      UpdateScope(
+        service: updates,
+        child: App(settings: settings, updates: updates, initialFiles: _isDesktop ? filesFromArguments(args) : const []),
+      ),
+    );
+  } on Object catch (e) {
+    runApp(StartupErrorApp(error: e, logPath: log.file?.path));
+  }
 
   if (showWindow != null) {
     final show = showWindow;
     WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(show()));
+  }
+}
+
+/// 배치를 기다리지 않고 바로 창을 띄운다(배치 단계가 실패했을 때).
+Future<void> _showNow(StartupLog log) async {
+  try {
+    await windowManager.show();
+    await windowManager.focus();
+    log.write('window shown (without placement)');
+  } on Object catch (e, s) {
+    log.error('show', e, s);
   }
 }
 
@@ -70,7 +111,7 @@ Future<void> _nextFrame() {
 /// 시작 위치는 WindowPlacement — 모니터마다 배율이 다른 Windows 듀얼
 /// 모니터에서 center: true/저장 좌표 복원이 창을 화면 밖에 놓는다.
 /// 배치가 끝나고 첫 프레임이 그려진 뒤에 show() 를 불러야 깜빡이지 않는다 (§5).
-Future<Future<void> Function()> _prepareWindow({bool newWindow = false}) async {
+Future<Future<void> Function()> _prepareWindow({bool newWindow = false, required StartupLog log}) async {
   const windowSize = Size(1200, 720);
   WindowPlacement? placement;
   if (WindowPlacement.enabled) {
@@ -84,7 +125,11 @@ Future<Future<void> Function()> _prepareWindow({bool newWindow = false}) async {
   );
   final placed = Completer<void>();
   await windowManager.waitUntilReadyToShow(options, () async {
-    await placement?.placeInitially();
+    try {
+      await placement?.placeInitially();
+    } on Object catch (e, s) {
+      log.error('place window', e, s);
+    }
     if (newWindow) {
       // 다른 창이 이미 떠 있다: 같은 자리에 겹치지 않게 조금 어긋나게 놓는다.
       try {
@@ -97,11 +142,21 @@ Future<Future<void> Function()> _prepareWindow({bool newWindow = false}) async {
     placed.complete();
   });
   return () async {
-    await placed.future;
-    await _nextFrame();
-    await windowManager.show();
-    await windowManager.focus();
-    placement?.attach();
+    try {
+      // 배치 콜백이 오지 않거나 실패해도 창은 띄운다.
+      await placed.future.timeout(const Duration(seconds: 5));
+    } on TimeoutException catch (e) {
+      log.error('window placement callback', e);
+    }
+    try {
+      await _nextFrame().timeout(const Duration(seconds: 5));
+      await windowManager.show();
+      await windowManager.focus();
+      placement?.attach();
+      log.write('window shown');
+    } on Object catch (e, s) {
+      log.error('show', e, s);
+    }
   };
 }
 

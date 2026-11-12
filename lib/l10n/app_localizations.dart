@@ -1969,6 +1969,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'내려받은 폴더에서 ./install.sh --default-pdf 를 실행하면 PDF 기본 앱이 Daylight PDF가 돼요. 파일 관리자에서 PDF의 속성 → \"연결 프로그램\"으로 골라도 돼요.'**
   String get defaultAppLinuxSteps;
+
+  /// No description provided for @startupFailedTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'Daylight PDF를 시작하지 못했어요'**
+  String get startupFailedTitle;
+
+  /// No description provided for @startupFailedBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'시작하는 중에 문제가 생겼어요. 아래 기록 파일을 개발자에게 보내 주세요.\n{path}'**
+  String startupFailedBody(String path);
 }
 
 class _AppLocalizationsDelegate

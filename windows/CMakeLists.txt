@@ -109,3 +109,20 @@ install(DIRECTORY "${PROJECT_BUILD_DIR}/${FLUTTER_ASSET_DIR_NAME}"
 install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
   CONFIGURATIONS Profile;Release
   COMPONENT Runtime)
+
+# Ship the Visual C++ runtime (msvcp140.dll, vcruntime140.dll, vcruntime140_1.dll, ...)
+# next to the executable. A clean Windows 10 PC may have no runtime, or an older one in
+# System32 than the one this was built with (an old msvcp140.dll crashes std::mutex code
+# built with MSVC 14.40+). An app-local copy is searched before System32.
+# Release/Profile only: Debug builds need the debug runtime, which is never shipped.
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+set(CMAKE_INSTALL_UCRT_LIBRARIES FALSE)
+include(InstallRequiredSystemLibraries)
+if(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS)
+  install(PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+    CONFIGURATIONS Profile;Release
+    COMPONENT Runtime)
+else()
+  message(WARNING "Visual C++ runtime DLLs not found; they will not be bundled.")
+endif()

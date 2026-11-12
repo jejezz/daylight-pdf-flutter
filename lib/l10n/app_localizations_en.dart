@@ -1066,4 +1066,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get defaultAppLinuxSteps =>
       'Run ./install.sh --default-pdf in the downloaded folder to make Daylight PDF the default PDF app. You can also choose it under a PDF\'s Properties → \"Open With\" in your file manager.';
+
+  @override
+  String get startupFailedTitle => 'Daylight PDF couldn\'t start';
+
+  @override
+  String startupFailedBody(String path) {
+    return 'Something went wrong while starting. Please send the log file below to the developer.\n$path';
+  }
 }
