@@ -2,6 +2,11 @@
 
 #include <optional>
 
+// 창을 띄우는 일은 Dart(main.dart)가 맡지만, 그 앞에서 Dart가 실패하거나 멈추면 창 없이 프로세스만 남는다
+// (Windows 10 보고). 이 시간 안에 창이 보이지 않으면 러너가 직접 띄운다.
+static constexpr UINT_PTR kShowFallbackTimer = 0xDA71;
+static constexpr UINT kShowFallbackMs = 10000;
+
 #include "flutter/generated_plugin_registrant.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
@@ -38,6 +43,8 @@ bool FlutterWindow::OnCreate() {
   // window is shown. It is a no-op if the first frame hasn't completed yet.
   flutter_controller_->ForceRedraw();
 
+  ::SetTimer(GetHandle(), kShowFallbackTimer, kShowFallbackMs, nullptr);
+
   return true;
 }
 
@@ -64,6 +71,16 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   }
 
   switch (message) {
+    case WM_TIMER:
+      if (wparam == kShowFallbackTimer) {
+        ::KillTimer(hwnd, kShowFallbackTimer);
+        if (!::IsWindowVisible(hwnd)) {
+          ::ShowWindow(hwnd, SW_SHOWNORMAL);
+          ::SetForegroundWindow(hwnd);
+        }
+        return 0;
+      }
+      break;
     case WM_FONTCHANGE:
       flutter_controller_->engine()->ReloadSystemFonts();
       break;

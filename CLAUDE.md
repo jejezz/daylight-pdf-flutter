@@ -82,6 +82,19 @@ https://github.com/jejezz/application-release-templates/tree/main/conventions
 - 스크립트의 "Flutter 기본" 행은 이제 앱 기본(끔)과 같고, "Impeller 켬/끔" 행이 환경변수로 강제한 값이다.
 - 측정은 한 PC·한 GPU다. **끈 상태의 화면 품질·스크롤·큰 PDF 확대/축소 성능은 측정하지 않았다** — 문제가 보이면 `DAYLIGHT_IMPELLER=1`로 비교한다.
 
+## Windows 10에서 앱이 안 열린다는 보고 (`fix/windows10-startup`, 원인 미확정)
+
+- 창은 `main.dart`가 준비를 마친 뒤 `windowManager.show()`로만 보이므로, 그 앞에서 실패하거나 멈추면 **창 없이 프로세스만 남는다**. Windows 10 PC가 없어 원인은 아직 모른다.
+  정적 분석으로 뺀 것: 러너는 Windows 10에서 되는 Daylight Terminal과 같고, 모든 DLL(`pdfium.dll` 포함)의 가져오는 함수가 Windows 10에 있다.
+- 그래서 넣은 것: ① **`StartupLog`**(`lib/platform/startup_log.dart`): 시작 단계마다 시간·오류를 `%LOCALAPPDATA%\Daylight PDF\startup.log`(그 밖은 임시 폴더 `daylight_pdf/`)에 남기고,
+  멈춘 단계는 제한 시간 뒤 건너뛴다(pdfrx 초기화는 실패해도 문서를 열 때 다시 시도). 설정을 못 읽으면 `StartupErrorApp`이 오류와 기록 위치를 보인다.
+  ② 러너(`flutter_window.cpp`)가 10초 안에 창이 안 보이면 직접 띄운다. ③ **VC++ 런타임 동봉**(`windows/CMakeLists.txt`의 `InstallRequiredSystemLibraries`, Release/Profile):
+  빌드 출력·설치 파일에 `msvcp140.dll`·`vcruntime140(_1).dll` 등이 들어간다. 런타임이 없거나 System32의 런타임이 빌드한 MSVC보다 오래된 PC를 막는다
+  (옛 `msvcp140.dll` + MSVC 14.40+ 빌드는 `std::mutex`에서 죽는다). 변수 이름은 `CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP`이다(`..._RUNTIME_SKIP`이면 `bin/`에 설치하려다 빌드가 깨진다).
+- **이 세 가지를 넣은 portable 빌드가 Windows 10에서 실행되는 것을 확인했다**(2026-11-12). 어느 것이 고쳤는지는 그 PC의 `startup.log`로 가린다
+  (`ERROR`·`timed out` 줄이 없고 `window shown`이면 런타임 동봉이 고친 것이다).
+- 다시 보고가 오면 받을 것: `startup.log`, 작업 관리자에 프로세스가 남는지, 이벤트 뷰어 "Application Error"의 오류 모듈 이름.
+
 ## 주석 (`lib/engine/annotations/`) — 5단계 스파이크 결과
 
 PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다. 문서는 pdfrx의 `useNativeDocumentHandle`로
