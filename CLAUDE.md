@@ -305,5 +305,9 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
 - 파일 받기: Windows·Linux는 새 프로세스의 명령줄 인자(`filesFromArguments`, Linux는 `Exec ... %F`). macOS는 인자로 주지 않고 `application(_:open:)`으로 주므로
   `AppDelegate.swift`의 `IncomingFilesBridge`(FlutterAppLifecycleDelegate `handleOpenURLs:`)가 채널 `art.zoomon.daylightpdf/incoming`으로 넘긴다
   (Dart가 묻기 전에 온 파일은 `initialFiles`, 그 뒤는 `filesOpened`). Android는 PDF만, 그대로(`initialFile`/`fileOpened`).
+- **설정의 "기본 앱" 구역**(`lib/platform/default_app_section.dart`, 외형 다음, 데스크톱만): Windows는 "Windows 설정 열기"(`ms-settings:defaultapps?registeredAppMachine|User=`,
+  `reg query`로 설치 프로그램이 HKLM·HKCU 중 어디에 등록했는지 본다. 없으면 "설치 프로그램으로 설치하세요")와 4단계 안내, 눌러서 복사하는 형식 칩(보기용 `.pdf` / 변환용 10개).
+  설정 앱 페이지 맨 위 "기본값 설정"은 이미지까지 모두 바꾸므로 PDF는 형식별로 고르라고 안내한다. macOS·Linux는 고르는 방법 한 문단. 시험: `test/default_app_section_test.dart`.
+  실제 Windows 앱에서 화면·복사·미등록 알림을 확인했다. 설정 앱 문구("기본값 설정", 파일 형식 검색 칸)는 설치 후 실제 화면과 맞는지 아직 못 봤다.
 - 시험: `test/open_files_test.dart`, `test/incoming_files_test.dart`. Windows 릴리스 빌드에 PNG 인자를 넘겨 변환 화면이 뜨는 것을 확인했다.
   **못 시험한 것**: macOS 빌드·Finder 열기(이 Windows에서 Swift를 컴파일하지 못함 — 태그 전에 release 워크플로를 수동 실행해 macOS 빌드부터 확인), Inno Setup 컴파일과 설치 후 연결, Linux.

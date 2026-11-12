@@ -1009,4 +1009,61 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pagesOverwriteUnsaved =>
       'There are unsaved annotations, so the file can\'t be overwritten. Save them in the viewer first.';
+
+  @override
+  String get settingsSectionDefaultApp => 'Default app';
+
+  @override
+  String get defaultAppDescription =>
+      'You can make PDFs open in Daylight PDF when you double-click them. Images, SVG and .ai files open in the Convert screen when you pick Daylight PDF under \"Open with\".';
+
+  @override
+  String get defaultAppDescriptionWindows =>
+      'Windows doesn\'t let apps change the default app themselves. Pick Daylight PDF in the Settings app by following these steps.';
+
+  @override
+  String get defaultAppOpenSettingsButton => 'Open Windows Settings';
+
+  @override
+  String get defaultAppWindowsStep1 =>
+      'Click \"Open Windows Settings\". The Settings app opens the Daylight PDF page.';
+
+  @override
+  String get defaultAppWindowsStep2 =>
+      'In the page\'s list of file types, find .pdf, click the current app, choose Daylight PDF and click \"Set default\".';
+
+  @override
+  String get defaultAppWindowsStep3 =>
+      'If a type isn\'t listed, click it below to copy it, paste it into the file type search box at the top of Settings, then choose as in step 2.';
+
+  @override
+  String get defaultAppWindowsStep4 =>
+      'The \"Set default\" button at the top of the page changes images and SVG too, so double-clicking a photo would open the Convert screen. To change only PDF, choose type by type.';
+
+  @override
+  String get defaultAppViewTypesLabel => 'Opens in the viewer (click to copy)';
+
+  @override
+  String get defaultAppConvertTypesLabel =>
+      'Opens in the Convert screen (only if you want)';
+
+  @override
+  String get defaultAppCopyTooltip => 'Copy';
+
+  @override
+  String defaultAppCopied(String fileType) {
+    return 'Copied $fileType. Paste it into the search box in Settings.';
+  }
+
+  @override
+  String get defaultAppNotRegisteredWindows =>
+      'This copy of Daylight PDF wasn\'t installed with the installer, so it isn\'t listed in Settings. Install it with the installer and try again.';
+
+  @override
+  String get defaultAppMacSteps =>
+      'In Finder, select a PDF and press ⌘I (Get Info). Under \"Open with\", choose Daylight PDF and click \"Change All…\" so every PDF opens in Daylight PDF.';
+
+  @override
+  String get defaultAppLinuxSteps =>
+      'Run ./install.sh --default-pdf in the downloaded folder to make Daylight PDF the default PDF app. You can also choose it under a PDF\'s Properties → \"Open With\" in your file manager.';
 }

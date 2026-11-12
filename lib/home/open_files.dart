@@ -9,8 +9,14 @@ import '../convert/image_to_pdf.dart';
 import 'open_pdf.dart';
 import 'recent_files.dart';
 
-/// 운영체제가 이 앱으로 열어 줄 수 있는 파일인가: PDF, PDF 호환 `.ai`, SVG, 변환할 수 있는 이미지.
+/// 운영체제에 등록한 형식 중 보기 화면으로 여는 것 (점 없이).
+const viewerExtensions = ['pdf'];
+
+/// 운영체제에 등록한 형식 중 변환 화면으로 여는 것 (점 없이).
 /// 설치 파일·Info.plist·Linux `.desktop`에 등록한 확장자와 같게 둔다.
+final convertExtensions = ['ai', 'svg', ...ImageToPdf.extensions];
+
+/// 운영체제가 이 앱으로 열어 줄 수 있는 파일인가: PDF, PDF 호환 `.ai`, SVG, 변환할 수 있는 이미지.
 bool isOpenableFile(String path) {
   final ext = p.extension(path).toLowerCase();
   return ext == '.pdf' || ext == '.svg' || AiToPdf.supports(path) || ImageToPdf.supports(path);
