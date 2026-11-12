@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import '../platform/default_app_section.dart';
+import '../platform/platform_kind.dart';
 import 'settings_menus.dart';
 
 /// 설정 화면: 모바일(Android 태블릿)까지 지원하는 앱이라 전체 페이지로 민다
@@ -35,6 +37,8 @@ class SettingsScreen extends StatelessWidget {
             Text(l10n.languageMenuTooltip, style: theme.textTheme.bodySmall),
             const SizedBox(height: 8),
             const LanguageSegmentedButton(),
+            // 앱 고유 구역: 외형 다음 (settings-screen.md §3). 모바일에서는 아무것도 그리지 않는다.
+            if (!isMobilePlatform) ...[const SizedBox(height: 32), const DefaultAppSection()],
           ],
         ),
       ),

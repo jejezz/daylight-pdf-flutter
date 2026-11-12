@@ -293,3 +293,21 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
 - **그리는 도구가 켜져 있으면 `linkHandlerParams`를 null로 한다.** 그리기 층이 입력을 아래 뷰어로도 흘려보내므로, 끄지 않으면 그리다가 링크가 눌린다.
   링크 입력은 pdfrx의 `PdfOverlayInteractionRegion`/`MouseRegion(opaque: false)`이라 글자 선택·끌기·메모 아이콘 누르기를 막지 않는다.
 - 시험: `test/link_handler_test.dart`(동작·확인 창), `integration_test/link_test.dart`(실제 PDF의 링크 읽기·커서·이동; 이 Windows 환경에서는 `printing` 플러그인 C++ 빌드가 코드 페이지 경고로 실패해 못 돌렸다).
+
+## 파일 연결(기본 앱 등록) — `lib/home/open_files.dart`
+
+- 운영체제에 등록하는 형식: PDF(보기 화면), PDF 호환 `.ai`·SVG·이미지(PNG/JPG/BMP/GIF/WebP/TIFF; 변환 화면). 홈에 끌어놓을 때와 같은 갈래(`openFiles`).
+  목록은 네 곳을 같게 둔다: `isOpenableFile`, `installer/windows/app.iss`의 `[Registry]`, `macos/Runner/Info.plist`의 `CFBundleDocumentTypes`,
+  `release.yml`이 만드는 Linux `.desktop`의 `MimeType`.
+- **앱이 스스로 기본 앱이 되지는 않는다** — 후보로만 등록하고 사용자가 고른다. Windows 10+는 설치 파일이 기본값을 바꾸지 못한다(설정 > 앱 > 기본 앱에 이름이 뜬다).
+  macOS는 Finder "다음으로 열기 > 모두 변경"(PDF는 `LSHandlerRank` Default, 나머지 Alternate). Linux는 `install.sh --default-pdf`만 `xdg-mime`으로 PDF 기본 앱을 바꾼다.
+- **macOS에서 기본 앱을 코드로 바꾸는 API(`NSWorkspace.setDefaultApplication`)는 쓰지 않는다**: 같은 기능을 넣던 다른 앱의 릴리스 빌드가 Swift 시그니처 문제로 두 번 깨졌다.
+- 파일 받기: Windows·Linux는 새 프로세스의 명령줄 인자(`filesFromArguments`, Linux는 `Exec ... %F`). macOS는 인자로 주지 않고 `application(_:open:)`으로 주므로
+  `AppDelegate.swift`의 `IncomingFilesBridge`(FlutterAppLifecycleDelegate `handleOpenURLs:`)가 채널 `art.zoomon.daylightpdf/incoming`으로 넘긴다
+  (Dart가 묻기 전에 온 파일은 `initialFiles`, 그 뒤는 `filesOpened`). Android는 PDF만, 그대로(`initialFile`/`fileOpened`).
+- **설정의 "기본 앱" 구역**(`lib/platform/default_app_section.dart`, 외형 다음, 데스크톱만): Windows는 "Windows 설정 열기"(`ms-settings:defaultapps?registeredAppMachine|User=`,
+  `reg query`로 설치 프로그램이 HKLM·HKCU 중 어디에 등록했는지 본다. 없으면 "설치 프로그램으로 설치하세요")와 4단계 안내, 눌러서 복사하는 형식 칩(보기용 `.pdf` / 변환용 10개).
+  설정 앱 페이지 맨 위 "기본값 설정"은 이미지까지 모두 바꾸므로 PDF는 형식별로 고르라고 안내한다. macOS·Linux는 고르는 방법 한 문단. 시험: `test/default_app_section_test.dart`.
+  실제 Windows 앱에서 화면·복사·미등록 알림을 확인했다. 설정 앱 문구("기본값 설정", 파일 형식 검색 칸)는 설치 후 실제 화면과 맞는지 아직 못 봤다.
+- 시험: `test/open_files_test.dart`, `test/incoming_files_test.dart`. Windows 릴리스 빌드에 PNG 인자를 넘겨 변환 화면이 뜨는 것을 확인했다.
+  **못 시험한 것**: macOS 빌드·Finder 열기(이 Windows에서 Swift를 컴파일하지 못함 — 태그 전에 release 워크플로를 수동 실행해 macOS 빌드부터 확인), Inno Setup 컴파일과 설치 후 연결, Linux.

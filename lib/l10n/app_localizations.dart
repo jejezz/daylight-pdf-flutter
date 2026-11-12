@@ -1879,6 +1879,96 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'저장하지 않은 주석이 있어 같은 이름으로 덮어쓸 수 없어요. 보기 화면에서 먼저 저장하세요.'**
   String get pagesOverwriteUnsaved;
+
+  /// No description provided for @settingsSectionDefaultApp.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 앱'**
+  String get settingsSectionDefaultApp;
+
+  /// No description provided for @defaultAppDescription.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF를 더블클릭하면 Daylight PDF로 열리게 할 수 있어요. 이미지·SVG·.ai 파일은 \"연결 프로그램\"에서 고르면 변환 화면으로 열려요.'**
+  String get defaultAppDescription;
+
+  /// No description provided for @defaultAppDescriptionWindows.
+  ///
+  /// In ko, this message translates to:
+  /// **'Windows는 앱이 기본 앱을 직접 바꾸지 못하게 막아 둬요. 설정 앱에서 아래 순서대로 Daylight PDF를 고르세요.'**
+  String get defaultAppDescriptionWindows;
+
+  /// No description provided for @defaultAppOpenSettingsButton.
+  ///
+  /// In ko, this message translates to:
+  /// **'Windows 설정 열기'**
+  String get defaultAppOpenSettingsButton;
+
+  /// No description provided for @defaultAppWindowsStep1.
+  ///
+  /// In ko, this message translates to:
+  /// **'\"Windows 설정 열기\"를 눌러요. 설정 앱에 Daylight PDF 페이지가 열려요.'**
+  String get defaultAppWindowsStep1;
+
+  /// No description provided for @defaultAppWindowsStep2.
+  ///
+  /// In ko, this message translates to:
+  /// **'페이지의 형식 목록에서 .pdf를 찾아 지금의 앱을 누르고, Daylight PDF를 고른 뒤 \"기본값 설정\"을 눌러요.'**
+  String get defaultAppWindowsStep2;
+
+  /// No description provided for @defaultAppWindowsStep3.
+  ///
+  /// In ko, this message translates to:
+  /// **'목록에 형식이 안 보이면 아래 형식을 눌러 복사하고, 설정 앱 맨 위의 파일 형식 검색 칸에 붙여 넣은 뒤 2단계처럼 골라요.'**
+  String get defaultAppWindowsStep3;
+
+  /// No description provided for @defaultAppWindowsStep4.
+  ///
+  /// In ko, this message translates to:
+  /// **'페이지 맨 위의 \"기본값 설정\" 단추는 이미지·SVG까지 한 번에 바꿔요. 그러면 사진을 더블클릭할 때도 변환 화면이 열리니, PDF만 바꾸려면 형식마다 고르세요.'**
+  String get defaultAppWindowsStep4;
+
+  /// No description provided for @defaultAppViewTypesLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'보기 화면으로 열 형식 (눌러서 복사)'**
+  String get defaultAppViewTypesLabel;
+
+  /// No description provided for @defaultAppConvertTypesLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'변환 화면으로 열 형식 (필요할 때만)'**
+  String get defaultAppConvertTypesLabel;
+
+  /// No description provided for @defaultAppCopyTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'복사'**
+  String get defaultAppCopyTooltip;
+
+  /// No description provided for @defaultAppCopied.
+  ///
+  /// In ko, this message translates to:
+  /// **'{fileType}을(를) 복사했어요. 설정 앱의 검색 칸에 붙여 넣으세요.'**
+  String defaultAppCopied(String fileType);
+
+  /// No description provided for @defaultAppNotRegisteredWindows.
+  ///
+  /// In ko, this message translates to:
+  /// **'설치 프로그램으로 설치한 Daylight PDF가 아니라서 설정 앱 목록에 없어요. 설치 프로그램으로 설치한 뒤 다시 해 보세요.'**
+  String get defaultAppNotRegisteredWindows;
+
+  /// No description provided for @defaultAppMacSteps.
+  ///
+  /// In ko, this message translates to:
+  /// **'Finder에서 PDF 파일을 하나 고르고 ⌘I(정보 가져오기)를 눌러요. \"다음으로 열기\"에서 Daylight PDF를 고른 뒤 \"모두 변경…\"을 누르면 모든 PDF가 Daylight PDF로 열려요.'**
+  String get defaultAppMacSteps;
+
+  /// No description provided for @defaultAppLinuxSteps.
+  ///
+  /// In ko, this message translates to:
+  /// **'내려받은 폴더에서 ./install.sh --default-pdf 를 실행하면 PDF 기본 앱이 Daylight PDF가 돼요. 파일 관리자에서 PDF의 속성 → \"연결 프로그램\"으로 골라도 돼요.'**
+  String get defaultAppLinuxSteps;
 }
 
 class _AppLocalizationsDelegate
