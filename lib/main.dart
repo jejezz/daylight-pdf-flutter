@@ -22,6 +22,7 @@ import 'home/home_screen.dart';
 import 'home/open_files.dart';
 import 'home/recent_files.dart';
 import 'platform/incoming_files.dart';
+import 'platform/pdf_fallback_fonts.dart';
 import 'platform/startup_error_app.dart';
 import 'platform/startup_log.dart';
 import 'l10n/app_localizations.dart';
@@ -55,6 +56,8 @@ Future<void> main(List<String> args) async {
   }
   // 실패하거나 멈춰도 넘어간다: 문서를 열 때 pdfrx가 다시 초기화를 시도한다.
   await log.step('pdfrx', pdfrxFlutterInitialize, timeout: const Duration(seconds: 20), fallback: () {});
+  // 글꼴을 PDF에 넣지 않은 한글 PDF(굴림 등)가 빈 글자로 나오지 않게 대체 글꼴을 정한다.
+  await log.step('pdf fallback fonts', installPdfFallbackFonts, timeout: const Duration(seconds: 10), fallback: () {});
 
   Future<void> Function()? showWindow;
   if (_isDesktop) {
