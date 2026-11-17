@@ -324,3 +324,13 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
   실제 Windows 앱에서 화면·복사·미등록 알림을 확인했다. 설정 앱 문구("기본값 설정", 파일 형식 검색 칸)는 설치 후 실제 화면과 맞는지 아직 못 봤다.
 - 시험: `test/open_files_test.dart`, `test/incoming_files_test.dart`. Windows 릴리스 빌드에 PNG 인자를 넘겨 변환 화면이 뜨는 것을 확인했다.
   **못 시험한 것**: macOS 빌드·Finder 열기(이 Windows에서 Swift를 컴파일하지 못함 — 태그 전에 release 워크플로를 수동 실행해 macOS 빌드부터 확인), Inno Setup 컴파일과 설치 후 연결, Linux.
+
+## 글꼴을 넣지 않은 한글 PDF (`third_party/pdfrx_engine/`, `lib/platform/pdf_fallback_fonts.dart`)
+
+- 증상: 굴림·바탕 등을 이름만 가리키는 PDF(ERP·한글 문서 도구가 만든 주문서 등, `/BaseFont /±¼¸²` + `UniKS-UCS2-H`)에서 한글이 통째로 비고 글자 추출도 안 됐다.
+- 원인: PDFium이 시스템 글꼴 대체 콜백에 글꼴 이름을 **PDF의 코드 페이지 바이트(CP949)** 로 넘기는데, pdfrx_engine 0.6.1이 이를 엄격한 UTF-8로 풀다 예외가 나
+  요청이 조용히 사라졌다(글꼴 요청 기록도 안 남음). 그래서 `PdfFontManager`·missing-font 이벤트로는 고칠 수 없었다.
+- 고침: pdfrx_engine 사본(`DAYLIGHT_PATCH.md`)이 이름을 UTF-8→Latin-1 순으로 풀고, `pdfrxSetCharsetFallbackFont(charset: 129)`로 한글 요청 중 못 찾은 것을 대체 글꼴로
+  내준다. 앱은 시작할 때 `installPdfFallbackFonts()`로 운영체제의 기본 한글 글꼴(Windows 맑은 고딕, macOS Apple SD Gothic Neo, Linux Noto CJK/나눔고딕, Android Noto CJK)만 쓴다. 한글 글꼴이 없는 시스템이면 대체하지 않는다(사용자도 한글을 못 읽는다).
+  일본어·중국어 글꼴(charset 128/134/136)도 같은 원리로 같은 이유로 빠지지만 아직 대체 글꼴을 정하지 않았다.
+- 시험: `integration_test/korean_font_test.dart`(굴림 이름 PDF를 `raw_pdf.dart`의 `unembeddedKoreanPdf`로 만들어 글자 추출·렌더링 확인; 대체 글꼴을 빼면 실패). Windows에서만 돌렸다. macOS·Linux·Android 경로는 못 시험했다.
