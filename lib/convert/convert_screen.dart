@@ -13,8 +13,10 @@ import '../widgets/status_pill.dart';
 import '../widgets/tool_chip.dart';
 import '../window/focus_tint.dart';
 import 'ai_to_pdf.dart';
+import 'conversion_error.dart';
 import 'conversion_queue.dart';
 import 'error_text.dart';
+import 'hwp_to_pdf.dart';
 import 'image_to_pdf.dart';
 import 'output_paths.dart';
 import 'pdf_to_images.dart';
@@ -96,7 +98,10 @@ class _ConvertScreenState extends State<ConvertScreen> {
     final l10n = AppLocalizations.of(context);
     final files = await openFiles(
       acceptedTypeGroups: [
-        XTypeGroup(label: l10n.convertFileTypes, extensions: [...ImageToPdf.extensions, 'svg', 'ai', 'pdf']),
+        XTypeGroup(
+          label: l10n.convertFileTypes,
+          extensions: [...ImageToPdf.extensions, 'svg', 'ai', ...HwpToPdf.extensions, 'pdf'],
+        ),
       ],
     );
     if (files.isNotEmpty && mounted) {
@@ -115,8 +120,16 @@ class _ConvertScreenState extends State<ConvertScreen> {
     final pdfs = paths.where(_isPdf).toList();
     final svgs = paths.where(SvgToPdf.supports).toList();
     final ais = paths.where(AiToPdf.supports).toList();
+    final hwps = paths.where(HwpToPdf.supports).toList();
     final skipped = paths
-        .where((x) => !ImageToPdf.supports(x) && !_isPdf(x) && !SvgToPdf.supports(x) && !AiToPdf.supports(x))
+        .where(
+          (x) =>
+              !ImageToPdf.supports(x) &&
+              !_isPdf(x) &&
+              !SvgToPdf.supports(x) &&
+              !AiToPdf.supports(x) &&
+              !HwpToPdf.supports(x),
+        )
         .map(p.basename)
         .toList();
 
@@ -140,6 +153,9 @@ class _ConvertScreenState extends State<ConvertScreen> {
     }
     for (final ai in ais) {
       _queue.add(_toPdfJob(ai, JobKind.ai, AiToPdf.convert));
+    }
+    for (final hwp in hwps) {
+      _queue.add(_hwpJob(hwp));
     }
     for (final pdf in pdfs) {
       _queue.add(_pdfJob(pdf));
@@ -187,6 +203,21 @@ class _ConvertScreenState extends State<ConvertScreen> {
         return [out];
       },
     );
+  }
+
+  /// HWP·HWPX·HML → PDF. 글꼴을 바꿔 그렸으면 작업에 경고를 남겨 목록에서 알린다.
+  ConversionJob _hwpJob(String input) {
+    late final ConversionJob job;
+    job = ConversionJob(
+      label: p.basename(input),
+      kind: JobKind.hwp,
+      run: () async {
+        final out = uniquePath(p.join(_dirFor(input), '${p.basenameWithoutExtension(input)}.pdf'));
+        job.warnings = await HwpToPdf.convert(input, out);
+        return [out];
+      },
+    );
+    return job;
   }
 
   ConversionJob _pdfJob(String input) {
@@ -408,6 +439,7 @@ class _JobCard extends StatelessWidget {
     JobKind.image => Icons.image_outlined,
     JobKind.svg => Icons.polyline_outlined,
     JobKind.ai => Icons.auto_awesome_mosaic_outlined,
+    JobKind.hwp => Icons.description_outlined,
     JobKind.pdf => Icons.picture_as_pdf_outlined,
     JobKind.other => Icons.insert_drive_file_outlined,
   };
@@ -457,6 +489,8 @@ class _JobCard extends StatelessWidget {
                       color: job.status == JobStatus.failed ? theme.colorScheme.error : null,
                     ),
                   ),
+                if (job.status == JobStatus.done)
+                  for (final warning in job.warnings) _WarningLine(warning: warning),
               ],
             ),
           ),
@@ -485,5 +519,43 @@ class _JobCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// 변환은 끝났지만 알려야 하는 점 한 줄(예: 글꼴을 바꿔 그림). 자세한 내용은 툴팁.
+class _WarningLine extends StatelessWidget {
+  const _WarningLine({required this.warning});
+
+  final ConversionWarning warning;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final light = theme.brightness == Brightness.light;
+    final color = light ? AppColors.warningTextLight : AppColors.warning;
+    final line = Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(Icons.warning_amber_rounded, size: 14, color: color),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              conversionWarningText(l10n, warning),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(color: color),
+            ),
+          ),
+        ],
+      ),
+    );
+    final detail = conversionWarningDetail(l10n, warning);
+    return detail == null ? line : Tooltip(message: detail, child: line);
   }
 }

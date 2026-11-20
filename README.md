@@ -7,7 +7,7 @@
 <h1 align="center">Daylight PDF</h1>
 
 <p align="center">
-  A desktop app that <b>converts images, SVG and PDF-compatible .ai files to PDF</b>, with viewing, annotations and page tools in one place.
+  A desktop app that <b>converts images, SVG, HWP and PDF-compatible .ai files to PDF</b>, with viewing, annotations and page tools in one place.
 </p>
 
 <p align="center">
@@ -28,7 +28,7 @@
 
 ## Features
 
-- **Convert** — PNG, JPG, BMP, GIF, WebP, TIFF, SVG and PDF-compatible `.ai` to PDF (one PDF per file, or merge images into one); PDF pages to PNG or JPG at 72, 150 or 300 dpi. Drop files in, and a queue shows progress and failures per file.
+- **Convert** — PNG, JPG, BMP, GIF, WebP, TIFF, SVG, HWP/HWPX/HML and PDF-compatible `.ai` to PDF (one PDF per file, or merge images into one); PDF pages to PNG or JPG at 72, 150 or 300 dpi. Drop files in, and a queue shows progress and failures per file.
 - **View** — fast PDFium rendering with thumbnails, an outline sidebar, text search (`⌘F`), fit width / fit page / actual size, and a password prompt for protected PDFs. Your last ten files are one click away on the home screen.
 - **Annotate** — highlight, underline, notes, freehand, rectangle and circle in six colors. Undo with `⌘Z`; click a note to read or edit it. Annotations are standard PDF annotations, so they show up in other viewers too, notes with their own icon.
 - **Page tools** — merge PDFs, split every N pages or by ranges, rotate, delete, drag to reorder, save just the pages you select, and cut scanned two-page spreads down the middle into single pages.
@@ -60,7 +60,7 @@ Download from [**Releases**](https://github.com/jejezz/daylight-pdf-flutter/rele
 
 Rendering, page assembly and annotations all run on [PDFium](https://pdfium.googlesource.com/pdfium/) (through [pdfrx](https://pub.dev/packages/pdfrx)), so nothing is re-encoded when you merge, split or annotate: annotations are written with PDFium's annotation API, and a note's icon is an SVG converted into the annotation's own appearance, which is why it looks the same elsewhere. Printing prepares the PDF first — page selection, scaling and margins, n-up or booklet imposition, page numbers and watermark — and then hands the result to the operating system's print dialog.
 
-Good to know: there is no direct text editing, HEIC images aren't supported, an `.ai` file must be saved with "Create PDF Compatible File", and the page tools can't open password-protected PDFs yet.
+Good to know: there is no direct text editing, HEIC images aren't supported, an `.ai` file must be saved with "Create PDF Compatible File", and the page tools can't open password-protected PDFs yet. HWP/HWPX/HML are converted with the bundled [rhwp](https://github.com/edwardkim/rhwp) engine using the fonts installed on your computer (none are downloaded); if a font from the document is missing, a similar one is used and the result list warns you that line breaks and letter shapes may differ from the original. Equations in HWP files may not come out correctly.
 
 ## Development
 

@@ -12,6 +12,8 @@ import 'package:flutter/services.dart';
 
 const _entries = <(List<String> packages, String asset)>[
   (['SeoulNamsan'], 'assets/licenses/seoul-namsan.txt'),
+  (['rhwp'], 'assets/licenses/rhwp-mit.txt'),
+  (['rhwp third-party dependencies'], 'assets/licenses/rhwp-third-party.txt'),
   // (['libserialport'], 'assets/licenses/libserialport-lgpl-3.0.txt'),
 ];
 

@@ -24,7 +24,7 @@ https://github.com/jejezz/application-release-templates/tree/main/conventions
 
 ## 범위
 
-- 변환: 이미지(PNG/JPG/HEIC) → PDF, SVG → PDF, PDF 호환 `.ai` → PDF, PDF → 이미지,
+- 변환: 이미지(PNG/JPG/HEIC) → PDF, SVG → PDF, PDF 호환 `.ai` → PDF, HWP/HWPX/HML → PDF, PDF → 이미지,
   일괄 변환. PDF 호환 옵션이 꺼진 `.ai`는 안내 메시지로 처리한다.
 - 보기, 주석(하이라이트·밑줄·도형·손글씨), 메모(PDF 표준 주석), 페이지 조작.
 - PDF 엔진은 인터페이스 뒤에 두어 교체 가능하게 한다.
@@ -43,6 +43,31 @@ https://github.com/jejezz/application-release-templates/tree/main/conventions
 - SVG 글자에 한글 등 Latin-1 밖 문자가 있으면 대체 글꼴 SeoulNamsan을 PDF에 넣는다(`SvgToPdf.convert`의
   `loadFallbackFonts`). 이 글꼴에 없는 문자(예: é ñ ü)는 □로 나오고, 이때 SVG 글자 전체가 SeoulNamsan이 된다.
 - 이미지는 PNG/JPG/BMP/GIF/WebP/TIFF. HEIC는 지원하지 않는다(건너뛰고 알림).
+- HWP/HWPX/HML은 rhwp로 바꾼다(아래 "HWP 변환"). 글꼴은 이 컴퓨터에 설치된 것만 쓰므로 문서의 글꼴이 없으면 비슷한 글꼴로 바뀌고, 그럴 때 결과 목록이 경고를 보인다(줄바꿈·글자 모양이 원본과 다를 수 있다).
+  수식은 기본 방식에서 깨질 수 있고, 한컴 PDF와 똑같지는 않다. 암호 문서는 안내만 한다. HWP 3.0은 rhwp가 "일부"만 지원한다.
+
+## HWP 변환 (`lib/convert/hwp_to_pdf.dart`, `hwp_runner.dart`, `third_party/rhwp/`)
+
+- **엔진**: [rhwp](https://github.com/edwardkim/rhwp) 0.9.1(MIT)의 명령줄 도구를 **프로세스로** 부른다: `rhwp export-pdf <입력> -o <출력.tmp> --json ...`.
+  HWP 5.0·HWPX·HML과 일부 HWP 3.0을 읽는다. 결과는 `.tmp`에 쓴 뒤 이름을 바꾼다(`HwpToPdf.convert`). 인자는 목록으로 넘겨 셸을 거치지 않고, 입력은 절대 경로로 바꿔 `-`로 시작하는 이름이 옵션이 되지 않게 한다.
+- **글꼴은 넣지도 받지도 않는다**: rhwp는 글꼴을 실행 파일에 거의 넣지 않고 **처음 쓸 때 CDN에서 약 60MB를 내려받아 캐시**한다. 그래서 항상 `RHWP_WEBFONT_OFFLINE=1`과 쓰이지 않는 임시 캐시 폴더(`RHWP_WEBFONT_CACHE`)로 돌려
+  내려받기를 막고, 운영체제 글꼴만 쓴다. 없는 글꼴은 `--fallback-serif/sans/mono`의 운영체제별 글꼴로 대신한다(`hwpFallbackFonts`; **Windows만 시험했다** — macOS·Linux 이름은 추정이라 틀려도 변환은 되고 못 찾았다고만 알린다).
+  글자 폭은 원본 문서 기준으로 맞춰서(`preserveSourceMetrics`) 글꼴이 바뀌어도 줄바꿈이 크게 틀어지지 않았다(사업계획서·신청서·보고서 시료 확인). PDF에는 사용한 글꼴의 일부가 들어간다(OS 글꼴의 임베딩 허용 여부는 확인하지 못했다).
+- **경고**: `--json`의 `nativeFontSupply.unavailable`(공급하지 못한 글꼴)을 `ConversionWarning(fontsSubstituted, items: 이름들)`으로 돌려주고 `ConversionJob.warnings`에 담아 변환 화면이 완료 줄 아래에 보인다(툴팁에 글꼴 이름).
+  이 값은 문서에서 온 **신뢰할 수 없는 문자열**이라 제어 문자를 지우고 이름 60자·100개로 줄여 표시만 한다(`unavailableFonts`). 항목 뒤 ": 사유"는 떼고 같은 이름은 한 번만 센다.
+- **오류 매핑**: 종료 코드 2 + stderr에 "비밀번호" → `passwordProtected`, 그 밖의 0이 아닌 코드 → `cannotRead`, 제한 시간(15분) 초과 → `conversionTimeout`, 실행 파일이 없음(`ProcessException`) → `converterMissing`.
+- **변환기 위치**: Windows·Linux는 앱 옆 `rhwp/rhwp[.exe]`, macOS는 앱 번들의 `Contents/Helpers/rhwp`(`HwpToPdf.executablePathFor`). 개발할 때는 `DAYLIGHT_RHWP`(실행 파일 전체 경로)로 다른 빌드를 가리킬 수 있다.
+  **바이너리는 저장소에 넣지 않는다**(`.gitignore`). 로컬 Windows 개발은 `third_party/rhwp/windows-x64/`에 두면 `windows/CMakeLists.txt`가 빌드 폴더(설치 파일)로 복사하고, 없으면 CMake 경고만 낸다(`tool/fetch_rhwp.sh windows-x64`로 받을 수도 있다).
+  최소 기능으로 직접 빌드하면 약 46MB(공식 배포판 77MB; PDF 가져오기·Skia 제외, 압축 약 17MB), 출력은 비교한 파일에서 바이트까지 같았다. 빌드는 약 25분이라 릴리스마다 하지 않는다.
+- **빌드·고정·동봉(CI)**: `.github/workflows/build-rhwp.yml`(수동 실행)이 crates.io 소스(`cargo install rhwp --locked --no-default-features --features wasm-api`)로 Windows·Linux·macOS(arm64+x64를 `lipo`로 합친 universal, ad-hoc 서명)를 만들어
+  **프리릴리스** `rhwp-v<버전>-b<번호>`로 올린다(앱 릴리스로 오해받지 않게 프리릴리스 + 비 semver 태그; 같은 태그는 덮어쓰지 않는다). 실행 요약에 나온 SHA-256 세 줄을 `third_party/rhwp/rhwp.lock`에 붙여 넣어 커밋한다.
+  릴리스 워크플로는 `tool/fetch_rhwp.sh <플랫폼>`으로 그 빌드를 받아 **해시를 확인한 뒤에만** 푼다(비었거나 다르면 중단. `check` 작업이 해시가 비었는지 먼저 본다). 넣는 곳: Windows는 CMake가 설치 폴더로, Linux는 tarball의 `rhwp/`, macOS는 `.app/Contents/Helpers/`
+  (ad-hoc으로 다시 서명해 봉인을 맞추고, 이어지는 Developer ID 서명 `--deep`이 함께 서명한다. 앱은 샌드박스가 아니라 도우미를 띄울 수 있다). 스크립트는 `tool/package_rhwp.sh`(압축)·`tool/fetch_rhwp.sh`(받기·검증).
+  **rhwp를 올릴 때**: 워크플로를 새 버전·번호로 돌리고, 해시와 `RHWP_VERSION`·`RHWP_BUILD`를 갱신한다. 새 버전에서도 `integration_test/hwp_test.dart`와 시료 몇 개의 출력을 확인한다. 프리릴리스를 이 저장소에 두는 것이 앱 업데이트 확인에 영향이 없는지는 확인하지 못했다(업데이트 서버가 어떻게 고르는지 모름) — 걱정되면 `rhwp.lock`의 `RHWP_REPO`를 별도 저장소로 바꾼다.
+- **느리다**: 기본 SVG 방식은 35쪽 88초, 151쪽 239초가 걸렸다(작은 문서는 2~10초). 진행 표시는 도는 표시뿐이고 **취소·경과 시간은 아직 없다**. `--backend direct`는 빠르지만 파일이 30~110MB가 되고 일부 문서에서 실패해서 쓰지 않는다.
+- **수식**: 기본 방식에서 수식 글자가 깨진다(글꼴 문제가 아니다 — OS 글꼴만 써도 같고, `direct`에서는 맞게 그려졌다). 시료가 한 개뿐이라 원인과 대응은 아직 못 정했다.
+- 시험: `test/hwp_to_pdf_test.dart`(가짜 실행기: 명령줄·환경변수·JSON 읽기·오류 매핑·임시 파일), `test/convert_screen_test.dart`(경고·오류 표시), 통합 `integration_test/hwp_test.dart`(실제 rhwp + PDFium으로 쪽 수·글자 추출·오프라인 캐시 비어 있음; 자료는 `integration_test/fixtures/hwp/`, rhwp 저장소의 MIT 예제).
+  **못 시험한 것**: 두 워크플로를 GitHub에서 한 번도 돌리지 않았다(YAML 구문과, 스크립트를 가짜 릴리스로 로컬에서 시험한 것뿐: 성공·해시 비움·해시 불일치) — **`rhwp.lock`의 해시가 비어 있어 지금은 태그를 달아도 `check`에서 멈춘다**. macOS·Linux 변환기 빌드와 동작(universal 합치기, 서명·공증, Helpers 경로), 인터넷이 없는 PC, 한컴 글꼴이 설치된 PC의 품질, 암호 문서 실제 변환(오류 매핑만 시험), 설치 파일(Inno Setup)에 변환기가 들어가는 것.
 
 ## 페이지 도구 (`lib/pages/`)
 
@@ -309,7 +334,7 @@ PDFium FFI(`pdfium_dart`)로 `PdfiumAnnotations.add/read/remove`를 구현했다
 
 ## 파일 연결(기본 앱 등록) — `lib/home/open_files.dart`
 
-- 운영체제에 등록하는 형식: PDF(보기 화면), PDF 호환 `.ai`·SVG·이미지(PNG/JPG/BMP/GIF/WebP/TIFF; 변환 화면). 홈에 끌어놓을 때와 같은 갈래(`openFiles`).
+- 운영체제에 등록하는 형식: PDF(보기 화면), PDF 호환 `.ai`·SVG·HWP 계열(hwp/hwpx/hml)·이미지(PNG/JPG/BMP/GIF/WebP/TIFF; 변환 화면). 홈에 끌어놓을 때와 같은 갈래(`openFiles`).
   목록은 네 곳을 같게 둔다: `isOpenableFile`, `installer/windows/app.iss`의 `[Registry]`, `macos/Runner/Info.plist`의 `CFBundleDocumentTypes`,
   `release.yml`이 만드는 Linux `.desktop`의 `MimeType`.
 - **앱이 스스로 기본 앱이 되지는 않는다** — 후보로만 등록하고 사용자가 고른다. Windows 10+는 설치 파일이 기본값을 바꾸지 못한다(설정 > 앱 > 기본 앱에 이름이 뜬다).
