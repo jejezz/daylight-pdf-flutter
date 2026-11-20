@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 
 import '../convert/ai_to_pdf.dart';
 import '../convert/convert_screen.dart';
+import '../convert/hwp_to_pdf.dart';
 import '../convert/image_to_pdf.dart';
 import 'open_pdf.dart';
 import 'recent_files.dart';
@@ -14,12 +15,16 @@ const viewerExtensions = ['pdf'];
 
 /// 운영체제에 등록한 형식 중 변환 화면으로 여는 것 (점 없이).
 /// 설치 파일·Info.plist·Linux `.desktop`에 등록한 확장자와 같게 둔다.
-final convertExtensions = ['ai', 'svg', ...ImageToPdf.extensions];
+final convertExtensions = ['ai', 'svg', ...HwpToPdf.extensions, ...ImageToPdf.extensions];
 
-/// 운영체제가 이 앱으로 열어 줄 수 있는 파일인가: PDF, PDF 호환 `.ai`, SVG, 변환할 수 있는 이미지.
+/// 운영체제가 이 앱으로 열어 줄 수 있는 파일인가: PDF, PDF 호환 `.ai`, SVG, HWP 계열, 변환할 수 있는 이미지.
 bool isOpenableFile(String path) {
   final ext = p.extension(path).toLowerCase();
-  return ext == '.pdf' || ext == '.svg' || AiToPdf.supports(path) || ImageToPdf.supports(path);
+  return ext == '.pdf' ||
+      ext == '.svg' ||
+      AiToPdf.supports(path) ||
+      HwpToPdf.supports(path) ||
+      ImageToPdf.supports(path);
 }
 
 /// 명령줄 인자(Windows·Linux에서 파일을 더블클릭하거나 "연결 프로그램"으로 열면 경로가 온다)에서 열 파일을 고른다.

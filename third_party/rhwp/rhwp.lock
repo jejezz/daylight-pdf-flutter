@@ -1,0 +1,12 @@
+# Which rhwp (HWP → PDF converter) build the app ships. Read by tool/fetch_rhwp.sh (bash `source`d, KEY=VALUE only).
+#
+# The binaries are built by the "Build rhwp" workflow (.github/workflows/build-rhwp.yml) from the crates.io source
+# of rhwp RHWP_VERSION, and published as the prerelease  rhwp-v<RHWP_VERSION>-b<RHWP_BUILD>  in RHWP_REPO.
+# After running that workflow, paste the SHA-256 lines from its summary below; the release workflow refuses to
+# build while one is empty, and refuses a download whose hash differs.
+RHWP_REPO=jejezz/daylight-pdf-flutter
+RHWP_VERSION=0.9.1
+RHWP_BUILD=1
+RHWP_SHA256_WINDOWS_X64=
+RHWP_SHA256_MACOS_UNIVERSAL=
+RHWP_SHA256_LINUX_X64=

@@ -110,6 +110,15 @@ Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes
 Root: HKA; Subkey: "Software\Classes\.ai\OpenWithProgids"; ValueType: string; ValueName: "{#AppProgConvert}"; ValueData: ""; Flags: uninsdeletevalue
 Root: HKA; Subkey: "{#AppCapabilities}\FileAssociations"; ValueType: string; ValueName: ".ai"; ValueData: "{#AppProgConvert}"
 Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".ai"; ValueData: ""
+Root: HKA; Subkey: "Software\Classes\.hwp\OpenWithProgids"; ValueType: string; ValueName: "{#AppProgConvert}"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKA; Subkey: "{#AppCapabilities}\FileAssociations"; ValueType: string; ValueName: ".hwp"; ValueData: "{#AppProgConvert}"
+Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".hwp"; ValueData: ""
+Root: HKA; Subkey: "Software\Classes\.hwpx\OpenWithProgids"; ValueType: string; ValueName: "{#AppProgConvert}"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKA; Subkey: "{#AppCapabilities}\FileAssociations"; ValueType: string; ValueName: ".hwpx"; ValueData: "{#AppProgConvert}"
+Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".hwpx"; ValueData: ""
+Root: HKA; Subkey: "Software\Classes\.hml\OpenWithProgids"; ValueType: string; ValueName: "{#AppProgConvert}"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKA; Subkey: "{#AppCapabilities}\FileAssociations"; ValueType: string; ValueName: ".hml"; ValueData: "{#AppProgConvert}"
+Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".hml"; ValueData: ""
 Root: HKA; Subkey: "Software\Classes\.svg\OpenWithProgids"; ValueType: string; ValueName: "{#AppProgConvert}"; ValueData: ""; Flags: uninsdeletevalue
 Root: HKA; Subkey: "{#AppCapabilities}\FileAssociations"; ValueType: string; ValueName: ".svg"; ValueData: "{#AppProgConvert}"
 Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".svg"; ValueData: ""
