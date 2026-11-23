@@ -126,13 +126,3 @@ if(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS)
 else()
   message(WARNING "Visual C++ runtime DLLs not found; they will not be bundled.")
 endif()
-
-# HWP -> PDF converter (rhwp, MIT). Not committed: place the Windows build in
-# third_party/rhwp/windows-x64/ (see third_party/rhwp/README.md). The app looks for it in
-# <install dir>/rhwp/ and reports "converter missing" for HWP files if it is absent.
-set(RHWP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/rhwp/windows-x64")
-if(EXISTS "${RHWP_DIR}/rhwp.exe")
-  install(DIRECTORY "${RHWP_DIR}/" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}/rhwp" COMPONENT Runtime)
-else()
-  message(WARNING "rhwp.exe not found in ${RHWP_DIR}; HWP conversion will not work in this build.")
-endif()
