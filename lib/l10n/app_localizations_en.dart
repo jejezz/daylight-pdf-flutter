@@ -273,7 +273,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get convertClearFinished => 'Clear finished';
 
   @override
-  String get convertFileTypes => 'Images, SVG, AI, HWP, PDF';
+  String get convertFileTypes => 'Images, SVG, AI, PDF';
 
   @override
   String get convertMergeImages => 'Merge images into one PDF';
@@ -325,38 +325,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String errNotPdfCompatible(String name) {
     return 'This .ai was saved without PDF compatibility. In Illustrator, turn on \"Create PDF Compatible File\" and save again: $name';
-  }
-
-  @override
-  String errConverterMissing(String name) {
-    return 'The document converter could not be started. Please reinstall the app: $name';
-  }
-
-  @override
-  String errConversionTimeout(String name) {
-    return 'The conversion took too long and was stopped. The document may be too large or complex: $name';
-  }
-
-  @override
-  String warnFontsSubstituted(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count fonts from the original are',
-      one: '1 font from the original is',
-    );
-    String _temp1 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'were',
-      one: 'was',
-    );
-    return '$_temp0 not installed on this computer and $_temp1 replaced. Line breaks and letter shapes may differ from the original.';
-  }
-
-  @override
-  String warnFontsDetail(String names) {
-    return 'Replaced fonts: $names';
   }
 
   @override

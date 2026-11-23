@@ -551,7 +551,7 @@ abstract class AppLocalizations {
   /// No description provided for @convertFileTypes.
   ///
   /// In ko, this message translates to:
-  /// **'이미지, SVG, AI, HWP, PDF'**
+  /// **'이미지, SVG, AI, PDF'**
   String get convertFileTypes;
 
   /// No description provided for @convertMergeImages.
@@ -625,30 +625,6 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'PDF 호환 파일로 저장되지 않은 .ai예요. Illustrator에서 \"PDF 호환 파일 만들기\"를 켜고 다시 저장해 주세요: {name}'**
   String errNotPdfCompatible(String name);
-
-  /// No description provided for @errConverterMissing.
-  ///
-  /// In ko, this message translates to:
-  /// **'문서 변환기를 실행할 수 없어요. 앱을 다시 설치해 주세요: {name}'**
-  String errConverterMissing(String name);
-
-  /// No description provided for @errConversionTimeout.
-  ///
-  /// In ko, this message translates to:
-  /// **'변환이 너무 오래 걸려 멈췄어요. 문서가 너무 크거나 복잡할 수 있어요: {name}'**
-  String errConversionTimeout(String name);
-
-  /// No description provided for @warnFontsSubstituted.
-  ///
-  /// In ko, this message translates to:
-  /// **'원본 글꼴 {count}개를 이 컴퓨터에서 찾지 못해 다른 글꼴로 바꿨어요. 줄바꿈이나 글자 모양이 원본과 다를 수 있어요.'**
-  String warnFontsSubstituted(int count);
-
-  /// No description provided for @warnFontsDetail.
-  ///
-  /// In ko, this message translates to:
-  /// **'바꾼 글꼴: {names}'**
-  String warnFontsDetail(String names);
 
   /// No description provided for @pagesTitle.
   ///

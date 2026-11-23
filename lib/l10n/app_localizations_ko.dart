@@ -265,7 +265,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get convertClearFinished => '완료 항목 지우기';
 
   @override
-  String get convertFileTypes => '이미지, SVG, AI, HWP, PDF';
+  String get convertFileTypes => '이미지, SVG, AI, PDF';
 
   @override
   String get convertMergeImages => '이미지를 한 PDF로 합치기';
@@ -317,26 +317,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String errNotPdfCompatible(String name) {
     return 'PDF 호환 파일로 저장되지 않은 .ai예요. Illustrator에서 \"PDF 호환 파일 만들기\"를 켜고 다시 저장해 주세요: $name';
-  }
-
-  @override
-  String errConverterMissing(String name) {
-    return '문서 변환기를 실행할 수 없어요. 앱을 다시 설치해 주세요: $name';
-  }
-
-  @override
-  String errConversionTimeout(String name) {
-    return '변환이 너무 오래 걸려 멈췄어요. 문서가 너무 크거나 복잡할 수 있어요: $name';
-  }
-
-  @override
-  String warnFontsSubstituted(int count) {
-    return '원본 글꼴 $count개를 이 컴퓨터에서 찾지 못해 다른 글꼴로 바꿨어요. 줄바꿈이나 글자 모양이 원본과 다를 수 있어요.';
-  }
-
-  @override
-  String warnFontsDetail(String names) {
-    return '바꾼 글꼴: $names';
   }
 
   @override

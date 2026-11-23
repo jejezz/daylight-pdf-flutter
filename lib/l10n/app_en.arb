@@ -165,7 +165,7 @@
   "convertTitle": "Convert",
   "convertAddFiles": "Add files",
   "convertClearFinished": "Clear finished",
-  "convertFileTypes": "Images, SVG, AI, HWP, PDF",
+  "convertFileTypes": "Images, SVG, AI, PDF",
   "convertMergeImages": "Merge images into one PDF",
   "convertOutputSame": "Same folder as source",
   "convertEmpty": "Drop images or PDFs to convert",
@@ -233,38 +233,6 @@
   "@errNotPdfCompatible": {
     "placeholders": {
       "name": {
-        "type": "String"
-      }
-    }
-  },
-  "errConverterMissing": "The document converter could not be started. Please reinstall the app: {name}",
-  "@errConverterMissing": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "errConversionTimeout": "The conversion took too long and was stopped. The document may be too large or complex: {name}",
-  "@errConversionTimeout": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "warnFontsSubstituted": "{count, plural, =1{1 font from the original is} other{{count} fonts from the original are}} not installed on this computer and {count, plural, =1{was} other{were}} replaced. Line breaks and letter shapes may differ from the original.",
-  "@warnFontsSubstituted": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "warnFontsDetail": "Replaced fonts: {names}",
-  "@warnFontsDetail": {
-    "placeholders": {
-      "names": {
         "type": "String"
       }
     }

@@ -114,15 +114,6 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "$DISPLAY_NAME $VERSION → $FILE_NAME-$VERSION-* (prerelease: $PRERELEASE)"
 
-      # The HWP converter binaries are pinned by hash in third_party/rhwp/rhwp.lock; an empty hash means the
-      # "Build rhwp" workflow has not been run for it yet. Fail here instead of in all three builds.
-      - name: rhwp converter is pinned
-        run: |
-          if tr -d '\r' < third_party/rhwp/rhwp.lock | grep -qE '^RHWP_SHA256_[A-Z0-9_]+=[[:space:]]*$'; then
-            echo "::error::third_party/rhwp/rhwp.lock has an empty SHA-256 — run the \"Build rhwp\" workflow and paste its hashes"
-            exit 1
-          fi
-
       # conventions/readme-guide.md — a real release needs a finished README
       # (no TODOs, real images). A pre-release tag (vX.Y.Z-rc.N) — e.g. the
       # first pipeline run before any feature exists — only needs its
@@ -184,22 +175,6 @@ jobs:
       - run: flutter pub get
 
       - run: flutter build macos --release --dart-define=APP_VERSION=${{ env.VERSION }}
-
-      # HWP → PDF converter (rhwp): the build pinned in third_party/rhwp/rhwp.lock, hash-checked by
-      # tool/fetch_rhwp.sh. It goes in Contents/Helpers (lib/convert/hwp_to_pdf.dart looks there); the
-      # "Sign app" step below signs it too (--deep). The ad-hoc re-sign keeps the bundle valid for a build
-      # without a Developer ID, since adding a file breaks the seal Flutter's build made.
-      - name: Add rhwp (HWP converter) to the app
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          bash tool/fetch_rhwp.sh macos-universal
-          APP_PATH="build/macos/Build/Products/Release/$(ls build/macos/Build/Products/Release | grep '\.app$' | head -1)"
-          mkdir -p "$APP_PATH/Contents/Helpers"
-          cp third_party/rhwp/macos-universal/rhwp "$APP_PATH/Contents/Helpers/rhwp"
-          chmod +x "$APP_PATH/Contents/Helpers/rhwp"
-          codesign --force --deep --sign - "$APP_PATH"
-          codesign --verify --deep --strict "$APP_PATH"
 
       # Requires the MACOS_CERTIFICATE_* / MACOS_KEYCHAIN_PASSWORD secrets
       # (see README). Without a Developer ID certificate yet, delete this
@@ -303,14 +278,6 @@ jobs:
 
       - run: flutter pub get
 
-      # HWP → PDF converter (rhwp): the build pinned in third_party/rhwp/rhwp.lock, hash-checked by
-      # tool/fetch_rhwp.sh. windows/CMakeLists.txt copies it next to the app, so the installer carries it.
-      - name: Fetch rhwp (HWP converter)
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: bash tool/fetch_rhwp.sh windows-x64
-
       - run: flutter build windows --release --dart-define=APP_VERSION=${{ env.VERSION }}
 
       - name: Install Inno Setup
@@ -373,12 +340,6 @@ jobs:
 
       - run: flutter build linux --release --dart-define=APP_VERSION=${{ env.VERSION }}
 
-      # HWP → PDF converter (rhwp), pinned and hash-checked like the other platforms.
-      - name: Fetch rhwp (HWP converter)
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: bash tool/fetch_rhwp.sh linux-x64
-
       # conventions/packaging.md §4: the bundle plus an icon, a .desktop
       # entry and linux/install.sh, which puts the app under ~/.local so it
       # shows up in the desktop's app launcher.
@@ -397,9 +358,6 @@ jobs:
           STAGE_DIR="$FILE_NAME"
           rm -rf "$STAGE_DIR"
           cp -r build/linux/x64/release/bundle "$STAGE_DIR"
-          # The app looks for <app dir>/rhwp/rhwp (lib/convert/hwp_to_pdf.dart).
-          mkdir -p "$STAGE_DIR/rhwp"
-          cp third_party/rhwp/linux-x64/rhwp third_party/rhwp/linux-x64/LICENSE third_party/rhwp/linux-x64/THIRD_PARTY_LICENSES.md "$STAGE_DIR/rhwp/"
 
           mkdir -p "$STAGE_DIR/share/icons/hicolor/512x512/apps" "$STAGE_DIR/share/applications"
           cp "$ICON" "$STAGE_DIR/share/icons/hicolor/512x512/apps/$APP_ID.png"
@@ -418,7 +376,7 @@ jobs:
           StartupWMClass=$APP_ID
           Terminal=false
           Categories=Office;Viewer;Graphics;
-          MimeType=application/pdf;application/illustrator;application/postscript;image/svg+xml;application/x-hwp;application/haansofthwp;application/vnd.hancom.hwp;application/vnd.hancom.hwpx;application/x-hwpml;image/png;image/jpeg;image/bmp;image/gif;image/webp;image/tiff;
+          MimeType=application/pdf;application/illustrator;application/postscript;image/svg+xml;image/png;image/jpeg;image/bmp;image/gif;image/webp;image/tiff;
           EOF
           sed -i 's/^[[:space:]]*//' "$STAGE_DIR/share/applications/$APP_ID.desktop"
 

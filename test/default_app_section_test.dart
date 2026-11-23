@@ -45,7 +45,7 @@ void main() {
     ]) {
       expect(find.text(step), findsOneWidget);
     }
-    expect(find.byType(ActionChip), findsNWidgets(14)); // .pdf + .ai .svg .hwp .hwpx .hml + 이미지 8개
+    expect(find.byType(ActionChip), findsNWidgets(11)); // .pdf + .ai .svg + 이미지 8개
     expect(find.text('.pdf'), findsOneWidget);
     expect(find.text('.tiff'), findsOneWidget);
 

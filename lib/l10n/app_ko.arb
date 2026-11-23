@@ -182,7 +182,7 @@
   "convertTitle": "변환",
   "convertAddFiles": "파일 추가",
   "convertClearFinished": "완료 항목 지우기",
-  "convertFileTypes": "이미지, SVG, AI, HWP, PDF",
+  "convertFileTypes": "이미지, SVG, AI, PDF",
   "convertMergeImages": "이미지를 한 PDF로 합치기",
   "convertOutputSame": "원본과 같은 폴더",
   "convertEmpty": "변환할 이미지나 PDF를 끌어다 놓으세요",
@@ -250,38 +250,6 @@
   "@errNotPdfCompatible": {
     "placeholders": {
       "name": {
-        "type": "String"
-      }
-    }
-  },
-  "errConverterMissing": "문서 변환기를 실행할 수 없어요. 앱을 다시 설치해 주세요: {name}",
-  "@errConverterMissing": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "errConversionTimeout": "변환이 너무 오래 걸려 멈췄어요. 문서가 너무 크거나 복잡할 수 있어요: {name}",
-  "@errConversionTimeout": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "warnFontsSubstituted": "원본 글꼴 {count}개를 이 컴퓨터에서 찾지 못해 다른 글꼴로 바꿨어요. 줄바꿈이나 글자 모양이 원본과 다를 수 있어요.",
-  "@warnFontsSubstituted": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "warnFontsDetail": "바꾼 글꼴: {names}",
-  "@warnFontsDetail": {
-    "placeholders": {
-      "names": {
         "type": "String"
       }
     }
